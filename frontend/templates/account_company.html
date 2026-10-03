@@ -110,6 +110,22 @@
               <button type="button" class="btn btn-outline" data-copy-from="invite-{{ course.id }}">Copy invite link</button>
             {% endif %}
           </div>
+
+          <div class="completers">
+            <p class="completers-title">Completed by</p>
+            {% if item.completers %}
+              <ul class="completers-list">
+                {% for person in item.completers %}
+                  <li>
+                    <a href="mailto:{{ person.email }}" title="{{ person.user.display_name }}">{{ person.email }}</a>
+                    {% if person.score is not none %}<span class="completers-score">{{ person.score }}%</span>{% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="completers-empty">No one has completed this course yet.</p>
+            {% endif %}
+          </div>
         </div>
       {% endfor %}
     </div>
