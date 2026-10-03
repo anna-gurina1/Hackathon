@@ -200,3 +200,69 @@ def test_ai_failure_gives_503_and_does_not_break(app, monkeypatch):
     resp = company.post("/api/ai-suggestions", json={"topic": "Coffee"})
     assert resp.status_code == 503
     assert resp.get_json()["error"] == "unavailable"
+
+
+# ---------- POST /course/<id>/ai-suggestions (button on the course page) ----------
+
+def _make_course(app, company_email, **fields):
+    from database import db
+    from database.models import Course, User
+
+    with app.app_context():
+        company = User.query.filter_by(email=company_email).one()
+        data = dict(
+            title="Espresso", description="", topic="", profession="", outcome="",
+            level="beginner", knowledge_type="procedure", duration=5,
+        )
+        data.update(fields)
+        course = Course(company_id=company.id, **data)
+        db.session.add(course)
+        db.session.commit()
+        return course.id
+
+
+def test_course_page_button_uses_the_saved_course(app, monkeypatch):
+    seen = {}
+
+    def fake_generate(fields, categories):
+        seen["fields"] = fields
+        return {key: f"AI question for {key}" for key, _label in categories}
+
+    monkeypatch.setattr("backend.routes.courses.generate_category_questions", fake_generate)
+    company = _signup_company(app, "Acme", "a@acme.md")
+    course_id = _make_course(app, "a@acme.md", topic="Coffee", profession="Barista")
+
+    resp = company.post(f"/course/{course_id}/ai-suggestions")
+
+    assert resp.status_code == 200
+    assert resp.get_json()["questions"]["goal"] == "AI question for goal"
+    assert seen["fields"]["title"] == "Espresso"
+    assert seen["fields"]["topic"] == "Coffee"
+    assert seen["fields"]["profession"] == "Barista"
+    assert seen["fields"]["level"] == "Beginner"
+
+
+def test_course_page_button_with_nothing_filled_in_is_rejected(app, monkeypatch):
+    def must_not_be_called(fields, categories):
+        raise AssertionError("the AI must not be called when topic, profession, ... are empty")
+
+    monkeypatch.setattr("backend.routes.courses.generate_category_questions", must_not_be_called)
+    company = _signup_company(app, "Acme", "a@acme.md")
+    course_id = _make_course(app, "a@acme.md")  # only a title
+
+    resp = company.post(f"/course/{course_id}/ai-suggestions")
+    assert resp.status_code == 400
+    assert resp.get_json()["error"] == "empty"
+
+
+def test_only_the_owner_can_ask_for_course_suggestions(app, monkeypatch):
+    monkeypatch.setattr(
+        "backend.routes.courses.generate_category_questions", lambda fields, categories: {"goal": "Q?"}
+    )
+    _signup_company(app, "Acme", "a@acme.md")
+    other = _signup_company(app, "Beta", "b@beta.md")
+    person = _signup_person(app, "ion@test.md")
+    course_id = _make_course(app, "a@acme.md", topic="Coffee")
+
+    assert other.post(f"/course/{course_id}/ai-suggestions").status_code == 403
+    assert person.post(f"/course/{course_id}/ai-suggestions").status_code == 403

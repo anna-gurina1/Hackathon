@@ -111,6 +111,8 @@
   </div>
 
   {# ---------- Side: suggested questions for the chosen level ---------- #}
+  {% set ai_url = url_for('courses.ai_suggestions') %}
+  {% set ai_form = 'course-details' %}
   {% include "partials/suggested_questions.html" %}
 </div>
 {% endblock %}

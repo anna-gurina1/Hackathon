@@ -855,3 +855,4 @@ a.lesson-row:hover { border-color: var(--accent); }
 .avatar-edit-form { margin: 0; }
 .avatar-pick { cursor: pointer; }
 .avatar-edit .danger-link { margin: 0; padding: 0; }
+.suggest-ai-button { margin: 0 0 12px; }
