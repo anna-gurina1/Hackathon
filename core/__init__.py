@@ -71,4 +71,11 @@ def create_app(config_class=Config):
 
         db.create_all()
 
+        # A fresh database always gets the demo company and demo courses,
+        # so there is something to try right after signing up (not in tests).
+        if not app.config.get("TESTING"):
+            from database.seed import ensure_demo_data
+
+            ensure_demo_data()
+
     return app

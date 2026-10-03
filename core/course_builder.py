@@ -95,6 +95,36 @@ def select_questions(level, knowledge_type, duration, yes_answers=None):
     return chosen
 
 
+def recommended_questions(level):
+    """Questions shown next to the lesson list in the course studio, grouped by category.
+
+    [{"category": "goal", "category_label": "Learning goal", "questions": [<question dict>, ...]}, ...]
+
+    Only questions a master answers with a video/text (answer_type == "media") are used.
+    The "video_quality" category (filming tips) is skipped. level=None means all levels.
+    """
+    groups = []
+    for category in CATEGORY_ORDER:
+        if category == "video_quality":
+            continue
+        questions = sorted(
+            (
+                q for q in QUESTIONS
+                if q["category"] == category
+                and q["answer_type"] == "media"
+                and (level is None or level in q["levels"])
+            ),
+            key=_sort_key,
+        )
+        if questions:
+            groups.append({
+                "category": category,
+                "category_label": category_label(category),
+                "questions": questions,
+            })
+    return groups
+
+
 def total_time(questions):
     """Total answer time of the selected questions, in seconds."""
     return sum(q["time"] for q in questions)

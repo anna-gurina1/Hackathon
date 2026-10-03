@@ -1,7 +1,13 @@
 import os
 
+from dotenv import load_dotenv
+
 # Project root (the folder with run.py)
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+# Read settings (MAIL_*, SECRET_KEY, ...) from the .env file in the project root.
+# This must happen BEFORE the Config class below, which reads os.environ.
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 
 class Config:
@@ -16,7 +22,8 @@ class Config:
     # Email. Leave MAIL_SERVER empty in development: emails are printed to the console.
     MAIL_SERVER = os.environ.get("MAIL_SERVER", "")
     MAIL_PORT = int(os.environ.get("MAIL_PORT", 587))
-    MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "1") == "1"
+    MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "1") == "1"  # STARTTLS (port 587)
+    MAIL_USE_SSL = os.environ.get("MAIL_USE_SSL", "0") == "1"  # SSL from the start (port 465)
     MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
     MAIL_FROM = os.environ.get("MAIL_FROM", "noreply@bitwise.local")

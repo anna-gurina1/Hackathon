@@ -1,6 +1,6 @@
 import pytest
 
-from core.course_builder import category_label, select_questions, total_time
+from core.course_builder import category_label, recommended_questions, select_questions, total_time
 from core.questions import CATEGORIES, DURATIONS, LEVELS, QUESTIONS, TYPES
 
 ALL_COMBINATIONS = [
@@ -68,3 +68,20 @@ def test_unknown_duration_uses_closest():
 def test_category_label():
     assert category_label("mistake") == CATEGORIES["mistake"]
     assert category_label("unknown") == "unknown"
+
+
+@pytest.mark.parametrize("level", list(LEVELS) + [None])
+def test_recommended_questions(level):
+    groups = recommended_questions(level)
+    assert groups
+    order = list(CATEGORIES)
+    positions = [order.index(g["category"]) for g in groups]
+    assert positions == sorted(positions)  # same order as CATEGORIES
+    for group in groups:
+        assert group["category"] != "video_quality"
+        assert group["category_label"] == category_label(group["category"])
+        assert group["questions"]
+        for q in group["questions"]:
+            assert q["answer_type"] == "media"
+            assert q["category"] == group["category"]
+            assert level is None or level in q["levels"]

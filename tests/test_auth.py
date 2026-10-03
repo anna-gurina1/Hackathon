@@ -10,7 +10,7 @@ def signup_person(client, email="ana@test.md"):
 def test_home_page_opens(client):
     response = client.get("/")
     assert response.status_code == 200
-    assert b"auth-signup" in response.data
+    assert b'action="/signup"' in response.data
 
 
 def test_signup_person_logs_in(client):
