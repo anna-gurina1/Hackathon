@@ -40,11 +40,13 @@ def create_app(config_class=Config):
     from backend.routes.main import bp as main_bp
     from backend.routes.courses import bp as courses_bp
     from backend.routes.builder import bp as builder_bp
+    from backend.routes.quiz import bp as quiz_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(courses_bp)
     app.register_blueprint(builder_bp)
+    app.register_blueprint(quiz_bp)
 
     @app.context_processor
     def inject_globals():
@@ -68,5 +70,12 @@ def create_app(config_class=Config):
         import database.models  # noqa: F401  (registers the tables)
 
         db.create_all()
+
+        # A fresh database always gets the demo company and demo courses,
+        # so there is something to try right after signing up (not in tests).
+        if not app.config.get("TESTING"):
+            from database.seed import ensure_demo_data
+
+            ensure_demo_data()
 
     return app

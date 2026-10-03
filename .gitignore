@@ -6,3 +6,8 @@ instance/
 uploads/*
 !uploads/.gitkeep
 .env
+app.db
+*.db
+*.mp4
+.vscode/
+.pytest_cache/
