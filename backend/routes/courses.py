@@ -12,9 +12,8 @@ from flask import (
 )
 from flask_login import current_user, login_required
 
-from backend.ai_tips import AiUnavailable, generate_category_questions
 from backend.uploads import delete_video
-from backend.email import external_url
+from backend.email import external_url, send_email
 from backend.ai_tips import AiUnavailable, generate_category_questions
 from core.course_builder import recommended_questions
 from core.questions import LEVELS
@@ -335,48 +334,6 @@ def lesson(course_id, n):
 @login_required
 def media(filename):
     return send_from_directory(current_app.config["UPLOAD_FOLDER"], filename)
-
-
-# ---------- AI ideas for the "Need ideas?" panel (backend/ai_tips.py) ----------
-
-AI_FIELDS = ("title", "description", "topic", "profession", "outcome")
-
-
-def _ai_answer(fields):
-    """One AI question per panel topic, as a JSON response."""
-    categories = [(g["category"], g["category_label"]) for g in recommended_questions(None)]
-    try:
-        questions = generate_category_questions(fields, categories)
-    except AiUnavailable:
-        current_app.logger.warning("AI suggestions are not available", exc_info=True)
-        return jsonify({"error": "unavailable"}), 503
-    return jsonify({"questions": questions})
-
-
-@bp.route("/api/ai-suggestions", methods=["POST"])
-@login_required
-def ai_suggestions():
-    """New course form: uses what the company has typed so far (not saved yet)."""
-    if not current_user.is_company:
-        abort(403)
-    data = request.get_json(silent=True) or {}
-    fields = {name: str(data.get(name, "")).strip()[:500] for name in AI_FIELDS}
-    if not any(fields.values()):
-        return jsonify({"error": "empty"}), 400
-    fields["level"] = LEVELS.get(data.get("level"), "")
-    return _ai_answer(fields)
-
-
-@bp.route("/course/<int:course_id>/ai-suggestions", methods=["POST"])
-@login_required
-def course_ai_suggestions(course_id):
-    """Course studio: uses the saved course. A title alone is not enough context."""
-    course = _owned_course_or_abort(course_id)
-    fields = {name: (getattr(course, name) or "").strip() for name in AI_FIELDS}
-    if not any(fields[name] for name in AI_FIELDS if name != "title"):
-        return jsonify({"error": "empty"}), 400
-    fields["level"] = LEVELS.get(course.level, "")
-    return _ai_answer(fields)
 
 
 # ---------- companies / search ----------
