@@ -1,6 +1,37 @@
 {% extends "base.html" %}
-{% block title %}Tips{% endblock %}
+
+{% block title %}Tips — find a course{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
+{% endblock %}
+
 {% block content %}
-  <h1>Tips</h1>
-  <p class="lead">Search by topic, company, profession or result. The search page is built in a later step.</p>
+<div class="container page">
+  <section class="search-hero">
+    <h1>Learn from people who do it every day</h1>
+    <p class="lead">Short video lessons from real experts. Finish a course — and the company may offer you a job.</p>
+
+    <form class="search-form" data-search-form role="search">
+      <div class="search-box">
+        <input type="search" name="q" placeholder="Search courses…" aria-label="Search" autocomplete="off" data-search-input>
+        <button type="submit" class="btn btn-primary">Search</button>
+      </div>
+
+      <div class="search-tabs pill-group" role="radiogroup" aria-label="Search by">
+        <label class="pill"><input type="radio" name="by" value="topic" checked><span>Topic</span></label>
+        <label class="pill"><input type="radio" name="by" value="company"><span>Company</span></label>
+        <label class="pill"><input type="radio" name="by" value="profession"><span>Profession</span></label>
+        <label class="pill"><input type="radio" name="by" value="result"><span>What you'll learn</span></label>
+      </div>
+    </form>
+  </section>
+
+  <p class="search-status muted" data-search-status aria-live="polite">Loading…</p>
+  <div class="card-grid" data-search-results></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/tips.js') }}"></script>
 {% endblock %}

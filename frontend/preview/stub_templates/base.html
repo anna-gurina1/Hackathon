@@ -1,0 +1,68 @@
+{# STUB for the preview only. The team's real base.html (frontend/templates/base.html) wins if it exists. #}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}Microlearning{% endblock %} · SkillShot</title>
+  <link rel="stylesheet" href="{{ url_for('preview_tools.static', filename='style.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="site-header">
+    <div class="container site-header-inner">
+      <a class="logo" href="{{ url_for('main.home') }}">SkillShot</a>
+      <nav class="site-nav">
+        <a href="{{ url_for('main.home') }}">Home</a>
+        <a href="{{ url_for('main.tips') }}">Tips</a>
+        {% if current_user.is_authenticated %}
+          <a class="avatar-link" href="{{ url_for('main.account') }}" title="My account">{{ current_user.initials }}</a>
+          <form method="post" action="{{ url_for('auth.logout') }}" style="display:inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="link-button">Log out</button>
+          </form>
+        {% else %}
+          <button type="button" class="btn btn-primary" data-open-auth>Log in</button>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="container" style="padding-top: 16px;">
+          {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block auth_modal %}
+  <dialog class="auth-modal" id="auth-modal">
+    <form method="post" action="{{ url_for('auth.login') }}" class="card">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <h2>Log in or sign up</h2>
+      <p class="muted small">We'll email you a one-time login link.</p>
+      <div class="field">
+        <label for="auth-email">Email</label>
+        <input id="auth-email" type="email" name="email" required placeholder="you@example.com">
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">Send login link</button>
+      <button class="btn btn-outline btn-block" type="button" data-close-auth style="margin-top:8px">Cancel</button>
+    </form>
+  </dialog>
+  {% endblock %}
+
+  <script>
+    const authModal = document.getElementById('auth-modal');
+    document.querySelectorAll('[data-open-auth]').forEach(b => b.addEventListener('click', () => authModal.showModal()));
+    document.querySelectorAll('[data-close-auth]').forEach(b => b.addEventListener('click', () => authModal.close()));
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

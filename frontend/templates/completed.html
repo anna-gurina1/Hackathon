@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Course completed · {{ course.title }}{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container page narrow">
+  <div class="card celebrate-card">
+    <canvas class="confetti-canvas" data-confetti></canvas>
+
+    <div class="trophy" aria-hidden="true">🏆</div>
+    <p class="eyebrow">Course completed</p>
+    <h1>Congratulations!</h1>
+    <p class="lead">You finished <strong>{{ course.title }}</strong> and passed every quiz.</p>
+
+    <div class="notice-box">
+      <strong>{{ course.company.display_name }}</strong> has been notified about your result.
+      If they'd like to work with you, their offer will appear in your account.
+    </div>
+
+    <div class="button-row">
+      <a class="btn btn-primary btn-lg" href="{{ url_for('main.account') }}">Go to my account</a>
+      <a class="btn btn-outline btn-lg" href="{{ url_for('main.tips') }}">Find more courses</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/confetti.js') }}"></script>
+{% endblock %}

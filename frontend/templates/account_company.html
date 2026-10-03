@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as ui %}
+
+{% block title %}Company account{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container page">
+
+  <div class="profile-head">
+    {{ ui.avatar(user, 'avatar-lg') }}
+    <div>
+      <h1>{{ user.display_name }}</h1>
+      <p class="muted">{{ user.email }} · <a href="{{ url_for('courses.company_profile', company_id=user.id) }}">Public page</a></p>
+    </div>
+  </div>
+
+  {% set total_enrolled = courses|sum(attribute='enrolled') %}
+  <div class="stat-grid">
+    <div class="card stat-card"><span class="stat-number">{{ courses|length }}</span><span class="stat-name">Courses</span></div>
+    <div class="card stat-card"><span class="stat-number">{{ total_enrolled }}</span><span class="stat-name">Learners</span></div>
+    <div class="card stat-card"><span class="stat-number">{{ candidates|length }}</span><span class="stat-name">Candidates</span></div>
+  </div>
+
+  {# ---------- Candidates: people who completed a course ---------- #}
+  <h2 class="section-title">Candidates</h2>
+  {% if candidates %}
+    <div class="stack">
+      {% for candidate in candidates %}
+        {% set person = candidate.user %}
+        <div class="card candidate-card">
+          <div class="candidate-person">
+            {{ ui.avatar(person) }}
+            <div>
+              <h3>{{ person.display_name }}</h3>
+              <p class="small muted">{{ person.email }}</p>
+            </div>
+          </div>
+
+          <dl class="candidate-facts">
+            <div><dt>Course</dt><dd>{{ candidate.course.title }}</dd></div>
+            <div><dt>Best score</dt><dd>{{ candidate.score }}%</dd></div>
+            <div><dt>Completed</dt><dd>{{ candidate.completed_at.strftime('%b %d, %Y') if candidate.completed_at else '—' }}</dd></div>
+          </dl>
+
+          <div class="offer-area">
+            {% if candidate.offer_sent %}
+              <span class="chip chip-success">✓ Offer sent</span>
+            {% else %}
+              <details class="offer-toggle">
+                <summary class="btn btn-primary">Send job offer</summary>
+                <form class="offer-form" method="post"
+                      action="{{ url_for('quiz.send_offer', user_id=person.id, course_id=candidate.course.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <label class="small muted" for="offer-{{ person.id }}-{{ candidate.course.id }}">Your message to {{ person.display_name }}</label>
+                  <textarea id="offer-{{ person.id }}-{{ candidate.course.id }}" name="text" rows="4" required
+                            placeholder="Hi! We loved your result. Would you like to join our team as…"></textarea>
+                  <button type="submit" class="btn btn-primary">Send offer</button>
+                </form>
+              </details>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card empty-state">
+      <p class="muted">No candidates yet. People who finish your courses will show up here.</p>
+    </div>
+  {% endif %}
+
+  {# ---------- Courses ---------- #}
+  <div class="page-header" style="margin-top: 32px; margin-bottom: 14px;">
+    <h2 class="section-title" style="margin: 0;">Your courses</h2>
+    <a class="btn btn-primary" href="{{ url_for('courses.new') }}">+ New course</a>
+  </div>
+
+  {% if courses %}
+    <div class="manage-list">
+      {% for item in courses %}
+        {% set course = item.course %}
+        <div class="card manage-row">
+          <div>
+            <h3><a href="{{ url_for('courses.view', course_id=course.id) }}">{{ course.title }}</a></h3>
+            <div class="chip-row">
+              {% if course.status == 'published' %}
+                <span class="chip chip-success">Published</span>
+              {% else %}
+                <span class="chip chip-warning">Draft</span>
+              {% endif %}
+              <span class="chip {{ 'chip-dark' if course.is_private }}">{{ 'Private' if course.is_private else 'Public' }}</span>
+              <span class="chip">{{ course.lesson_count }} lesson{{ 's' if course.lesson_count != 1 }}</span>
+            </div>
+          </div>
+
+          <div class="manage-numbers">
+            <div><strong>{{ item.enrolled }}</strong><span>enrolled</span></div>
+            <div><strong>{{ item.completed }}</strong><span>completed</span></div>
+          </div>
+
+          <div class="manage-buttons">
+            <a class="btn btn-outline" href="{{ url_for('builder.script', course_id=course.id) }}">Builder</a>
+            <a class="btn btn-outline" href="{{ url_for('courses.edit', course_id=course.id) }}">Edit</a>
+            <a class="btn btn-outline" href="{{ url_for('courses.view', course_id=course.id) }}">View</a>
+            {% if item.invite_url %}
+              <input type="hidden" id="invite-{{ course.id }}" value="{{ item.invite_url }}">
+              <button type="button" class="btn btn-outline" data-copy-from="invite-{{ course.id }}">Copy invite link</button>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card empty-state">
+      <p class="muted">You haven't created any courses yet.</p>
+      <a class="btn btn-primary" href="{{ url_for('courses.new') }}">Create your first course</a>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/pages.js') }}"></script>
+{% endblock %}
