@@ -69,8 +69,18 @@ img, video { max-width: 100%; }
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--line);
 }
-.site-header-inner { display: flex; align-items: center; justify-content: space-between; height: 64px; }
-.logo { font-family: var(--font-display); font-weight: 700; font-size: 1.3rem; color: var(--ink); text-decoration: none; }
+.site-header-inner { display: flex; align-items: center; justify-content: space-between; height: 112px; }
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+.logo img { width: 64px; height: 64px; object-fit: contain; }
 .site-nav { display: flex; align-items: center; gap: 16px; }
 .site-nav > a { color: var(--ink); text-decoration: none; font-weight: 600; }
 .site-nav > a:hover { color: var(--primary); }
