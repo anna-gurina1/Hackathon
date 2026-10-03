@@ -1,9 +1,0 @@
-{% extends "base.html" %}
-{% block title %}My account{% endblock %}
-{% block content %}
-  <div class="card">
-    <h1>{{ current_user.display_name }}</h1>
-    <p class="muted">{{ current_user.email }}</p>
-    <p>Your course statistics will appear here.</p>
-  </div>
-{% endblock %}
