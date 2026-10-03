@@ -84,22 +84,18 @@
         <label>Who can see it?</label>
         {% set is_private = is_editing and course.is_private %}
         <div class="option-grid">
-        <label class="option-card">
-          <input type="radio" name="visibility" value="private" {{ 'checked' if is_private }}>
-          <span class="option-card-body">
-            <strong>🔒 Private</strong>
-            <span class="small muted">Only people with your invite link.</span>
-          </span>
-        </label>
-          <label class="option-card {{ 'is-locked' if not is_pro }}">
-            <input type="radio" name="visibility" value="private" {{ 'checked' if is_private }} {{ 'disabled' if not is_pro }}>
+          <label class="option-card">
+            <input type="radio" name="visibility" value="public" {{ 'checked' if not is_private }}>
             <span class="option-card-body">
-              <strong>🔒 Private <span class="pro-badge">PRO</span></strong>
-              {% if is_pro %}
-                <span class="small muted">Only people with your invite link.</span>
-              {% else %}
-                <span class="small muted">Only with an invite link. <a href="{{ url_for('main.pro', next=request.path) }}">Upgrade to Pro</a></span>
-              {% endif %}
+              <strong>🌍 Public</strong>
+              <span class="small muted">Anyone can find it in search on Explore.</span>
+            </span>
+          </label>
+          <label class="option-card">
+            <input type="radio" name="visibility" value="private" {{ 'checked' if is_private }}>
+            <span class="option-card-body">
+              <strong>🔒 Private</strong>
+              <span class="small muted">Only people with your invite link.</span>
             </span>
           </label>
         </div>

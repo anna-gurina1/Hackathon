@@ -87,8 +87,18 @@ def create_app(config_class=Config):
             # A fresh database gets the demo company and demo courses, so there is
             # something to try right after signing up. Skipped while there are no tables.
             if tables.has_table("user"):
+                from sqlalchemy.exc import OperationalError
+
                 from database.seed import ensure_demo_data
 
-                ensure_demo_data()
+                try:
+                    ensure_demo_data()
+                except OperationalError:
+                    # models.py has a new column that this app.db does not have yet.
+                    # Skip the demo data so `flask db upgrade` itself can start.
+                    db.session.rollback()
+                    app.logger.warning(
+                        "The database is older than models.py. Run:  flask db upgrade"
+                    )
 
     return app

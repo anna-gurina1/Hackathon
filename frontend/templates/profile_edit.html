@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "partials/macros.html" as ui %}
 
 {% block title %}Edit profile{% endblock %}
 
@@ -9,6 +10,29 @@
 {% block content %}
 <div class="container page narrow">
   <h1>Edit profile</h1>
+
+  {# ---------- Photo (person) / logo (company) ---------- #}
+  <div class="card avatar-edit">
+    {{ ui.avatar(user, 'avatar-lg') }}
+    <div class="avatar-edit-body">
+      <p class="avatar-edit-title">{{ 'Profile photo' if user.is_person else 'Company logo' }}</p>
+      <form method="post" action="{{ url_for('main.upload_avatar') }}" enctype="multipart/form-data" class="avatar-edit-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label class="btn btn-outline btn-small avatar-pick">
+          {{ 'Change' if user.avatar else 'Upload' }}
+          <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp,image/gif" required
+                 onchange="this.form.submit()" hidden>
+        </label>
+      </form>
+      {% if user.avatar %}
+        <form method="post" action="{{ url_for('main.delete_avatar') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="danger-link">Remove</button>
+        </form>
+      {% endif %}
+      <p class="field-hint">png, jpg, webp or gif, up to 5 MB. It will be cropped to a square.</p>
+    </div>
+  </div>
 
   <div class="card">
     <form method="post" action="{{ url_for('main.edit_profile') }}">

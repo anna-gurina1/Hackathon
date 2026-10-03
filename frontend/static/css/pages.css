@@ -816,3 +816,23 @@ a.lesson-row:hover { border-color: var(--accent); }
   align-self: flex-start; background: var(--error-ink); color: #fff; border: 1px solid var(--error-ink);
 }
 .danger-button:hover { background: #fff; color: var(--error-ink); }
+
+/* Company name that opens the company page */
+.company-link { color: inherit; text-decoration: none; font-weight: 600; }
+.company-link:hover { color: var(--accent); text-decoration: underline; }
+
+/* Course card: the whole card opens the course, the company name opens the company */
+.course-card { position: relative; }
+.course-card .stretched-link { color: inherit; text-decoration: none; }
+.course-card .stretched-link::after { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
+.course-card .course-card-company { position: relative; z-index: 2; align-self: flex-start; color: var(--ink-soft); font-weight: 500; }
+
+/* Profile photo / company logo */
+.avatar-photo { object-fit: cover; background: var(--soft); }
+.avatar-edit { display: flex; align-items: center; gap: 18px; margin-bottom: 18px; }
+.avatar-edit-body { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.avatar-edit-title { flex-basis: 100%; margin: 0; font-weight: 700; }
+.avatar-edit-body .field-hint { flex-basis: 100%; margin: 0; }
+.avatar-edit-form { margin: 0; }
+.avatar-pick { cursor: pointer; }
+.avatar-edit .danger-link { margin: 0; padding: 0; }

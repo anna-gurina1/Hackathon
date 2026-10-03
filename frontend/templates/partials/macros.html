@@ -13,13 +13,24 @@
 {% endmacro %}
 
 {% macro avatar(user, size="") %}
-  <span class="avatar {{ size }}" aria-hidden="true">{{ user.initials }}</span>
+  {%- set photo = user.avatar_url -%}
+  {%- if photo -%}
+    <img class="avatar avatar-photo {{ size }}" src="{{ photo }}" alt="">
+  {%- else -%}
+    <span class="avatar {{ size }}" aria-hidden="true">{{ user.initials }}</span>
+  {%- endif -%}
 {% endmacro %}
 
+{# Company name that opens the company page. company = User with type "company" #}
+{% macro company_link(company, class="") -%}
+  <a class="company-link {{ class }}" href="{{ url_for('courses.company_profile', company_id=company.id) }}">{{ company.display_name }}</a>
+{%- endmacro %}
+
 {% macro course_card(course) %}
-  <a class="card course-card" href="{{ url_for('courses.view', course_id=course.id) }}">
-    <span class="course-card-company small muted">{{ course.company.display_name }}</span>
-    <h3 class="course-card-title">{{ course.title }}</h3>
+  {# The whole card opens the course (stretched link); the company name opens the company page #}
+  <div class="card course-card">
+    {{ company_link(course.company, "course-card-company small muted") }}
+    <h3 class="course-card-title"><a class="stretched-link" href="{{ url_for('courses.view', course_id=course.id) }}">{{ course.title }}</a></h3>
     {% if course.description %}
       <p class="course-card-text muted small">{{ course.description|truncate(110) }}</p>
     {% endif %}
@@ -27,5 +38,5 @@
       <span class="chip">{{ level_label(course.level) }}</span>
       <span class="chip">{{ course.lesson_count }} lesson{{ 's' if course.lesson_count != 1 }}</span>
     </span>
-  </a>
+  </div>
 {% endmacro %}

@@ -22,6 +22,9 @@ class User(db.Model, UserMixin):
     # cannot be replayed.
     login_nonce = db.Column(db.String(32), default=lambda: secrets.token_hex(16), nullable=False)
 
+    # Profile photo / company logo: Cloudinary public_id of the image (None = show initials)
+    avatar = db.Column(db.String(255), nullable=True)
+
     person = db.relationship(
         "PersonProfile", backref="user", uselist=False, cascade="all, delete-orphan"
     )
@@ -52,6 +55,18 @@ class User(db.Model, UserMixin):
         if self.person:
             return f"{self.person.first_name} {self.person.last_name}"
         return self.email
+
+    @property
+    def avatar_url(self):
+        """https link of the profile photo, or None (then the initials are shown)."""
+        if not self.avatar:
+            return None
+        from backend.uploads import image_url
+
+        try:
+            return image_url(self.avatar)
+        except RuntimeError:  # Cloudinary is not configured on this computer
+            return None
 
     @property
     def initials(self):
