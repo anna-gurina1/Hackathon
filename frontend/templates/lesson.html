@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as ui %}
+
+{% block title %}{{ lesson.title }} · {{ course.title }}{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container page">
+  <a class="back-link" href="{{ url_for('courses.view', course_id=course.id) }}">← {{ course.title }}</a>
+
+  <div class="lesson-layout">
+
+    <article class="lesson-main">
+      <p class="eyebrow">Lesson {{ n }} of {{ course.lesson_count }}</p>
+      <h1>{{ lesson.title }}</h1>
+
+      {% if video_url %}
+        <div class="video-frame">
+          <video src="{{ video_url }}" controls playsinline preload="metadata"></video>
+        </div>
+      {% endif %}
+
+      {% if lesson.text %}
+        <div class="card lesson-text keep-lines">{{ lesson.text }}</div>
+      {% endif %}
+
+      {% if not video_url and not lesson.text %}
+        <div class="card empty-state"><p class="muted">This lesson has no content yet.</p></div>
+      {% endif %}
+
+      <div class="card next-step-card">
+        {% if quiz_url %}
+          <div>
+            <h2>Ready to check yourself?</h2>
+            <p>Pass a short quiz to unlock the next lesson. You can rewatch and retry as many times as you like.</p>
+          </div>
+          <a class="btn btn-primary btn-lg" href="{{ quiz_url }}">Take the quiz</a>
+        {% else %}
+          <div>
+            <h2>No quiz for this lesson yet</h2>
+            <p>The author hasn't added a quiz here. Check back soon.</p>
+          </div>
+        {% endif %}
+      </div>
+    </article>
+
+    <aside class="card lesson-side">
+      <p class="side-label">Your progress</p>
+      {{ ui.progress_bar(enrollment.progress_percent) }}
+
+      <ol class="lesson-list compact" style="margin-top: 16px;">
+        {% for item in lessons %}
+          {% if enrollment.status == 'completed' or item.order < enrollment.current_lesson %}
+            {% set lesson_state = 'done' %}
+          {% elif item.order == enrollment.current_lesson %}
+            {% set lesson_state = 'open' %}
+          {% else %}
+            {% set lesson_state = 'locked' %}
+          {% endif %}
+          {% set is_this_lesson = item.order == n %}
+
+          <li>
+            {% if lesson_state != 'locked' %}
+              <a class="lesson-row is-{{ lesson_state }} {{ 'is-current' if is_this_lesson }}"
+                 href="{{ url_for('courses.lesson', course_id=course.id, n=item.order) }}">
+            {% else %}
+              <div class="lesson-row is-locked">
+            {% endif %}
+                <span class="lesson-number">{% if lesson_state == 'done' and not is_this_lesson %}✓{% else %}{{ item.order }}{% endif %}</span>
+                <span class="lesson-name small">{{ item.title }}</span>
+                {% if lesson_state == 'locked' %}<span class="lesson-state">🔒</span>{% endif %}
+            {% if lesson_state != 'locked' %}</a>{% else %}</div>{% endif %}
+          </li>
+        {% endfor %}
+      </ol>
+    </aside>
+
+  </div>
+</div>
+{% endblock %}

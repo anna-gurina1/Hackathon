@@ -1,0 +1,36 @@
+{# Small reusable pieces of HTML. Import with: {% import "partials/macros.html" as ui %} #}
+
+{% macro level_label(level_key) -%}
+  {%- set level_names = {"beginner": "Beginner", "intermediate": "Intermediate", "advanced": "Professional"} -%}
+  {{ level_names.get(level_key, level_key|replace('_', ' ')|capitalize) }}
+{%- endmacro %}
+
+{% macro type_label(type_key) -%}
+  {{ type_key|replace('_', ' ')|capitalize }}
+{%- endmacro %}
+
+{% macro progress_bar(percent, label=true) %}
+  <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ percent }}">
+    <div class="progress-fill" style="width: {{ percent }}%"></div>
+  </div>
+  {% if label %}<p class="progress-label small muted">{{ percent }}% complete</p>{% endif %}
+{% endmacro %}
+
+{% macro avatar(user, size="") %}
+  <span class="avatar {{ size }}" aria-hidden="true">{{ user.initials }}</span>
+{% endmacro %}
+
+{% macro course_card(course) %}
+  <a class="card course-card" href="{{ url_for('courses.view', course_id=course.id) }}">
+    <span class="course-card-company small muted">{{ course.company.display_name }}</span>
+    <h3 class="course-card-title">{{ course.title }}</h3>
+    {% if course.description %}
+      <p class="course-card-text muted small">{{ course.description|truncate(110) }}</p>
+    {% endif %}
+    <span class="chip-row">
+      <span class="chip">{{ level_label(course.level) }}</span>
+      <span class="chip">{{ course.duration }} min</span>
+      <span class="chip">{{ course.lesson_count }} lesson{{ 's' if course.lesson_count != 1 }}</span>
+    </span>
+  </a>
+{% endmacro %}
