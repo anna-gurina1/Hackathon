@@ -203,3 +203,71 @@ def video_url(public_id):
         public_id, resource_type="video", secure=True, format="mp4"
     )
     return url
+
+
+# ---------- Картинки: фото профиля и логотип компании ----------
+
+ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif"}
+MAX_IMAGE_BYTES = 5 * 1024 * 1024
+CLOUDINARY_AVATAR_FOLDER = "hackathon-avatars"
+
+
+def save_image(file_storage):
+    """Загружает фото профиля / логотип в Cloudinary и возвращает public_id (для User.avatar).
+
+    Картинка сразу обрезается в квадрат 400x400 (по лицу или главному объекту).
+    Бросает ValueError с понятным текстом, RuntimeError если Cloudinary не настроен.
+    """
+    if file_storage is None or not file_storage.filename:
+        raise ValueError("No image selected.")
+
+    ext = _extension(file_storage.filename)
+    if ext not in ALLOWED_IMAGE_EXTENSIONS:
+        raise ValueError("Unsupported image format. Allowed formats: png, jpg, webp, gif.")
+
+    stream = file_storage.stream
+    stream.seek(0, os.SEEK_END)
+    size = stream.tell()
+    stream.seek(0)
+    if size == 0:
+        raise ValueError("The image file is empty.")
+    if size > MAX_IMAGE_BYTES:
+        raise ValueError("The image is too big (max 5 MB).")
+
+    _configure()
+    try:
+        result = cloudinary.uploader.upload(
+            stream,
+            resource_type="image",
+            asset_folder=CLOUDINARY_AVATAR_FOLDER,
+            transformation=[{"width": 400, "height": 400, "crop": "fill", "gravity": "auto"}],
+        )
+    except (CloudinaryError, OSError):
+        log.exception("Cloudinary image upload failed")
+        raise ValueError("Could not upload the image. Please try again.")
+    return result["public_id"]
+
+
+def delete_image(public_id):
+    """Удаляет картинку из Cloudinary. Безопасно вызывать с None."""
+    if not public_id:
+        return False
+    _configure()
+    try:
+        result = cloudinary.uploader.destroy(public_id, resource_type="image", invalidate=True)
+    except (CloudinaryError, OSError):
+        log.exception("Cloudinary image delete failed")
+        return False
+    return result.get("result") == "ok"
+
+
+def image_url(public_id, size=200):
+    """https-ссылка на квадратную картинку size x size или None."""
+    if not public_id:
+        return None
+    _configure()
+    url, _options = cloudinary.utils.cloudinary_url(
+        public_id, resource_type="image", secure=True,
+        width=size, height=size, crop="fill", gravity="auto", fetch_format="auto",
+    )
+    return url

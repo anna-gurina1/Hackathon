@@ -1,4 +1,4 @@
-# Изменения контракта: студия курса, без типа знаний, приватность только в Pro
+# Изменения контракта: студия курса, без типа знаний
 
 Это нужно вставить в общий контракт (prompt_backend.md) — разделы указаны. Всё остальное в контракте не меняется.
 
@@ -8,11 +8,9 @@
 После создания открывается студия курса (`builder.script`): список уроков, большой «+» для нового урока и сбоку
 рекомендуемые вопросы из `core/questions.py` для уровня курса. Урок = title + видео и/или текст; вопрос сбоку можно подставить
 в урок кнопкой «Use» (тогда сохраняется `question_id`). Время — только совет («1–3 min per lesson»), нигде не проверяется.
-Курс public или private. **Private доступен только компаниям с планом Pro** (демо-оплата, без настоящих денег).
+Курс public или private. Private доступен любой компании бесплатно: он не попадает в поиск и открывается только по ссылке-приглашению.
 
 ## 2. Модели (database/models.py)
-- `CompanyProfile`: добавить `is_pro` (bool, default False).
-- `User`: добавить свойство `is_pro` → `self.is_company and self.company.is_pro`.
 - `Course`: `knowledge_type` и `duration` сделать `nullable=True` (форма их больше не присылает). `yes_answers` больше не используется.
 
 ## 3. Подбор вопросов (core/course_builder.py)
@@ -33,7 +31,7 @@ recommended_questions(level) -> list[dict]
 | courses.edit | GET/POST /course/<int:course_id>/edit | владелец | course_form.html → после POST redirect builder.script |
 (остальные endpoint'ы courses без изменений)
 
-Правило для new/edit: если `visibility == "private"`, а `current_user.is_pro` = False → сохранить как public и `flash("Private courses are a Pro feature. The course stays public.", "info")`.
+Правило для new/edit: `visibility` берётся из формы как есть: `"private"` → приватный курс (invite-токен создаётся как раньше), любое другое значение → public.
 
 **builder** (вместо `builder.answer`)
 | endpoint | URL | доступ | шаблон |
@@ -51,13 +49,10 @@ recommended_questions(level) -> list[dict]
 | endpoint | URL | доступ | шаблон |
 |---|---|---|---|
 | main.explore | GET /explore | все | explore.html (страница поиска, бывшая tips) |
-| main.pro | GET/POST /pro | компания | pro.html. POST: `current_user.company.is_pro = True`, commit, flash success, redirect на `next` (из формы) или main.account |
 
 ## 5. Переменные шаблонов — заменить
-- **course_form.html**: `course` (Course | None), `LEVELS`, `is_pro` (bool), `recommended` (= recommended_questions(None)).
+- **course_form.html**: `course` (Course | None), `LEVELS`, `recommended` (= recommended_questions(None)).
   Поля: `title, description, topic, profession, outcome, level, visibility`.
 - **builder.html**: `course`, `lessons`, `recommended` (= recommended_questions(course.level)),
-  `used_question_ids` (set id вопросов, по которым уже есть уроки), `is_pro`.
-- **pro.html**: `user`, `next_url` (str | None, из `request.args.get("next")`).
-- **account_company.html**: как раньше; дополнительно используется `user.is_pro`.
+  `used_question_ids` (set id вопросов, по которым уже есть уроки).
 - Убрать из контракта: `TYPES`, `DURATIONS` в шаблонах, `script/answered/total` в builder.html.

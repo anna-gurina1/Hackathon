@@ -33,7 +33,8 @@ def create_app(config_class=Config):
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
     db.init_app(app)
-    migrate.init_app(app, db)
+    # absolute path, so migrations are found from any folder the server is started in
+    migrate.init_app(app, db, directory=os.path.join(BASE_DIR, "migrations"))
     csrf.init_app(app)
     login_manager.init_app(app)
 
@@ -74,21 +75,34 @@ def create_app(config_class=Config):
             # Tests use a throw-away in-memory database: no migrations needed.
             db.create_all()
         else:
-            # The real database is created and updated with migrations:
-            #     flask db upgrade
+            # The real database is created and updated with migrations (migrations/versions/).
+            # They run automatically on every start, so after `git pull` nobody has to
+            # remember `flask db upgrade` (it still works and does the same thing).
+            from flask_migrate import upgrade
             from sqlalchemy import inspect
 
+            try:
+                upgrade()
+            except Exception:  # never stop the site from starting because of this
+                app.logger.exception("Automatic database upgrade failed. Run:  flask db upgrade")
+
             tables = inspect(db.engine)
-            if not tables.has_table("alembic_version"):
-                app.logger.warning(
-                    "The database is not set up with migrations yet. Run:  flask db upgrade"
-                )
 
             # A fresh database gets the demo company and demo courses, so there is
             # something to try right after signing up. Skipped while there are no tables.
             if tables.has_table("user"):
+                from sqlalchemy.exc import OperationalError
+
                 from database.seed import ensure_demo_data
 
-                ensure_demo_data()
+                try:
+                    ensure_demo_data()
+                except OperationalError:
+                    # models.py has a new column that this app.db does not have yet.
+                    # Skip the demo data so `flask db upgrade` itself can start.
+                    db.session.rollback()
+                    app.logger.warning(
+                        "The database is older than models.py. Run:  flask db upgrade"
+                    )
 
     return app

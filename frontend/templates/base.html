@@ -28,8 +28,9 @@
 
         {% if current_user.is_authenticated %}
           <div class="user-menu">
-            <button type="button" class="avatar-button" data-user-menu-button aria-label="Account menu">
-              {{ current_user.initials }}
+            {% set header_photo = current_user.avatar_url %}
+            <button type="button" class="avatar-button {{ 'has-photo' if header_photo }}" data-user-menu-button aria-label="Account menu">
+              {% if header_photo %}<img src="{{ header_photo }}" alt="">{% else %}{{ current_user.initials }}{% endif %}
             </button>
             <div class="user-menu-list" data-user-menu hidden>
               <p class="user-menu-name">{{ current_user.display_name }}</p>
@@ -111,6 +112,11 @@
           <div class="field">
             <label for="company-name">Company name</label>
             <input id="company-name" type="text" name="company_name" autocomplete="organization">
+          </div>
+          <div class="field">
+            <label for="company-description">About the company <span class="muted small">(optional)</span></label>
+            <textarea id="company-description" name="description" rows="3" maxlength="500"
+                      placeholder="What you do, where you work, who you hire"></textarea>
           </div>
         </div>
 

@@ -100,7 +100,6 @@ def script(course_id):
         lessons=lessons,
         recommended=recommended_questions(course.level),
         used_question_ids={l.question_id for l in lessons if l.question_id is not None},
-        is_pro=current_user.is_pro,
     )
 
 

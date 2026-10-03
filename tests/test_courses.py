@@ -110,6 +110,6 @@ def test_private_course_not_in_search(app):
 
     resp = app.test_client().get("/api/search?q=Welding&by=topic")
     assert resp.status_code == 200
-    names = [c["name"] for c in resp.get_json()]
+    names = [c["company_name"] for c in resp.get_json()]
     assert "Beta" in names
     assert "Acme" not in names

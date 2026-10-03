@@ -30,7 +30,7 @@
     <div class="stack">
       {% for offer in offers %}
         <div class="card offer-card">
-          <h3>{{ offer.company.display_name }}</h3>
+          <h3>{{ ui.company_link(offer.company) }}</h3>
           <p class="small muted">After “{{ offer.course.title }}” · {{ offer.created_at.strftime('%b %d, %Y') }}</p>
           <p class="offer-text keep-lines">{{ offer.text }}</p>
         </div>
@@ -56,7 +56,7 @@
           </div>
           <div>
             <h3>{{ course.title }}</h3>
-            <p class="small muted" style="margin: 2px 0 0;">{{ course.company.display_name }}</p>
+            <p class="small muted" style="margin: 2px 0 0;">{{ ui.company_link(course.company) }}</p>
           </div>
           <div>
             {{ ui.progress_bar(enrollment.progress_percent) }}

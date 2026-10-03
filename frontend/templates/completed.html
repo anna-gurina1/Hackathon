@@ -17,7 +17,7 @@
     <p class="lead">You finished <strong>{{ course.title }}</strong> and passed every quiz.</p>
 
     <div class="notice-box">
-      <strong>{{ course.company.display_name }}</strong> has been notified about your result.
+      <strong><a class="company-link" href="{{ url_for('courses.company_profile', company_id=course.company.id) }}">{{ course.company.display_name }}</a></strong> has been notified about your result.
       If they'd like to work with you, their offer will appear in your account.
     </div>
 

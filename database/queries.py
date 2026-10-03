@@ -81,6 +81,48 @@ def search_companies(q, by):
     return list(companies.values())
 
 
+def search_courses(q, by):
+    """
+    Public+published courses for the Explore search (newest first).
+    `by`: "topic" -> course title, topic or description; "profession" -> Course.profession;
+    "result" -> Course.outcome. An empty `q` returns all public courses.
+    Each item: {"type": "course", "id", "title", "description", "level", "lesson_count",
+                "url", "company_id", "company_name", "company_url"}
+    """
+    from sqlalchemy import or_
+
+    from core.questions import LEVELS
+
+    columns = {
+        "topic": [Course.title, Course.topic, Course.description],
+        "profession": [Course.profession],
+        "result": [Course.outcome],
+    }.get(by)
+    if columns is None:
+        return []
+
+    query = Course.query.filter(Course.is_private.is_(False), Course.status == "published")
+    q = (q or "").strip()
+    if q:
+        query = query.filter(or_(*[column.ilike(f"%{q}%") for column in columns]))
+
+    results = []
+    for course in query.order_by(Course.created_at.desc()).all():
+        results.append({
+            "type": "course",
+            "id": course.id,
+            "title": course.title,
+            "description": course.description,
+            "level": LEVELS.get(course.level, course.level),
+            "lesson_count": course.lesson_count,
+            "url": f"/course/{course.id}",
+            "company_id": course.company_id,
+            "company_name": course.company.display_name,
+            "company_url": f"/company/{course.company_id}",
+        })
+    return results
+
+
 def person_dashboard(user):
     """Enrollments, started/completed counts and received offers for a person."""
     enrollments = (

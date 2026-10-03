@@ -250,30 +250,79 @@ def test_quiz_edit_other_course_lesson(app):
     assert other.get(f"/course/{course.id}/lesson/{lesson.id}/quiz/edit").status_code == 403
 
 
-# ---------- private courses are Pro only ----------
+# ---------- private courses are free for every company ----------
 
-def test_private_course_needs_pro(app):
+def edit_course(client, course, visibility):
+    return client.post(f"/course/{course.id}/edit", data={
+        "title": "Rebar check", "description": "d", "topic": "Concrete", "profession": "Builder",
+        "outcome": "Check rebar", "level": "beginner", "visibility": visibility,
+    })
+
+
+def test_company_creates_private_course(app):
     client = company_client(app)
-    with app.app_context():
-        course = create_course(client, visibility="private")
-        assert course.is_private is False  # not Pro -> stays public
-
-
-def test_pro_company_can_make_private_course(app):
-    client = company_client(app)
-    assert client.get("/pro").status_code == 200
-    response = client.post("/pro", data={"next": "/course/new"})
-    assert response.status_code == 302 and response.headers["Location"].endswith("/course/new")
     with app.app_context():
         course = create_course(client, visibility="private")
         assert course.is_private is True
+        assert course.invite_token  # the invite link is created as before
 
 
-def test_pro_ignores_foreign_redirect(app):
+def test_unknown_visibility_becomes_public(app):
     client = company_client(app)
-    response = client.post("/pro", data={"next": "https://evil.example"})
-    assert response.status_code == 302 and "evil.example" not in response.headers["Location"]
+    with app.app_context():
+        assert create_course(client, visibility="secret").is_private is False
+        assert create_course(client, visibility="").is_private is False
 
 
-def test_person_cannot_open_pro(app):
-    assert person_client(app).get("/pro").status_code == 403
+def test_edit_keeps_private_and_can_switch(app):
+    client = company_client(app)
+    with app.app_context():
+        course = create_course(client, visibility="private")
+        course_id, token = course.id, course.invite_token
+
+    assert edit_course(client, course, "private").status_code == 302
+    with app.app_context():
+        course = db.session.get(Course, course_id)
+        assert course.is_private is True and course.invite_token == token
+
+    edit_course(client, course, "public")
+    with app.app_context():
+        assert db.session.get(Course, course_id).is_private is False
+
+    edit_course(client, course, "private")
+    with app.app_context():
+        assert db.session.get(Course, course_id).is_private is True
+
+
+def test_private_course_stays_private_after_publish(app):
+    # Another company has a public course on the same topic (control: search itself works).
+    other = company_client(app, email="hr@other.md", name="Other")
+    with app.app_context():
+        public_course = create_course(other)
+    other.post(f"/course/{public_course.id}/publish")
+
+    client = company_client(app)
+    with app.app_context():
+        course = create_course(client, visibility="private")
+        course_id, token = course.id, course.invite_token
+    assert client.post(f"/course/{course_id}/publish").status_code == 302
+
+    # not in search, not on the public page of the company, not by id for a stranger
+    guest = app.test_client()
+    names = [c["company_name"] for c in guest.get("/api/search?q=Concrete&by=topic").get_json()]
+    assert "Other" in names and "Acme" not in names
+    with app.app_context():
+        company_id = db.session.get(Course, course_id).company_id
+    assert b"Rebar check" not in guest.get(f"/company/{company_id}").data
+    assert guest.get(f"/course/{course_id}").status_code == 404
+
+    # but it opens with the invite link, and the owner finds that link in the account
+    assert guest.get(f"/course/private/{token}").status_code == 200
+    assert guest.get("/course/private/wrong-token").status_code == 404
+    assert f"/course/private/{token}".encode() in client.get("/account").data
+
+
+def test_pro_page_is_gone(app):
+    client = company_client(app)
+    assert client.get("/pro").status_code == 404
+    assert client.post("/pro", data={"next": "/course/new"}).status_code == 404

@@ -1,9 +1,9 @@
-from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, logout_user
 
 from database import db
-from backend.uploads import delete_video
-from database.models import CompanyProfile, Enrollment, Offer, PersonProfile, QuizAttempt
+from backend.uploads import delete_image, delete_video, save_image
+from database.models import CompanyProfile, Course, Enrollment, Offer, PersonProfile, QuizAttempt
 from database.queries import company_dashboard, person_dashboard
 
 bp = Blueprint("main", __name__)
@@ -65,6 +65,41 @@ def edit_profile():
     return render_template("profile_edit.html", user=current_user, form={})
 
 
+# ---------- profile photo / company logo ----------
+
+@bp.route("/account/avatar", methods=["POST"])
+@login_required
+def upload_avatar():
+    """Profile photo (person) or logo (company). Replaces the old one."""
+    try:
+        public_id = save_image(request.files.get("avatar"))
+    except (ValueError, RuntimeError) as error:  # RuntimeError: Cloudinary is not configured
+        flash(str(error), "error")
+        return redirect(url_for("main.edit_profile"))
+
+    old = current_user.avatar
+    current_user.avatar = public_id
+    db.session.commit()
+    if old:
+        delete_image(old)
+    flash("Photo updated." if current_user.is_person else "Logo updated.", "success")
+    return redirect(url_for("main.edit_profile"))
+
+
+@bp.route("/account/avatar/delete", methods=["POST"])
+@login_required
+def delete_avatar():
+    old = current_user.avatar
+    if old:
+        current_user.avatar = None
+        db.session.commit()
+        delete_image(old)
+        flash("Photo removed." if current_user.is_person else "Logo removed.", "info")
+    return redirect(url_for("main.edit_profile"))
+
+
+# ---------- delete the account ----------
+
 @bp.route("/account/delete", methods=["POST"])
 @login_required
 def delete_account():
@@ -79,8 +114,6 @@ def delete_account():
 
     video_ids = []
     if user.is_company:
-        from database.models import Course
-
         for course in Course.query.filter_by(company_id=user.id).all():
             video_ids += [lesson.video_filename for lesson in course.lessons if lesson.video_filename]
             db.session.delete(course)  # lessons, quizzes, enrollments, offers go with it
@@ -90,36 +123,16 @@ def delete_account():
         Enrollment.query.filter_by(user_id=user.id).delete()
         Offer.query.filter_by(user_id=user.id).delete()
 
+    avatar = user.avatar
     logout_user()
     db.session.delete(user)  # the profile is deleted with the user
     db.session.commit()
 
-    # videos are removed only after the data is really gone from the database
+    # files are removed only after the data is really gone from the database
     for public_id in video_ids:
         delete_video(public_id)
+    if avatar:
+        delete_image(avatar)
 
     flash("Your account has been deleted.", "info")
     return redirect(url_for("main.home"))
-
-
-def _safe_next(target):
-    """Only allow redirects to a page of this site (no https://evil.com, no //evil.com)."""
-    if target and target.startswith("/") and not target.startswith("//") and "\\" not in target:
-        return target
-    return None
-
-
-@bp.route("/pro", methods=["GET", "POST"])
-@login_required
-def pro():
-    """Pro plan page. Payment is a demo: the button just turns Pro on."""
-    if not current_user.is_company:
-        abort(403)
-    if request.method == "POST":
-        current_user.company.is_pro = True
-        db.session.commit()
-        flash("You are on the Pro plan now. Private courses are unlocked.", "success")
-        return redirect(_safe_next(request.form.get("next")) or url_for("main.account"))
-    return render_template(
-        "pro.html", user=current_user, next_url=_safe_next(request.args.get("next"))
-    )
