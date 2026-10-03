@@ -23,6 +23,7 @@ from dotenv import load_dotenv
 ALLOWED_EXTENSIONS = {"mp4", "webm", "mov"}
 CLOUDINARY_FOLDER = "hackathon-lessons"  # папка в Cloudinary, чтобы видео не лежали кучей в корне
 CHUNK_SIZE = 20 * 1024 * 1024            # большие видео уходят кусками по 20 МБ
+MAX_VIDEO_BYTES = 100 * 1024 * 1024      # лимит бесплатного тарифа Cloudinary на одно видео
 
 log = logging.getLogger(__name__)
 _configured = False
@@ -76,10 +77,22 @@ def save_video(file_storage):
 
     _configure()
 
-    file_storage.stream.seek(0)
+    # размер проверяем заранее, чтобы не гонять большой файл в Cloudinary впустую
+    stream = file_storage.stream
+    stream.seek(0, os.SEEK_END)
+    size = stream.tell()
+    stream.seek(0)
+    if size == 0:
+        raise ValueError("The video file is empty.")
+    if size > MAX_VIDEO_BYTES:
+        raise ValueError(
+            f"The video is too large ({size // (1024 * 1024)} MB). "
+            f"Maximum is {MAX_VIDEO_BYTES // (1024 * 1024)} MB."
+        )
+
     try:
         result = cloudinary.uploader.upload_large(
-            file_storage.stream,
+            stream,
             resource_type="video",  # обязательно, иначе Cloudinary сохранит файл как raw
             asset_folder=CLOUDINARY_FOLDER,  # у тебя Dynamic folders, поэтому asset_folder, а не folder
             chunk_size=CHUNK_SIZE,
