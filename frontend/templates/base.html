@@ -23,8 +23,9 @@
       </a>
 
       <nav class="site-nav">
-        <a href="{{ url_for('main.home') }}">Home</a>
+        <a class="nav-home" href="{{ url_for('main.home') }}">Home</a>
         <a href="{{ url_for('main.explore') }}">Explore</a>
+        <a href="{{ url_for('main.pricing') }}">Pricing</a>
 
         {% if current_user.is_authenticated %}
           <div class="user-menu">
