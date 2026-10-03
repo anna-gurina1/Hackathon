@@ -38,6 +38,26 @@
     </div>
   {% endif %}
 
+  {# ---------- Requests to private courses that are not accepted yet ---------- #}
+  {% if requests %}
+    <h2 class="section-title">My requests</h2>
+    <div class="stack">
+      {% for access_request in requests %}
+        <div class="card request-card">
+          <div>
+            <h3><a href="{{ url_for('courses.view', course_id=access_request.course_id) }}">{{ access_request.course.title }}</a></h3>
+            <p class="small muted">{{ ui.company_link(access_request.course.company) }}</p>
+          </div>
+          {% if access_request.status == 'pending' %}
+            <span class="chip chip-warning">Waiting for approval</span>
+          {% else %}
+            <span class="chip chip-error">Declined</span>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
   {# ---------- My courses ---------- #}
   <h2 class="section-title">My courses</h2>
   {% if enrollments %}

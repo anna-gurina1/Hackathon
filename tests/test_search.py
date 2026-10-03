@@ -21,7 +21,8 @@ def setup_courses(app):
 def test_search_by_topic_returns_courses(app):
     company_id, course_id = setup_courses(app)
     results = app.test_client().get("/api/search?q=concrete&by=topic").get_json()
-    assert [r["title"] for r in results] == ["Rebar check"]
+    assert sorted(r["title"] for r in results) == ["Rebar check", "Secret"]  # drafts are never found
+    results = [r for r in results if r["title"] == "Rebar check"]
     assert results[0]["type"] == "course"
     assert results[0]["url"] == f"/course/{course_id}"
     assert results[0]["company_url"] == f"/company/{company_id}"

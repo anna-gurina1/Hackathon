@@ -6,6 +6,7 @@ function names and signatures exactly as listed here.
 
 from database import db
 from database.models import (
+    AccessRequest,
     CompanyProfile,
     Course,
     Enrollment,
@@ -43,7 +44,7 @@ def course_visible_to(course, user):
 
 def search_companies(q, by):
     """
-    Companies that have at least one public+published course matching the
+    Companies that have at least one published course (public or private) matching the
     filter. `by` selects which column is matched with ILIKE against `q`:
     "topic" -> Course.topic, "company" -> CompanyProfile.name,
     "profession" -> Course.profession, "result" -> Course.outcome.
@@ -57,7 +58,7 @@ def search_companies(q, by):
         db.session.query(Course)
         .join(User, Course.company_id == User.id)
         .join(CompanyProfile, CompanyProfile.user_id == User.id)
-        .filter(Course.is_private.is_(False), Course.status == "published")
+        .filter(Course.status == "published")  # private courses count too: they are found by request
     )
 
     q = (q or "").strip()
@@ -74,6 +75,7 @@ def search_companies(q, by):
                 "name": profile.name if profile else "",
                 "description": profile.description if profile else None,
                 "course_count": 0,
+                "avatar_url": course.company.avatar_url,
                 "url": f"/company/{company_id}",
             }
         companies[company_id]["course_count"] += 1
@@ -101,7 +103,8 @@ def search_courses(q, by):
     if columns is None:
         return []
 
-    query = Course.query.filter(Course.is_private.is_(False), Course.status == "published")
+    # Private courses are found too: their page offers "Request access" instead of "Start".
+    query = Course.query.filter(Course.status == "published")
     q = (q or "").strip()
     if q:
         query = query.filter(or_(*[column.ilike(f"%{q}%") for column in columns]))
@@ -115,6 +118,7 @@ def search_courses(q, by):
             "description": course.description,
             "level": LEVELS.get(course.level, course.level),
             "lesson_count": course.lesson_count,
+            "is_private": course.is_private,
             "url": f"/course/{course.id}",
             "company_id": course.company_id,
             "company_name": course.company.display_name,
@@ -138,10 +142,20 @@ def person_dashboard(user):
         .all()
     )
 
+    # Requests to private courses that are not accepted yet (waiting or declined)
+    requests = (
+        AccessRequest.query.filter(
+            AccessRequest.user_id == user.id, AccessRequest.status != "accepted"
+        )
+        .order_by(AccessRequest.created_at.desc())
+        .all()
+    )
+
     return {
         "enrollments": enrollments,
         "stats": {"started": len(enrollments), "completed": completed},
         "offers": offers,
+        "requests": requests,
     }
 
 
@@ -208,7 +222,17 @@ def company_dashboard(user):
                 "offer_sent": offer_sent,
             })
 
-    return {"courses": course_rows, "candidates": candidates}
+    requests = []
+    if course_ids:
+        requests = (
+            AccessRequest.query.filter(
+                AccessRequest.course_id.in_(course_ids), AccessRequest.status == "pending"
+            )
+            .order_by(AccessRequest.created_at)
+            .all()
+        )
+
+    return {"courses": course_rows, "candidates": candidates, "requests": requests}
 
 
 def best_score(user_id, course_id):

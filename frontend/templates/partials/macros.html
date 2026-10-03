@@ -37,6 +37,7 @@
     <span class="chip-row">
       <span class="chip">{{ level_label(course.level) }}</span>
       <span class="chip">{{ course.lesson_count }} lesson{{ 's' if course.lesson_count != 1 }}</span>
+      {% if course.is_private %}<span class="chip chip-dark">🔒 By request</span>{% endif %}
     </span>
   </div>
 {% endmacro %}

@@ -307,14 +307,14 @@ def test_private_course_stays_private_after_publish(app):
         course_id, token = course.id, course.invite_token
     assert client.post(f"/course/{course_id}/publish").status_code == 302
 
-    # not in search, not on the public page of the company, not by id for a stranger
+    # found in search and on the company page, but a stranger can only send a request
     guest = app.test_client()
     names = [c["company_name"] for c in guest.get("/api/search?q=Concrete&by=topic").get_json()]
-    assert "Other" in names and "Acme" not in names
+    assert "Other" in names and "Acme" in names
     with app.app_context():
         company_id = db.session.get(Course, course_id).company_id
-    assert b"Rebar check" not in guest.get(f"/company/{company_id}").data
-    assert guest.get(f"/course/{course_id}").status_code == 404
+    assert b"By request" in guest.get(f"/company/{company_id}").data
+    assert b"request access" in guest.get(f"/course/{course_id}").data
 
     # but it opens with the invite link, and the owner finds that link in the account
     assert guest.get(f"/course/private/{token}").status_code == 200

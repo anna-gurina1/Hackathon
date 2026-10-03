@@ -3,14 +3,7 @@ from flask_login import current_user, login_required, logout_user
 
 from database import db
 from backend.uploads import delete_image, delete_video, save_image
-from database.models import (
-    CompanyProfile,
-    Course,
-    Enrollment,
-    Offer,
-    PersonProfile,
-    QuizAttempt,
-)
+from database.models import AccessRequest, CompanyProfile, Course, Enrollment, Offer, PersonProfile, QuizAttempt
 from database.queries import company_dashboard, person_dashboard
 
 bp = Blueprint("main", __name__)
@@ -54,14 +47,10 @@ def edit_profile():
             last = form.get("last_name", "").strip()
             if not first or not last:
                 flash("Enter your first and last name.", "error")
-                return render_template(
-                    "profile_edit.html", user=current_user, form=form
-                )
+                return render_template("profile_edit.html", user=current_user, form=form)
             profile = current_user.person
             if profile is None:
-                profile = current_user.person = PersonProfile(
-                    first_name=first, last_name=last
-                )
+                profile = current_user.person = PersonProfile(first_name=first, last_name=last)
             profile.first_name = first[:60]
             profile.last_name = last[:60]
         else:
@@ -69,9 +58,7 @@ def edit_profile():
             description = form.get("description", "").strip()
             if not name:
                 flash("Enter the company name.", "error")
-                return render_template(
-                    "profile_edit.html", user=current_user, form=form
-                )
+                return render_template("profile_edit.html", user=current_user, form=form)
             profile = current_user.company
             if profile is None:
                 profile = current_user.company = CompanyProfile(name=name)
@@ -85,17 +72,13 @@ def edit_profile():
 
 # ---------- profile photo / company logo ----------
 
-
 @bp.route("/account/avatar", methods=["POST"])
 @login_required
 def upload_avatar():
     """Profile photo (person) or logo (company). Replaces the old one."""
     try:
         public_id = save_image(request.files.get("avatar"))
-    except (
-        ValueError,
-        RuntimeError,
-    ) as error:  # RuntimeError: Cloudinary is not configured
+    except (ValueError, RuntimeError) as error:  # RuntimeError: Cloudinary is not configured
         flash(str(error), "error")
         return redirect(url_for("main.edit_profile"))
 
@@ -122,14 +105,12 @@ def delete_avatar():
 
 # ---------- delete the account ----------
 
-
 @bp.route("/account/delete", methods=["POST"])
 @login_required
 def delete_account():
     """Delete the account for good. The user types their email to confirm.
     Person: their progress, quiz results and received offers are deleted.
-    Company: all its courses (with lessons, quizzes, videos, learners' progress) are deleted.
-    """
+    Company: all its courses (with lessons, quizzes, videos, learners' progress) are deleted."""
     user = current_user._get_current_object()
     typed = request.form.get("confirm_email", "").strip().lower()
     if typed != user.email.lower():
@@ -139,17 +120,12 @@ def delete_account():
     video_ids = []
     if user.is_company:
         for course in Course.query.filter_by(company_id=user.id).all():
-            video_ids += [
-                lesson.video_filename
-                for lesson in course.lessons
-                if lesson.video_filename
-            ]
-            db.session.delete(
-                course
-            )  # lessons, quizzes, enrollments, offers go with it
+            video_ids += [lesson.video_filename for lesson in course.lessons if lesson.video_filename]
+            db.session.delete(course)  # lessons, quizzes, enrollments, offers go with it
         Offer.query.filter_by(company_id=user.id).delete()
     else:
         QuizAttempt.query.filter_by(user_id=user.id).delete()
+        AccessRequest.query.filter_by(user_id=user.id).delete()
         Enrollment.query.filter_by(user_id=user.id).delete()
         Offer.query.filter_by(user_id=user.id).delete()
 

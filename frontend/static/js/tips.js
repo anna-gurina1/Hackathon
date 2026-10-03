@@ -80,6 +80,7 @@ function makeCourseCard(course) {
     makeElement('span', 'chip', course.level),
     makeElement('span', 'chip', course.lesson_count === 1 ? '1 lesson' : course.lesson_count + ' lessons')
   );
+  if (course.is_private) chips.append(makeElement('span', 'chip chip-dark', '🔒 By request'));
 
   card.append(companyLink, title, description, chips);
   return card;
@@ -90,14 +91,21 @@ function makeCompanyCard(company) {
   const card = makeElement('a', 'card result-company');
   card.href = company.url;
 
-  const avatar = makeElement('span', 'avatar', company.name.slice(0, 2).toUpperCase());
+  let avatar;
+  if (company.avatar_url) {
+    avatar = makeElement('img', 'avatar avatar-photo');
+    avatar.src = company.avatar_url;
+    avatar.alt = '';
+  } else {
+    avatar = makeElement('span', 'avatar', company.name.slice(0, 2).toUpperCase());
+  }
   const info = makeElement('div');
   const courseCount = makeElement('span', 'chip',
     company.course_count === 1 ? '1 course' : company.course_count + ' courses');
 
   info.append(
     makeElement('h3', '', company.name),
-    makeElement('p', 'small muted', company.description || ''),
+    makeElement('p', 'small muted', shorten(company.description, 140)),
     courseCount
   );
   card.append(avatar, info);
