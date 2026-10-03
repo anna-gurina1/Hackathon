@@ -36,7 +36,7 @@ def create_app(config_class=Config):
     csrf.init_app(app)
     login_manager.init_app(app)
 
-    from backend.routes.auth import bp as auth_bp
+    from backend.routes.site_auth import bp as auth_bp
     from backend.routes.main import bp as main_bp
 
     app.register_blueprint(main_bp)

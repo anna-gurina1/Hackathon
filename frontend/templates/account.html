@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}My account{% endblock %}
+{% block content %}
+  <div class="card">
+    <h1>{{ current_user.display_name }}</h1>
+    {% if current_user.is_company and current_user.company.description %}
+      <p>{{ current_user.company.description }}</p>
+    {% endif %}
+    <p class="muted">{{ current_user.email }}</p>
+    <p class="muted small">
+      {{ "Company account" if current_user.is_company else "Personal account" }}
+      · since {{ current_user.created_at.strftime("%d %b %Y") }}
+    </p>
+    <p>Your course statistics will appear here.</p>
+  </div>
+{% endblock %}
