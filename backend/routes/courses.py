@@ -57,19 +57,11 @@ def _read_form():
     return data, None
 
 
-def _apply_plan_rules(data):
-    """Private courses are a Pro feature: a non-Pro company's course stays public."""
-    if data["is_private"] and not current_user.is_pro:
-        data["is_private"] = False
-        flash("Private courses are a Pro feature. The course stays public.", "info")
-
-
 def _render_form(course, status=200):
     return render_template(
         "course_form.html",
         course=course,
         LEVELS=LEVELS,
-        is_pro=current_user.is_pro,
         recommended=recommended_questions(None),
     ), status
 
@@ -106,7 +98,6 @@ def new():
         if error:
             flash(error, "error")
             return _render_form(None, 400)
-        _apply_plan_rules(data)
         course = Course(company_id=current_user.id, **data)
         db.session.add(course)
         db.session.commit()
@@ -123,7 +114,6 @@ def edit(course_id):
         if error:
             flash(error, "error")
             return _render_form(course, 400)
-        _apply_plan_rules(data)
         for key, value in data.items():
             setattr(course, key, value)
         db.session.commit()

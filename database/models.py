@@ -74,7 +74,8 @@ class CompanyProfile(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     name = db.Column(db.String(120), nullable=False)
     description = db.Column(db.String(500), nullable=True)
-    # Pro plan (demo payment). Only Pro companies can make private courses.
+    # Not used anymore: the Pro plan was removed (private courses are free for everyone).
+    # The column stays so existing app.db files keep working.
     is_pro = db.Column(db.Boolean, default=False, nullable=False)
 
 
