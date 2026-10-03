@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Access denied{% endblock %}
+{% block content %}
+  <section class="hero">
+    <h1>403 · Access denied</h1>
+    <p class="lead">You don't have permission to open this page.</p>
+    <a class="btn btn-primary" href="{{ url_for('main.home') }}">Go home</a>
+  </section>
+{% endblock %}
