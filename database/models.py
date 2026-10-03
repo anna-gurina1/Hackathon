@@ -152,6 +152,9 @@ class Quiz(db.Model):
     questions = db.relationship(
         "QuizQuestion", backref="quiz", order_by="QuizQuestion.id", cascade="all, delete-orphan"
     )
+    attempts = db.relationship(
+        "QuizAttempt", backref="quiz", cascade="all, delete-orphan"
+    )
 
 
 class QuizQuestion(db.Model):

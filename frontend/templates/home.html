@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container page">
+  <section class="hero search-hero">
+    <p class="eyebrow">Microlearning from real experts</p>
+    <h1>Learn a job skill from people who do it every day</h1>
+    <p class="lead">Short video lessons from company experts. Finish a course — and the company may offer you a job.</p>
+    <div class="button-row" style="margin-top: 20px;">
+      <a class="btn btn-primary btn-lg" href="{{ url_for('main.explore') }}">Find a course</a>
+      {% if not current_user.is_authenticated %}
+        <button type="button" class="btn btn-outline btn-lg" data-open-auth>Log in or sign up</button>
+      {% elif current_user.is_company %}
+        <a class="btn btn-outline btn-lg" href="{{ url_for('courses.new') }}">Create a course</a>
+      {% else %}
+        <a class="btn btn-outline btn-lg" href="{{ url_for('main.account') }}">My courses</a>
+      {% endif %}
+    </div>
+  </section>
+
+  <h2 class="section-title">How it works</h2>
+  <div class="card-grid">
+    <div class="card"><h3>1. Watch</h3><p class="muted">Video lessons recorded by experts from real companies.</p></div>
+    <div class="card"><h3>2. Pass the quiz</h3><p class="muted">A quick test after each lesson. Retry as many times as you need.</p></div>
+    <div class="card"><h3>3. Get an offer</h3><p class="muted">Complete the course — the company sees your result and can invite you to work.</p></div>
+  </div>
+
+  <h2 class="section-title">For companies</h2>
+  <div class="card">
+    <p style="margin-top: 0;">Create a course in minutes: we suggest the questions, your expert answers them on video, and every answer becomes a lesson. People who finish your course appear in your <strong>Candidates</strong>.</p>
+    {% if not current_user.is_authenticated %}
+      <button type="button" class="btn btn-primary" data-open-auth>Sign up as a company</button>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
