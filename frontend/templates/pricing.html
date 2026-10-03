@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Pricing{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
+{% endblock %}
+
+{# Payments are not connected yet: every button just takes you further #}
+{% set next_step_url = url_for('main.account') if current_user.is_authenticated else url_for('main.home') %}
+
+{% block content %}
+<div class="container page">
+  <section class="pricing-intro">
+    <h1>Simple plans for every team</h1>
+    <p class="lead">Start free. Pay when you need more courses or longer videos.</p>
+  </section>
+
+  <div class="pricing-plans">
+
+    {# ---------- Free ---------- #}
+    <article class="card pricing-card">
+      <h2 class="pricing-name">Free</h2>
+      <p class="pricing-price">€0</p>
+      <p class="muted">Try it out</p>
+      <ul class="pricing-features">
+        <li>1 public course</li>
+        <li>Up to 3 videos per course</li>
+        <li>Videos up to 3 min each</li>
+        <li>See who completed your course and send job offers</li>
+      </ul>
+      <a class="btn btn-outline pricing-button" href="{{ next_step_url }}">Start free</a>
+    </article>
+
+    {# ---------- Per course ---------- #}
+    <article class="card pricing-card">
+      <h2 class="pricing-name">Per course</h2>
+      <p class="pricing-price">€29 <span class="pricing-period">per course, one-time</span></p>
+      <p class="muted">For 1–2 courses</p>
+      <ul class="pricing-features">
+        <li>Pay for each new course</li>
+        <li>Up to 10 videos per course</li>
+        <li>Videos up to 10 min each</li>
+        <li>Private courses by invite link</li>
+        <li>See who completed your course and send job offers</li>
+      </ul>
+      <a class="btn btn-outline pricing-button" href="{{ next_step_url }}">Buy a course</a>
+    </article>
+
+    {# ---------- Monthly (main plan) ---------- #}
+    <article class="card card-accent pricing-card pricing-card-main">
+      <span class="pricing-badge">Popular</span>
+      <h2 class="pricing-name">Monthly</h2>
+      <p class="pricing-price">€79 <span class="pricing-period">per month</span></p>
+      <p class="muted">For teams that train all the time</p>
+      <ul class="pricing-features">
+        <li>Unlimited courses</li>
+        <li>Unlimited videos</li>
+        <li>Videos up to 15 min each</li>
+        <li>Private courses by invite link</li>
+        <li>See who completed your course and send job offers</li>
+      </ul>
+      <a class="btn btn-primary pricing-button" href="{{ next_step_url }}">Subscribe</a>
+    </article>
+
+  </div>
+
+  <aside class="pricing-note">
+    <strong>Why limit video length?</strong>
+    Short lessons are easier to remember. That's why even Monthly keeps each video under 15 minutes — split longer topics into several lessons.
+  </aside>
+
+  <p class="small muted pricing-demo">Demo prices — payments are not connected yet.</p>
+</div>
+{% endblock %}

@@ -250,7 +250,7 @@ def save_image(file_storage):
 
 def delete_image(public_id):
     """Удаляет картинку из Cloudinary. Безопасно вызывать с None."""
-    if not public_id:
+    if not public_id or public_id.startswith("static:"):  # демо-логотип из frontend/static — не трогаем
         return False
     _configure()
     try:

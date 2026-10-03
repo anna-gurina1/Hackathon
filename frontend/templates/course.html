@@ -78,7 +78,7 @@
 
         {% elif not current_user.is_authenticated %}
           <p class="side-label">Ready to learn?</p>
-          <button type="button" class="btn btn-primary btn-lg btn-block" data-open-auth>Log in to start</button>
+          <button type="button" class="btn btn-primary btn-lg btn-block" data-open-auth>{{ 'Log in to request access' if course.is_private and not invite_token else 'Log in to start' }}</button>
           <p class="small muted">Sign up with just your email — no password needed.</p>
 
         {% elif current_user.is_company %}
@@ -98,10 +98,29 @@
             Continue lesson {{ continue_lesson }}
           </a>
 
+        {% elif course.is_private and not invite_token %}
+          {# Private course: the company decides who can learn #}
+          <p class="side-label">🔒 Private course</p>
+          {% if access_request and access_request.status == 'pending' %}
+            <p class="status-line"><span class="status-dot is-draft"></span>Request sent</p>
+            <p class="small">{{ course.company.display_name }} is reviewing your request. We'll email you when they answer.</p>
+            <button type="button" class="btn btn-outline btn-block" disabled>Waiting for approval</button>
+          {% elif access_request and access_request.status == 'declined' %}
+            <p class="small">{{ course.company.display_name }} declined your request for this course.</p>
+            <a class="btn btn-outline btn-block" href="{{ url_for('main.explore') }}">Find another course</a>
+          {% else %}
+            <p class="small">{{ course.company.display_name }} decides who can take this course. Send a request — you can start as soon as they accept it.</p>
+            <form method="post" action="{{ url_for('courses.request_access', course_id=course.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-primary btn-lg btn-block">Send request</button>
+            </form>
+          {% endif %}
+
         {% else %}
           <p class="side-label">{{ course.lesson_count }} short video lesson{{ 's' if course.lesson_count != 1 }}</p>
           <form method="post" action="{{ url_for('courses.start', course_id=course.id) }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% if invite_token %}<input type="hidden" name="invite" value="{{ invite_token }}">{% endif %}
             <button type="submit" class="btn btn-primary btn-lg btn-block">Start course</button>
           </form>
           <p class="small muted">Each lesson ends with a short quiz. Retake it as many times as you need.</p>

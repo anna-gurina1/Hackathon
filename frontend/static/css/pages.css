@@ -855,4 +855,18 @@ a.lesson-row:hover { border-color: var(--accent); }
 .avatar-edit-form { margin: 0; }
 .avatar-pick { cursor: pointer; }
 .avatar-edit .danger-link { margin: 0; padding: 0; }
+
+/* Requests to join a private course (company account / person account) */
+.request-card { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 18px; }
+.request-card h3 { margin: 0 0 2px; font-size: 1.05rem; }
+.request-card p { margin: 0; }
+.request-buttons { display: flex; gap: 8px; }
+.request-buttons form { margin: 0; }
+.count-badge {
+  display: inline-block; min-width: 26px; padding: 2px 9px; margin-left: 6px; border-radius: 999px;
+  background: var(--accent); color: var(--accent-ink); font-family: "Manrope", sans-serif;
+  font-size: .85rem; text-align: center; vertical-align: middle;
+}
+.action-card .btn[disabled] { opacity: .75; cursor: default; color: var(--accent-ink); border-color: rgba(255, 255, 255, .6); }
+.avatar-photo { box-shadow: 0 0 0 1px var(--line); }  /* white logos stay visible on white cards */
 .suggest-ai-button { margin: 0 0 12px; }

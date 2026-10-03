@@ -13,12 +13,12 @@ from flask import (
 from flask_login import current_user, login_required
 
 from backend.uploads import delete_video
-from backend.email import external_url
+from backend.email import external_url, send_email
 from backend.ai_tips import AiUnavailable, generate_category_questions
 from core.course_builder import recommended_questions
 from core.questions import LEVELS
 from database import db
-from database.models import CompanyProfile, Course, Enrollment, User  # noqa: F401
+from database.models import AccessRequest, CompanyProfile, Course, Enrollment, User  # noqa: F401
 from database.queries import course_visible_to, search_companies, search_courses
 
 bp = Blueprint("courses", __name__)
@@ -67,11 +67,17 @@ def _render_form(course, status=200):
     ), status
 
 
-def _render_course(course):
+def _render_course(course, invite_token=None):
+    """invite_token: set when the page was opened with the private invite link
+    (then the person can start right away, without a request)."""
     is_owner = current_user.is_authenticated and course.company_id == current_user.id
     enrollment = None
+    access_request = None
     if current_user.is_authenticated and current_user.is_person:
         enrollment = Enrollment.query.filter_by(
+            user_id=current_user.id, course_id=course.id
+        ).first()
+        access_request = AccessRequest.query.filter_by(
             user_id=current_user.id, course_id=course.id
         ).first()
     invite_url = None
@@ -84,6 +90,8 @@ def _render_course(course):
         enrollment=enrollment,
         is_owner=is_owner,
         invite_url=invite_url,
+        invite_token=invite_token,
+        access_request=access_request,
     )
 
 
@@ -152,7 +160,11 @@ def publish(course_id):
 @bp.route("/course/<int:course_id>")
 def view(course_id):
     course = db.session.get(Course, course_id)
-    if course is None or not course_visible_to(course, current_user):
+    if course is None:
+        abort(404)
+    # A published private course has a public page too (title, description, lessons list),
+    # but its lessons open only after the company accepts the request.
+    if course.status != "published" and not course_visible_to(course, current_user):
         abort(404)
     return _render_course(course)
 
@@ -162,7 +174,94 @@ def private(token):
     course = Course.query.filter_by(invite_token=token).first()
     if course is None:
         abort(404)
-    return _render_course(course)
+    return _render_course(course, invite_token=token)
+
+
+# ---------- requests to private courses ----------
+
+@bp.route("/course/<int:course_id>/request", methods=["POST"])
+@login_required
+def request_access(course_id):
+    """A person asks to join a private course."""
+    if not current_user.is_person:
+        abort(403)
+    course = db.session.get(Course, course_id)
+    if course is None or not course.is_private or course.status != "published":
+        abort(404)
+    back = redirect(url_for("courses.view", course_id=course.id))
+
+    if Enrollment.query.filter_by(user_id=current_user.id, course_id=course.id).first():
+        return back
+    existing = AccessRequest.query.filter_by(user_id=current_user.id, course_id=course.id).first()
+    if existing is not None:
+        if existing.status == "declined":
+            flash("The company has already declined your request for this course.", "info")
+        return back
+
+    db.session.add(AccessRequest(user_id=current_user.id, course_id=course.id))
+    db.session.commit()
+    send_email(
+        course.company.email,
+        f"New request to join “{course.title}”",
+        f"{current_user.display_name} ({current_user.email}) asks to join your private course "
+        f"“{course.title}”.\n\nAccept or decline the request in your account:\n"
+        f"{external_url('main.account')}\n",
+    )
+    flash(f"Request sent. {course.company.display_name} will review it — we'll email you the answer.", "success")
+    return back
+
+
+def _owned_request_or_abort(course_id, request_id):
+    course = _owned_course_or_abort(course_id)
+    access_request = db.session.get(AccessRequest, request_id)
+    if access_request is None or access_request.course_id != course.id:
+        abort(404)
+    return course, access_request
+
+
+@bp.route("/course/<int:course_id>/requests/<int:request_id>/accept", methods=["POST"])
+@login_required
+def accept_request(course_id, request_id):
+    from datetime import datetime
+
+    course, access_request = _owned_request_or_abort(course_id, request_id)
+    if access_request.status != "accepted":
+        access_request.status = "accepted"
+        access_request.decided_at = datetime.utcnow()
+        if not Enrollment.query.filter_by(user_id=access_request.user_id, course_id=course.id).first():
+            db.session.add(Enrollment(user_id=access_request.user_id, course_id=course.id))
+        db.session.commit()
+        person = access_request.user
+        send_email(
+            person.email,
+            f"You can start “{course.title}”",
+            f"Hi {person.display_name},\n\n{course.company.display_name} accepted your request. "
+            f"Start the course here:\n{external_url('courses.view', course_id=course.id)}\n",
+        )
+        flash(f"{person.display_name} can start the course now.", "success")
+    return redirect(url_for("main.account") + "#requests")
+
+
+@bp.route("/course/<int:course_id>/requests/<int:request_id>/decline", methods=["POST"])
+@login_required
+def decline_request(course_id, request_id):
+    from datetime import datetime
+
+    course, access_request = _owned_request_or_abort(course_id, request_id)
+    if access_request.status == "pending":
+        access_request.status = "declined"
+        access_request.decided_at = datetime.utcnow()
+        db.session.commit()
+        person = access_request.user
+        send_email(
+            person.email,
+            f"Your request to “{course.title}”",
+            f"Hi {person.display_name},\n\nUnfortunately {course.company.display_name} declined your "
+            f"request to join “{course.title}”. You can find other courses here:\n"
+            f"{external_url('main.explore')}\n",
+        )
+        flash("Request declined.", "info")
+    return redirect(url_for("main.account") + "#requests")
 
 
 # ---------- learning ----------
@@ -173,7 +272,14 @@ def start(course_id):
     if not current_user.is_person:
         abort(403)
     course = db.session.get(Course, course_id)
-    if course is None or not course_visible_to(course, current_user):
+    if course is None:
+        abort(404)
+    # private course: only after the request was accepted (= enrolled) or with the invite link
+    invited = course.is_private and request.form.get("invite") == course.invite_token
+    if not invited and not course_visible_to(course, current_user):
+        if course.is_private and course.status == "published":
+            flash("This is a private course. Send a request to join it.", "info")
+            return redirect(url_for("courses.view", course_id=course.id))
         abort(404)
     enrollment = Enrollment.query.filter_by(
         user_id=current_user.id, course_id=course.id
@@ -237,8 +343,8 @@ def company_profile(company_id):
     company = db.session.get(User, company_id)
     if company is None or not company.is_company:
         abort(404)
-    courses = (
-        Course.query.filter_by(company_id=company.id, is_private=False, status="published")
+    courses = (  # public and private (private ones open by request)
+        Course.query.filter_by(company_id=company.id, status="published")
         .order_by(Course.created_at.desc())
         .all()
     )

@@ -19,6 +19,7 @@ from datetime import datetime, timedelta
 
 from database import db
 from database.models import (
+    AccessRequest,
     CompanyProfile,
     Course,
     Enrollment,
@@ -44,6 +45,7 @@ DEMO_COMPANIES = [
     {
         "email": "alliedtesting" + DEMO_DOMAIN,
         "name": "Allied Testing",
+        "logo": "img/demo/alliedtesting.png",
         "description": (
             "Allied Testing is a leading global software quality assurance and testing consultancy "
             "specializing in the financial sector and capital markets. Founded in 2000, the company "
@@ -133,6 +135,7 @@ DEMO_COMPANIES = [
     {
         "email": "victoriabank" + DEMO_DOMAIN,
         "name": "Victoriabank",
+        "logo": "img/demo/victoriabank.png",
         "description": (
             "Victoriabank is one of the largest and most innovative commercial banks in Moldova, originally "
             "founded in 1989 as the country's first commercial banking institution. As part of Romania's "
@@ -223,6 +226,7 @@ DEMO_COMPANIES = [
     {
         "email": "fusionworks" + DEMO_DOMAIN,
         "name": "FusionWorks",
+        "logo": "img/demo/fusionworks.png",
         "description": (
             "FusionWorks is an ISO-certified, AI-native software development company based in Chisinau, "
             "Moldova. Founded in 2011, it delivers full-cycle product engineering and staff augmentation "
@@ -350,6 +354,7 @@ DEMO_COMPANIES = [
     {
         "email": "diez" + DEMO_DOMAIN,
         "name": "Diez",
+        "logo": "img/demo/diez.png",
         "description": (
             "Diez is a leading independent online news media portal in Moldova, primarily tailored for the "
             "youth audience and students aged 15 to 39. Founded in April 2013, the platform delivers "
@@ -455,13 +460,14 @@ DEMO_COMPANIES = [
 ]
 
 # Learners. "completed" = finished the course of that company (shown to the company as a candidate).
+# "requested" = sent a request to the private course of that company (waits in the company account).
 DEMO_LEARNERS = [
     {"email": "ana.popescu" + DEMO_DOMAIN, "first_name": "Ana", "last_name": "Popescu",
      "completed": ["alliedtesting" + DEMO_DOMAIN, "diez" + DEMO_DOMAIN], "score": 100},
     {"email": "ion.rusu" + DEMO_DOMAIN, "first_name": "Ion", "last_name": "Rusu",
-     "completed": ["fusionworks" + DEMO_DOMAIN], "score": 90},
+     "completed": ["fusionworks" + DEMO_DOMAIN], "score": 90, "requested": ["victoriabank" + DEMO_DOMAIN]},
     {"email": "maria.ceban" + DEMO_DOMAIN, "first_name": "Maria", "last_name": "Ceban",
-     "completed": ["alliedtesting" + DEMO_DOMAIN], "score": 80},
+     "completed": ["alliedtesting" + DEMO_DOMAIN], "score": 80, "requested": ["victoriabank" + DEMO_DOMAIN]},
 ]
 
 
@@ -488,6 +494,8 @@ def _get_or_create_company(data):
         user.company = CompanyProfile(name=data["name"], description=data["description"])
         db.session.add(user)
         db.session.flush()
+    if not user.avatar and data.get("logo"):  # the logo is a file in frontend/static, no Cloudinary needed
+        user.avatar = "static:" + data["logo"]
     return user
 
 
@@ -524,6 +532,11 @@ def _get_or_create_learner(data, courses_by_company):
         for lesson in course.lessons:
             db.session.add(QuizAttempt(user_id=user.id, quiz_id=lesson.quiz.id,
                                        score=data["score"], passed=True, created_at=finished))
+
+    for company_email in data.get("requested", []):
+        course = courses_by_company.get(company_email)
+        if course is not None:
+            db.session.add(AccessRequest(user_id=user.id, course_id=course.id))
 
 
 def _remove_legacy_demo():

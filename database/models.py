@@ -61,6 +61,11 @@ class User(db.Model, UserMixin):
         """https link of the profile photo, or None (then the initials are shown)."""
         if not self.avatar:
             return None
+        if self.avatar.startswith("static:"):
+            # demo logos live in frontend/static (database/seed.py), e.g. "static:img/demo/diez.png"
+            from flask import url_for
+
+            return url_for("static", filename=self.avatar[len("static:"):])
         from backend.uploads import image_url
 
         try:
@@ -137,6 +142,9 @@ class Course(db.Model):
     )
     enrollments = db.relationship("Enrollment", backref="course", cascade="all, delete-orphan")
     offers = db.relationship("Offer", backref="course", cascade="all, delete-orphan")
+    access_requests = db.relationship(
+        "AccessRequest", backref="course", cascade="all, delete-orphan"
+    )
 
     @property
     def lesson_count(self):
@@ -263,3 +271,20 @@ class Offer(db.Model):
 
     company = db.relationship("User", foreign_keys=[company_id])
     user = db.relationship("User", foreign_keys=[user_id])
+
+
+class AccessRequest(db.Model):
+    """A person asks to join a private course. The company accepts or declines.
+    Accepting creates an Enrollment, so the person can start learning."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey("course.id"), nullable=False)
+    status = db.Column(db.String(20), default="pending", nullable=False)  # pending | accepted | declined
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    decided_at = db.Column(db.DateTime, nullable=True)
+
+    user = db.relationship("User")
+
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "course_id", name="uq_access_request_user_course"),
+    )

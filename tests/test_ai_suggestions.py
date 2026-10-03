@@ -130,17 +130,19 @@ def test_gemini_http_error_is_unavailable(monkeypatch):
 # ---------- POST /api/ai-suggestions ----------
 
 def _signup_company(app, name, email):
+    # sign-up needs the confirmation link from the email: signup_confirmed opens it directly
+    from tests.conftest import signup_confirmed
+
     client = app.test_client()
-    client.post("/signup", data={"type": "company", "company_name": name, "email": email})
+    signup_confirmed(client, {"type": "company", "company_name": name, "email": email})
     return client
 
 
 def _signup_person(app, email):
+    from tests.conftest import signup_confirmed
+
     client = app.test_client()
-    client.post(
-        "/signup",
-        data={"type": "person", "first_name": "Ion", "last_name": "Popescu", "email": email},
-    )
+    signup_confirmed(client, {"type": "person", "first_name": "Ion", "last_name": "Popescu", "email": email})
     return client
 
 

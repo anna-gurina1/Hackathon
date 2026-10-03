@@ -25,6 +25,35 @@
     <div class="card stat-card"><span class="stat-number">{{ candidates|length }}</span><span class="stat-name">Candidates</span></div>
   </div>
 
+  {# ---------- Requests to join private courses ---------- #}
+  {% if requests %}
+    <h2 class="section-title" id="requests">Requests to join <span class="count-badge">{{ requests|length }}</span></h2>
+    <div class="stack">
+      {% for access_request in requests %}
+        {% set person = access_request.user %}
+        <div class="card request-card">
+          <div class="candidate-person">
+            {{ ui.avatar(person) }}
+            <div>
+              <h3>{{ person.display_name }}</h3>
+              <p class="small muted">{{ person.email }} · wants to join “{{ access_request.course.title }}” · {{ access_request.created_at.strftime('%b %d, %Y') }}</p>
+            </div>
+          </div>
+          <div class="request-buttons">
+            <form method="post" action="{{ url_for('courses.accept_request', course_id=access_request.course_id, request_id=access_request.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-primary">Accept</button>
+            </form>
+            <form method="post" action="{{ url_for('courses.decline_request', course_id=access_request.course_id, request_id=access_request.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-outline">Decline</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
   {# ---------- Candidates: people who completed a course ---------- #}
   <h2 class="section-title">Candidates</h2>
   {% if candidates %}
