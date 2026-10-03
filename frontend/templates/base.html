@@ -18,8 +18,8 @@
       <nav class="main-nav" aria-label="Main">
         <a href="{{ url_for('main.home') }}"
            class="nav-link{% if request.endpoint == 'main.home' %} is-active{% endif %}">Home</a>
-        <a href="{{ url_for('main.tips') }}"
-           class="nav-link{% if request.endpoint == 'main.tips' %} is-active{% endif %}">Tips</a>
+        <a href="{{ url_for('main.explore') }}"
+           class="nav-link{% if request.endpoint == 'main.explore' %} is-active{% endif %}">Explore</a>
       </nav>
 
       <div class="header-user">
@@ -133,7 +133,7 @@
       <span>&copy; {{ now_year }} Bitwise. Learn in minutes.</span>
       <nav aria-label="Footer">
         <a href="{{ url_for('main.home') }}">Home</a>
-        <a href="{{ url_for('main.tips') }}">Tips</a>
+        <a href="{{ url_for('main.explore') }}">Explore</a>
       </nav>
     </div>
   </footer>

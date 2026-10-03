@@ -9,9 +9,9 @@ def home():
     return render_template("home.html")
 
 
-@bp.route("/tips")
-def tips():
-    return render_template("tips.html")
+@bp.route("/explore")
+def explore():
+    return render_template("explore.html")
 
 
 @bp.route("/account")

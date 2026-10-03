@@ -1,6 +1,6 @@
 /* =========================================================
    pages.css — styles for course, lesson, quiz, builder,
-   account, company and tips pages.
+   account, company and explore pages.
    Uses the shared variables from style.css (--primary, --line ...).
    Mobile first: base styles are for phones, @media adds desktop.
    ========================================================= */
@@ -513,7 +513,7 @@ a.lesson-row:hover { border-color: var(--primary); }
 .company-hero p { margin: 0; max-width: 640px; }
 
 /* =========================================================
-   TIPS / SEARCH (tips.html)
+   EXPLORE / SEARCH (explore.html)
    ========================================================= */
 .search-hero { padding: 24px 0 8px; }
 .search-hero h1 { font-size: clamp(2rem, 7vw, 3rem); margin-bottom: 8px; }
