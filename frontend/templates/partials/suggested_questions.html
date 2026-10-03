@@ -12,7 +12,7 @@
   </p>
 
   {% for group in recommended %}
-    <details class="suggest-group">
+    <details class="suggest-group" data-category="{{ group.category }}">
       <summary class="suggest-category">
         <span>{{ group.category_label }}</span>
         <span class="suggest-count" data-suggest-count>{{ group.questions|length }}</span>
