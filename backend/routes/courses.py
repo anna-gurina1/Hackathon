@@ -18,7 +18,7 @@ from core.course_builder import recommended_questions
 from core.questions import LEVELS
 from database import db
 from database.models import CompanyProfile, Course, Enrollment, User  # noqa: F401
-from database.queries import course_visible_to, search_companies
+from database.queries import course_visible_to, search_companies, search_courses
 
 bp = Blueprint("courses", __name__)
 
@@ -248,4 +248,11 @@ def company_profile(company_id):
 def search():
     q = request.args.get("q", "").strip()
     by = request.args.get("by", "topic")
-    return jsonify(search_companies(q, by))
+    # "Company" finds companies (the card opens the company page);
+    # everything else finds courses (the card opens the course).
+    if by == "company":
+        companies = search_companies(q, by)
+        for company in companies:
+            company["type"] = "company"
+        return jsonify(companies)
+    return jsonify(search_courses(q, by))

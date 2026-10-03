@@ -309,7 +309,7 @@ def test_private_course_stays_private_after_publish(app):
 
     # not in search, not on the public page of the company, not by id for a stranger
     guest = app.test_client()
-    names = [c["name"] for c in guest.get("/api/search?q=Concrete&by=topic").get_json()]
+    names = [c["company_name"] for c in guest.get("/api/search?q=Concrete&by=topic").get_json()]
     assert "Other" in names and "Acme" not in names
     with app.app_context():
         company_id = db.session.get(Course, course_id).company_id
