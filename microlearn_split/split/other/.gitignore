@@ -1,0 +1,6 @@
+venv/
+__pycache__/
+*.pyc
+app.db
+app/static/uploads/*
+!app/static/uploads/.gitkeep
