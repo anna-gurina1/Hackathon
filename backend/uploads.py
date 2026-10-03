@@ -13,6 +13,9 @@
 """
 import logging
 import os
+import shutil
+import subprocess
+import tempfile
 
 import cloudinary
 import cloudinary.uploader
@@ -24,6 +27,11 @@ ALLOWED_EXTENSIONS = {"mp4", "webm", "mov"}
 CLOUDINARY_FOLDER = "hackathon-lessons"  # папка в Cloudinary, чтобы видео не лежали кучей в корне
 CHUNK_SIZE = 20 * 1024 * 1024            # большие видео уходят кусками по 20 МБ
 MAX_VIDEO_BYTES = 100 * 1024 * 1024      # лимит бесплатного тарифа Cloudinary на одно видео
+
+# Если видео больше лимита, оно автоматически сжимается через ffmpeg.
+# Попытки по порядку: (максимальная высота кадра, CRF). Больше CRF = меньше файл, хуже качество.
+COMPRESS_ATTEMPTS = [(720, 28), (480, 32)]
+COMPRESS_TIMEOUT = 15 * 60               # секунд на одно сжатие
 
 log = logging.getLogger(__name__)
 _configured = False
@@ -61,11 +69,70 @@ def _extension(filename):
     return filename.rsplit(".", 1)[1].lower()
 
 
+def _find_ffmpeg():
+    """Путь к ffmpeg: сначала тот, что ставится вместе с imageio-ffmpeg, потом системный."""
+    try:
+        import imageio_ffmpeg
+
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        return shutil.which("ffmpeg")
+
+
+def _compress(stream, ext, workdir):
+    """Сжимает видео в mp4 до размера <= MAX_VIDEO_BYTES. Возвращает путь к готовому файлу.
+
+    Бросает ValueError, если ffmpeg не найден или видео не удалось уменьшить.
+    """
+    ffmpeg = _find_ffmpeg()
+    if ffmpeg is None:
+        log.error("ffmpeg not found: run `pip install imageio-ffmpeg`")
+        raise ValueError(
+            f"The video is larger than {MAX_VIDEO_BYTES // (1024 * 1024)} MB "
+            "and the server cannot compress it."
+        )
+
+    src = os.path.join(workdir, f"source.{ext}")
+    dst = os.path.join(workdir, "compressed.mp4")
+    with open(src, "wb") as f:
+        shutil.copyfileobj(stream, f)
+
+    for height, crf in COMPRESS_ATTEMPTS:
+        command = [
+            ffmpeg, "-y", "-i", src,
+            "-vf", f"scale=-2:'min({height},ih)'",   # не больше height пикселей по высоте, не растягиваем маленькое
+            "-c:v", "libx264", "-crf", str(crf), "-preset", "veryfast",
+            "-c:a", "aac", "-b:a", "96k",
+            "-movflags", "+faststart",               # видео начинает играть до полной загрузки
+            dst,
+        ]
+        try:
+            subprocess.run(command, check=True, capture_output=True, timeout=COMPRESS_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            log.error("ffmpeg timed out")
+            raise ValueError("Compressing the video took too long. Try a shorter video.")
+        except subprocess.CalledProcessError as error:
+            log.error("ffmpeg failed: %s", error.stderr.decode(errors="replace")[-500:])
+            raise ValueError("Could not compress the video. Is it a valid video file?")
+        except OSError:
+            log.exception("could not start ffmpeg")
+            raise ValueError("Could not compress the video.")
+
+        if os.path.getsize(dst) <= MAX_VIDEO_BYTES:
+            return dst
+
+    raise ValueError(
+        f"Even after compression the video is larger than {MAX_VIDEO_BYTES // (1024 * 1024)} MB. "
+        "Try a shorter video."
+    )
+
+
 def save_video(file_storage):
     """Загружает видео в Cloudinary и возвращает его public_id (для Lesson.video_filename).
 
+    Видео больше 100 МБ автоматически сжимается через ffmpeg.
     Бросает ValueError с понятным текстом, если файл не выбран, у него
-    неподдерживаемый формат или загрузка не удалась.
+    неподдерживаемый формат, его не удалось сжать или загрузка не удалась.
     """
     if file_storage is None or not file_storage.filename:
         raise ValueError("No video file selected.")
@@ -77,29 +144,34 @@ def save_video(file_storage):
 
     _configure()
 
-    # размер проверяем заранее, чтобы не гонять большой файл в Cloudinary впустую
     stream = file_storage.stream
     stream.seek(0, os.SEEK_END)
     size = stream.tell()
     stream.seek(0)
     if size == 0:
         raise ValueError("The video file is empty.")
-    if size > MAX_VIDEO_BYTES:
-        raise ValueError(
-            f"The video is too large ({size // (1024 * 1024)} MB). "
-            f"Maximum is {MAX_VIDEO_BYTES // (1024 * 1024)} MB."
-        )
 
-    try:
-        result = cloudinary.uploader.upload_large(
-            stream,
-            resource_type="video",  # обязательно, иначе Cloudinary сохранит файл как raw
-            asset_folder=CLOUDINARY_FOLDER,  # у тебя Dynamic folders, поэтому asset_folder, а не folder
-            chunk_size=CHUNK_SIZE,
-        )
-    except (CloudinaryError, OSError):
-        log.exception("Cloudinary video upload failed")
-        raise ValueError("Could not upload the video. Please try again.")
+    # временная папка удалится сама, даже если что-то пошло не так
+    with tempfile.TemporaryDirectory() as workdir:
+        if size > MAX_VIDEO_BYTES:
+            path = _compress(stream, ext, workdir)   # слишком большое видео сжимаем
+            source = open(path, "rb")
+        else:
+            source = stream
+
+        try:
+            result = cloudinary.uploader.upload_large(
+                source,
+                resource_type="video",  # обязательно, иначе Cloudinary сохранит файл как raw
+                asset_folder=CLOUDINARY_FOLDER,  # у тебя Dynamic folders, поэтому asset_folder, а не folder
+                chunk_size=CHUNK_SIZE,
+            )
+        except (CloudinaryError, OSError):
+            log.exception("Cloudinary video upload failed")
+            raise ValueError("Could not upload the video. Please try again.")
+        finally:
+            if source is not stream:
+                source.close()
 
     return result["public_id"]
 
