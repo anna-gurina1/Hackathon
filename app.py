@@ -15,7 +15,7 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    CORS(app) 
+    CORS(app)
     JWTManager(app)
     db.init_app(app)
     init_cloudinary()
@@ -33,5 +33,5 @@ def create_app():
 
 app = create_app()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True, port=5000)
