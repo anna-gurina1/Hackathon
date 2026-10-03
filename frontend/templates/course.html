@@ -20,7 +20,6 @@
 
       <div class="chip-row">
         <span class="chip">{{ ui.level_label(course.level) }}</span>
-        <span class="chip">{{ course.duration }} min</span>
         <span class="chip">{{ course.lesson_count }} lesson{{ 's' if course.lesson_count != 1 }}</span>
         {% if course.is_private %}<span class="chip chip-dark">Private</span>{% endif %}
         {% if course.status == 'draft' %}<span class="chip chip-warning">Draft</span>{% endif %}
@@ -40,7 +39,6 @@
       <dl class="info-list">
         {% if course.topic %}<div><dt>Topic</dt><dd>{{ course.topic }}</dd></div>{% endif %}
         {% if course.profession %}<div><dt>Profession</dt><dd>{{ course.profession }}</dd></div>{% endif %}
-        <div><dt>Knowledge</dt><dd>{{ ui.type_label(course.knowledge_type) }}</dd></div>
       </dl>
     </section>
 
@@ -101,7 +99,7 @@
           </a>
 
         {% else %}
-          <p class="side-label">{{ course.lesson_count }} short lessons · {{ course.duration }} min</p>
+          <p class="side-label">{{ course.lesson_count }} short video lesson{{ 's' if course.lesson_count != 1 }}</p>
           <form method="post" action="{{ url_for('courses.start', course_id=course.id) }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-primary btn-lg btn-block">Start course</button>

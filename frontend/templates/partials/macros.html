@@ -5,10 +5,6 @@
   {{ level_names.get(level_key, level_key|replace('_', ' ')|capitalize) }}
 {%- endmacro %}
 
-{% macro type_label(type_key) -%}
-  {{ type_key|replace('_', ' ')|capitalize }}
-{%- endmacro %}
-
 {% macro progress_bar(percent, label=true) %}
   <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ percent }}">
     <div class="progress-fill" style="width: {{ percent }}%"></div>
@@ -29,7 +25,6 @@
     {% endif %}
     <span class="chip-row">
       <span class="chip">{{ level_label(course.level) }}</span>
-      <span class="chip">{{ course.duration }} min</span>
       <span class="chip">{{ course.lesson_count }} lesson{{ 's' if course.lesson_count != 1 }}</span>
     </span>
   </a>

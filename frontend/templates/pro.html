@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Bitwise Pro{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container page narrow">
+  <div class="card pro-card">
+    <span class="pro-badge pro-badge-lg">PRO</span>
+    <h1>Private courses for your team</h1>
+    <p class="lead">Make any course private and share it only with the people you invite.</p>
+
+    <ul class="pro-features">
+      <li>🔒 Private courses with invite links</li>
+      <li>👥 Unlimited learners</li>
+      <li>📨 Candidates and job offers, as before</li>
+    </ul>
+
+    {% if user.is_pro %}
+      <p class="status-line"><span class="status-dot"></span>You're on Pro</p>
+      <a class="btn btn-primary btn-lg btn-block" href="{{ next_url or url_for('main.account') }}">Continue</a>
+    {% else %}
+      <p class="pro-price"><strong>$19</strong> / month</p>
+      <form method="post" action="{{ url_for('main.pro') }}" data-pay-form>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ next_url or '' }}">
+        <button type="submit" class="btn btn-primary btn-lg btn-block" data-pay-button>Pay $19</button>
+      </form>
+      <p class="small muted pro-note">Demo checkout — no real payment is made.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    // Demo payment: show "Processing…" for a moment, then send the form
+    const payForm = document.querySelector('[data-pay-form]');
+    if (payForm) {
+      payForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        const payButton = payForm.querySelector('[data-pay-button]');
+        payButton.disabled = true;
+        payButton.textContent = 'Processing payment…';
+        setTimeout(function () { payForm.submit(); }, 1200);
+      });
+    }
+  </script>
+{% endblock %}
