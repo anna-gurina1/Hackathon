@@ -4,7 +4,7 @@ from flask import Blueprint, current_app, flash, redirect, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
-from backend.email import send_email
+from backend.email import external_url, send_email
 from database import db
 from database.models import CompanyProfile, PersonProfile, User
 
@@ -26,7 +26,7 @@ def _back_to_form(message, tab):
 
 def send_login_link(user):
     token = _serializer().dumps({"id": user.id, "n": user.login_nonce})
-    link = url_for("auth.magic_login", token=token, _external=True)
+    link = external_url("auth.magic_login", token=token)
     return send_email(
         user.email,
         "Your login link",

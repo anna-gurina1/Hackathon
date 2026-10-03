@@ -13,6 +13,7 @@ from flask import (
 from flask_login import current_user, login_required
 
 from backend.uploads import delete_video
+from backend.email import external_url
 from core.course_builder import recommended_questions
 from core.questions import LEVELS
 from database import db
@@ -82,7 +83,7 @@ def _render_course(course):
         ).first()
     invite_url = None
     if is_owner and course.is_private:
-        invite_url = url_for("courses.private", token=course.invite_token, _external=True)
+        invite_url = external_url("courses.private", token=course.invite_token)
     return render_template(
         "course.html",
         course=course,

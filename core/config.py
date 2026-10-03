@@ -19,6 +19,11 @@ class Config:
     UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
     MAX_CONTENT_LENGTH = 500 * 1024 * 1024  # 500 MB, for course videos
 
+    # Public address of the site, used in links inside emails (login link, invite link).
+    # Empty = the address the browser used (e.g. http://127.0.0.1:5000, works only on this computer).
+    # Set it to the address other people can open, e.g. https://abc123.ngrok-free.app
+    PUBLIC_URL = os.environ.get("PUBLIC_URL", "").rstrip("/")
+
     # Email. Leave MAIL_SERVER empty in development: emails are printed to the console.
     MAIL_SERVER = os.environ.get("MAIL_SERVER", "")
     MAIL_PORT = int(os.environ.get("MAIL_PORT", 587))
