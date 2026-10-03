@@ -6,13 +6,6 @@ from database import db
 from database.models import Course, Lesson, User
 
 
-@pytest.fixture
-def uploads(app, tmp_path):
-    """Videos from tests go to a temporary folder, not to the real uploads/."""
-    app.config["UPLOAD_FOLDER"] = str(tmp_path)
-    return tmp_path
-
-
 def company_client(app, email="hr@acme.md", name="Acme"):
     client = app.test_client()
     client.post("/signup", data={"type": "company", "company_name": name, "email": email})
@@ -93,7 +86,28 @@ def test_empty_answer_is_rejected(app):
         assert Lesson.query.count() == 0
 
 
-def test_video_answer_and_replacement(app, uploads):
+@pytest.fixture
+def fake_storage(monkeypatch):
+    """Video storage is replaced by a dict, so the test works with local files and Cloudinary alike."""
+    stored = {}
+
+    def save(file_storage):
+        from backend.uploads import ALLOWED_EXTENSIONS
+        if file_storage.filename.rsplit(".", 1)[-1].lower() not in ALLOWED_EXTENSIONS:
+            raise ValueError("Unsupported video format.")
+        name = f"video-{len(stored) + 1}"
+        stored[name] = file_storage.read()
+        return name
+
+    def delete(name):
+        return stored.pop(name, None) is not None
+
+    monkeypatch.setattr("backend.routes.builder.save_video", save)
+    monkeypatch.setattr("backend.routes.builder.delete_video", delete)
+    return stored
+
+
+def test_video_answer_and_replacement(app, fake_storage):
     client = company_client(app)
     with app.app_context():
         course = create_course(client)
@@ -104,7 +118,7 @@ def test_video_answer_and_replacement(app, uploads):
         content_type="multipart/form-data")
     with app.app_context():
         old_name = Lesson.query.one().video_filename
-    assert old_name and (uploads / old_name).exists()
+    assert old_name in fake_storage
 
     client.post(f"/course/{course.id}/builder/{first}", data={
         "title": "Goal", "video": (io.BytesIO(b"new video"), "goal2.webm")},
@@ -112,11 +126,11 @@ def test_video_answer_and_replacement(app, uploads):
     with app.app_context():
         new_name = Lesson.query.one().video_filename
     assert new_name != old_name
-    assert (uploads / new_name).exists()
-    assert not (uploads / old_name).exists()
+    assert new_name in fake_storage
+    assert old_name not in fake_storage
 
 
-def test_wrong_video_format(app, uploads):
+def test_wrong_video_format(app, fake_storage):
     client = company_client(app)
     with app.app_context():
         course = create_course(client)
@@ -127,6 +141,21 @@ def test_wrong_video_format(app, uploads):
     assert b"Unsupported video format" in response.data
     with app.app_context():
         assert Lesson.query.count() == 0
+
+
+def test_storage_not_configured(app, monkeypatch):
+    def broken(file_storage):
+        raise RuntimeError("Video storage is not configured.")
+    monkeypatch.setattr("backend.routes.builder.save_video", broken)
+    client = company_client(app)
+    with app.app_context():
+        course = create_course(client)
+    first = media_question_ids(app, course)[0]
+    response = client.post(f"/course/{course.id}/builder/{first}", data={
+        "title": "Goal", "video": (io.BytesIO(b"x"), "goal.mp4")},
+        content_type="multipart/form-data", follow_redirects=True)
+    assert response.status_code == 200
+    assert b"not configured" in response.data
 
 
 def test_question_not_in_script(app):

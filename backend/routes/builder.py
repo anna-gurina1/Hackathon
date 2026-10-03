@@ -134,7 +134,7 @@ def answer(course_id, question_id):
     if has_new_video:
         try:
             new_filename = save_video(video)
-        except ValueError as error:
+        except (ValueError, RuntimeError) as error:  # RuntimeError: video storage is not configured
             flash(str(error), "error")
             return redirect(back)
 
