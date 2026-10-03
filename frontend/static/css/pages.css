@@ -822,3 +822,23 @@ a.lesson-row:hover { border-color: var(--accent); }
   font-size: .72rem; text-align: center; letter-spacing: 0;
 }
 .suggest-group[open] { padding-bottom: 8px; }
+
+/* My account: "Delete account" block */
+.danger-zone { margin-top: 40px; padding: 0; border-color: var(--line); }
+.danger-zone > summary {
+  padding: 14px 18px; cursor: pointer; list-style: none;
+  color: var(--ink-soft); font-weight: 600; font-size: .92rem;
+}
+.danger-zone > summary::-webkit-details-marker { display: none; }
+.danger-zone > summary::before { content: "▸ "; }
+.danger-zone[open] > summary::before { content: "▾ "; }
+.danger-zone[open] { border-color: var(--error-ink); }
+.danger-zone > p, .danger-zone > form { margin: 0; padding: 0 18px 16px; }
+.danger-zone form { display: flex; flex-direction: column; gap: 8px; max-width: 420px; }
+.danger-zone input {
+  padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; font: inherit;
+}
+.danger-button {
+  align-self: flex-start; background: var(--error-ink); color: #fff; border: 1px solid var(--error-ink);
+}
+.danger-button:hover { background: #fff; color: var(--error-ink); }

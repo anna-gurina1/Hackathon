@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from backend.email import external_url, send_email
 from backend.throttle import claim_email_slot
 from database import db
-from database.models import CompanyProfile, PersonProfile, User
+from database.models import CompanyProfile, EmailThrottle, PersonProfile, User
 
 bp = Blueprint("auth", __name__)
 
@@ -33,8 +33,9 @@ def make_signup_token(data):
     return _signup_serializer().dumps(data)
 
 
-def _wait_message(seconds):
-    return f"An email was just sent to this address. You can request another in {seconds} s."
+def _wait_message(seconds, what="an email"):
+    return (f"We already sent {what} to this address a moment ago — check your inbox and the Spam folder. "
+            f"You can request another in {seconds} s.")
 
 
 def _back_to_form(message, tab):
@@ -88,7 +89,7 @@ def signup():
 
     wait = claim_email_slot(email)
     if wait:
-        return _back_to_form(_wait_message(wait), "signup")
+        return _back_to_form(_wait_message(wait, "a confirmation link"), "signup")
 
     link = external_url("auth.confirm_signup", token=make_signup_token(data))
     send_email(
@@ -159,11 +160,18 @@ def login():
 
     user = User.query.filter_by(email=email).first()
     if not user:
+        if db.session.get(EmailThrottle, f"auth:{email}") is not None:
+            # signed up recently, but the link from the email was not opened yet
+            return _back_to_form(
+                f"You have not confirmed your email yet. Open the confirmation link we sent to {email} "
+                "(check the Spam folder too) — your account is created only after that.",
+                "signup",
+            )
         return _back_to_form("No account with this email. Sign up first.", "signup")
 
     wait = claim_email_slot(email)
     if wait:
-        return _back_to_form(_wait_message(wait), "login")
+        return _back_to_form(_wait_message(wait, "a login link"), "login")
 
     if not send_login_link(user):
         return _back_to_form("Could not send the email right now. Try again later.", "login")

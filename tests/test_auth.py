@@ -197,3 +197,13 @@ def test_404_page(client):
     response = client.get("/no-such-page")
     assert response.status_code == 404
     assert b"Page not found" in response.data
+
+
+def test_login_before_confirming_says_so(client):
+    client.post("/signup", data={"type": "person", "first_name": "Ana", "last_name": "G",
+                                 "email": "new@test.md"})
+    response = client.post("/login", data={"email": "new@test.md"}, follow_redirects=True)
+    assert b"You have not confirmed your email yet" in response.data
+    response = client.post("/signup", data={"type": "person", "first_name": "Ana", "last_name": "G",
+                                            "email": "new@test.md"}, follow_redirects=True)
+    assert b"confirmation link" in response.data
