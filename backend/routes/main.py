@@ -3,7 +3,7 @@ from flask_login import current_user, login_required, logout_user
 
 from database import db
 from backend.uploads import delete_image, delete_video, save_image
-from database.models import CompanyProfile, Course, Enrollment, Offer, PersonProfile, QuizAttempt
+from database.models import AccessRequest, CompanyProfile, Course, Enrollment, Offer, PersonProfile, QuizAttempt
 from database.queries import company_dashboard, person_dashboard
 
 bp = Blueprint("main", __name__)
@@ -120,6 +120,7 @@ def delete_account():
         Offer.query.filter_by(company_id=user.id).delete()
     else:
         QuizAttempt.query.filter_by(user_id=user.id).delete()
+        AccessRequest.query.filter_by(user_id=user.id).delete()
         Enrollment.query.filter_by(user_id=user.id).delete()
         Offer.query.filter_by(user_id=user.id).delete()
 

@@ -48,12 +48,14 @@ def _make_course(app, company_email, title="Welding basics", topic="Welding",
 
 # ---------- tests ----------
 
-def test_private_course_needs_token(app):
+def test_private_course_page_offers_request(app):
     _signup_company(app, "Acme", "a@acme.md")
     course_id, token = _make_course(app, "a@acme.md", is_private=True)
     guest = app.test_client()
 
-    assert guest.get(f"/course/{course_id}").status_code == 404
+    # the page of a published private course is public, but it asks for a request
+    page = guest.get(f"/course/{course_id}")
+    assert page.status_code == 200 and b"Log in to request access" in page.data
     assert guest.get("/course/private/wrong-token").status_code == 404
     assert guest.get(f"/course/private/{token}").status_code == 200
 
@@ -101,8 +103,8 @@ def test_cannot_open_lesson_2_before_passing_quiz(app):
     assert person.get(f"/course/{course_id}/lesson/2").status_code == 403
 
 
-def test_private_course_not_in_search(app):
-    # Acme has only a private course; Beta has a public one (control: search itself works)
+def test_private_course_is_found_in_search(app):
+    # private courses are found too (they open by request)
     _signup_company(app, "Acme", "a@acme.md")
     _signup_company(app, "Beta", "b@beta.md")
     _make_course(app, "a@acme.md", topic="Welding", is_private=True)
@@ -112,4 +114,5 @@ def test_private_course_not_in_search(app):
     assert resp.status_code == 200
     names = [c["company_name"] for c in resp.get_json()]
     assert "Beta" in names
-    assert "Acme" not in names
+    assert "Acme" in names
+    assert {c["company_name"]: c["is_private"] for c in resp.get_json()} == {"Acme": True, "Beta": False}

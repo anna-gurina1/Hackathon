@@ -159,14 +159,14 @@ def test_search_by_topic_matches_public_course(app):
         assert results[0]["url"] == f"/company/{company.id}"
 
 
-def test_search_excludes_private_courses(app):
+def test_search_finds_companies_with_private_courses(app):
     with app.app_context():
-        company = _make_company("search2@test.md", name="Hidden Co")
+        company = _make_company("search2@test.md", name="Private Co")
         _make_course(company, topic="Rebar inspection", is_private=True, status="published")
 
         results = search_companies("rebar", "topic")
 
-        assert results == []
+        assert [r["name"] for r in results] == ["Private Co"]
 
 
 def test_search_excludes_draft_courses(app):
@@ -232,6 +232,7 @@ def test_person_dashboard_empty_for_new_user(app):
             "enrollments": [],
             "stats": {"started": 0, "completed": 0},
             "offers": [],
+            "requests": [],
         }
 
 
