@@ -1,5 +1,3 @@
-import secrets
-
 from database import db
 from database.models import Course, Enrollment, Lesson, Quiz, User
 
@@ -37,7 +35,6 @@ def _make_course(app, company_email, title="Welding basics", topic="Welding",
             knowledge_type="procedure",
             duration=5,
             is_private=is_private,
-            invite_token=secrets.token_urlsafe(16),
             status=status,
         )
         db.session.add(course)
