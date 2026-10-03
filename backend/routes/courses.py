@@ -14,7 +14,12 @@ from flask_login import current_user, login_required
 
 from backend.ai_tips import AiUnavailable, generate_category_questions
 from backend.uploads import delete_video
+<<<<<<< HEAD
 from backend.email import external_url, send_email
+=======
+from backend.email import external_url
+from backend.ai_tips import AiUnavailable, generate_category_questions
+>>>>>>> c9732fb7681c189fbd85380665ea0ee88b384c68
 from core.course_builder import recommended_questions
 from core.questions import LEVELS
 from database import db
@@ -405,3 +410,52 @@ def search():
             company["type"] = "company"
         return jsonify(companies)
     return jsonify(search_courses(q, by))
+
+# ---------- AI suggestions for the "Need ideas?" panel ----------
+
+def _ai_questions_response(fields):
+    """One AI question per topic of the panel, as JSON."""
+    categories = [(g["category"], g["category_label"]) for g in recommended_questions(None)]
+    try:
+        questions = generate_category_questions(fields, categories)
+    except AiUnavailable:
+        return jsonify(error="unavailable"), 503
+    return jsonify(questions=questions)
+
+
+@bp.route("/api/ai-suggestions", methods=["POST"])
+@login_required
+def ai_suggestions():
+    """New course page: the AI reads what the company typed in the form.
+    JSON in: {title, description, topic, profession, outcome, level}"""
+    if not current_user.is_company:
+        abort(403)
+    payload = request.get_json(silent=True) or {}
+    fields = {
+        name: str(payload.get(name) or "").strip()[:500]
+        for name in ("title", "description", "topic", "profession", "outcome")
+    }
+    if not any(fields.values()):
+        return jsonify(error="empty"), 400
+    fields["level"] = LEVELS.get(payload.get("level"), "")
+    return _ai_questions_response(fields)
+
+
+@bp.route("/course/<int:course_id>/ai-suggestions", methods=["POST"])
+@login_required
+def course_ai_suggestions(course_id):
+    """Course page: the AI reads the saved course (only its owner may ask)."""
+    course = _owned_course_or_abort(course_id)
+    fields = {
+        "title": course.title,
+        "description": course.description,
+        "topic": course.topic,
+        "profession": course.profession,
+        "outcome": course.outcome,
+    }
+    fields = {name: (value or "").strip()[:500] for name, value in fields.items()}
+    # the title always exists, so "nothing entered" means: no topic, profession, description, outcome
+    if not any(fields[name] for name in ("description", "topic", "profession", "outcome")):
+        return jsonify(error="empty"), 400
+    fields["level"] = LEVELS.get(course.level, "")
+    return _ai_questions_response(fields)
