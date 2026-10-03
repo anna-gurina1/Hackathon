@@ -5,17 +5,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <title>{% block title %}Microlearning{% endblock %} · SkillShot</title>
+  <title>{% block title %}Microlearning{% endblock %} · Gitwise</title>
   <link rel="stylesheet" href="{{ url_for('preview_tools.static', filename='style.css') }}">
   {% block head %}{% endblock %}
 </head>
 <body>
   <header class="site-header">
     <div class="container site-header-inner">
-      <a class="logo" href="{{ url_for('main.home') }}">SkillShot</a>
+      <a class="logo" href="{{ url_for('main.home') }}">Gitwise</a>
       <nav class="site-nav">
         <a href="{{ url_for('main.home') }}">Home</a>
-        <a href="{{ url_for('main.tips') }}">Tips</a>
+        <a href="{{ url_for('main.explore') }}">Explore</a>
         {% if current_user.is_authenticated %}
           <a class="avatar-link" href="{{ url_for('main.account') }}" title="My account">{{ current_user.initials }}</a>
           <form method="post" action="{{ url_for('auth.logout') }}" style="display:inline">

@@ -1,4 +1,4 @@
-// tips.js — search on the Tips page.
+// tips.js — search on the Explore page.
 // Asks the server: /api/search?q=...&by=topic|company|profession|result
 // Server answers with a list of companies: [{id, name, description, course_count, url}]
 
