@@ -4,3 +4,4 @@ Flask-Login>=0.6
 Flask-WTF>=1.2
 cloudinary>=1.40
 python-dotenv>=1.0
+imageio-ffmpeg>=0.5
