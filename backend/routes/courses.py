@@ -1,5 +1,3 @@
-import secrets
-
 from flask import (
     Blueprint,
     abort,
@@ -101,11 +99,7 @@ def new():
             return render_template(
                 "course_form.html", course=None, LEVELS=LEVELS, TYPES=TYPES, DURATIONS=DURATIONS
             ), 400
-        course = Course(
-            company_id=current_user.id,
-            invite_token=secrets.token_urlsafe(16),
-            **data,
-        )
+        course = Course(company_id=current_user.id, **data)
         db.session.add(course)
         db.session.commit()
         return redirect(url_for("builder.script", course_id=course.id))
@@ -139,11 +133,12 @@ def edit(course_id):
 @login_required
 def delete(course_id):
     course = _owned_course_or_abort(course_id)
-    for lesson in course.lessons:
-        if lesson.video_filename:
-            delete_video(lesson.video_filename)
+    video_ids = [lesson.video_filename for lesson in course.lessons]
     db.session.delete(course)
     db.session.commit()
+    # videos are removed only after the course is really gone from the database
+    for public_id in video_ids:
+        delete_video(public_id)
     flash("Course deleted.", "info")
     return redirect(url_for("main.account"))
 
@@ -219,11 +214,7 @@ def lesson(course_id, n):
     lesson_obj = next((l for l in course.lessons if l.order == n), None)
     if lesson_obj is None:
         abort(404)
-    video_url = (
-        url_for("courses.media", filename=lesson_obj.video_filename)
-        if lesson_obj.video_filename
-        else None
-    )
+    video_url = lesson_obj.video_url  # Cloudinary https link or None
     quiz_url = (
         url_for("quiz.take", course_id=course.id, n=n) if lesson_obj.quiz else None
     )

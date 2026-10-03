@@ -64,12 +64,11 @@ ALL_TYPES = ["procedure", "practical_skill", "decision_making", "experience"]
 # ---------------------------------------------------------------------------
 
 QUESTIONS = [
-
     # ===================== GOAL — learning goal =====================
     {
         "id": 1,
         "text": "What should the learner be able to do after watching this video?",
-        "hint": "Describe a concrete action: \"perform...\", \"set up...\", \"recognize...\" rather than \"understand...\".",
+        "hint": 'Describe a concrete action: "perform...", "set up...", "recognize..." rather than "understand...".',
         "levels": ALL_LEVELS,
         "types": ALL_TYPES,
         "category": "goal",
@@ -105,7 +104,6 @@ QUESTIONS = [
         "if_yes": [],
         "only_after": None,
     },
-
     # ===================== SETUP — show and setup =====================
     {
         "id": 4,
@@ -172,7 +170,6 @@ QUESTIONS = [
         "if_yes": [],
         "only_after": None,
     },
-
     # ===================== DEMONSTRATION — what to show =====================
     {
         "id": 9,
@@ -252,7 +249,6 @@ QUESTIONS = [
         "if_yes": [],
         "only_after": None,
     },
-
     # ===================== EXPLANATION — what to say =====================
     {
         "id": 15,
@@ -319,7 +315,6 @@ QUESTIONS = [
         "if_yes": [],
         "only_after": None,
     },
-
     # ===================== REASONING — expert thinking =====================
     {
         "id": 20,
@@ -399,7 +394,6 @@ QUESTIONS = [
         "if_yes": [],
         "only_after": None,
     },
-
     # ===================== MISTAKE — common mistakes =====================
     {
         "id": 26,
@@ -466,7 +460,6 @@ QUESTIONS = [
         "if_yes": [],
         "only_after": None,
     },
-
     # ===================== EXAMPLE — worked example =====================
     {
         "id": 31,
@@ -520,7 +513,6 @@ QUESTIONS = [
         "if_yes": [],
         "only_after": None,
     },
-
     # ===================== EXCEPTION — exceptions =====================
     {
         "id": 35,
@@ -587,7 +579,6 @@ QUESTIONS = [
         "if_yes": [],
         "only_after": None,
     },
-
     # ===================== VERIFICATION — checking the result =====================
     {
         "id": 40,
@@ -641,7 +632,6 @@ QUESTIONS = [
         "if_yes": [],
         "only_after": None,
     },
-
     # ===================== VIDEO QUALITY — making the explanation clear =====================
     {
         "id": 44,
@@ -722,32 +712,54 @@ DURATION_GUIDANCE = {
         "description": "Essential demonstration: show the task, explain the key actions and one critical mistake or check.",
         "max_priority": 1,
         "preferred_categories": [
-            "goal", "demonstration", "explanation", "mistake", "verification"
+            "goal",
+            "demonstration",
+            "explanation",
+            "mistake",
+            "verification",
         ],
     },
     5: {
         "description": "Core explanation: essential demonstration plus preparation, reasoning or one useful practical tip.",
         "max_priority": 2,
         "preferred_categories": [
-            "goal", "setup", "demonstration", "explanation",
-            "mistake", "verification", "video_quality"
+            "goal",
+            "setup",
+            "demonstration",
+            "explanation",
+            "mistake",
+            "verification",
+            "video_quality",
         ],
     },
     10: {
         "description": "Detailed explanation: demonstrate the process, explain why, show mistakes, examples and useful expert reasoning.",
         "max_priority": 2,
         "preferred_categories": [
-            "goal", "setup", "demonstration", "explanation",
-            "reasoning", "mistake", "example", "verification"
+            "goal",
+            "setup",
+            "demonstration",
+            "explanation",
+            "reasoning",
+            "mistake",
+            "example",
+            "verification",
         ],
     },
     15: {
-        "description": "Deep professional explanation: include detailed reasoning, examples, exceptions, edge cases and professional tips.",
+        "description": "Deep professional explanation: include detailed reasoning, examples, exceptions, edge cases and professional explore.",
         "max_priority": 3,
         "preferred_categories": [
-            "goal", "setup", "demonstration", "explanation",
-            "reasoning", "mistake", "example", "exception",
-            "verification", "video_quality"
+            "goal",
+            "setup",
+            "demonstration",
+            "explanation",
+            "reasoning",
+            "mistake",
+            "example",
+            "exception",
+            "verification",
+            "video_quality",
         ],
     },
 }
