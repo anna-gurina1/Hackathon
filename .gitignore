@@ -6,3 +6,4 @@ app.db
 instance/
 uploads/*
 !uploads/.gitkeep
+.env

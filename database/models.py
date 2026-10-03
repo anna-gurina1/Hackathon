@@ -125,7 +125,7 @@ class Lesson(db.Model):
     title = db.Column(db.String(200), nullable=False)
     question_id = db.Column(db.Integer, nullable=True)  # id from core.questions.QUESTIONS
 
-    video_filename = db.Column(db.String(255), nullable=True)  # name of file in uploads/
+    video_filename = db.Column(db.String(255), nullable=True)  # Cloudinary public_id of the video
     text = db.Column(db.Text, nullable=True)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -134,13 +134,21 @@ class Lesson(db.Model):
         "Quiz", backref="lesson", uselist=False, cascade="all, delete-orphan"
     )
 
-    def delete_video_file(self, upload_folder):
-        """Remove this lesson's video from disk (if any) and clear the field.
+    @property
+    def video_url(self):
+        """https link for <video src=...>, or None if the lesson has no video."""
+        from backend.uploads import video_url
+
+        return video_url(self.video_filename)
+
+    def delete_video_file(self, upload_folder=None):
+        """Remove this lesson's video from Cloudinary (if any) and clear the field.
+        upload_folder is kept only so old calls keep working; it is not used anymore.
         Caller (backend) is responsible for db.session.commit() afterwards."""
         if self.video_filename:
-            path = os.path.join(upload_folder, self.video_filename)
-            if os.path.exists(path):
-                os.remove(path)
+            from backend.uploads import delete_video
+
+            delete_video(self.video_filename)
             self.video_filename = None
 
 
