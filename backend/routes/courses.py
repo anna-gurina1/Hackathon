@@ -14,12 +14,8 @@ from flask_login import current_user, login_required
 
 from backend.ai_tips import AiUnavailable, generate_category_questions
 from backend.uploads import delete_video
-<<<<<<< HEAD
-from backend.email import external_url, send_email
-=======
 from backend.email import external_url
 from backend.ai_tips import AiUnavailable, generate_category_questions
->>>>>>> c9732fb7681c189fbd85380665ea0ee88b384c68
 from core.course_builder import recommended_questions
 from core.questions import LEVELS
 from database import db
