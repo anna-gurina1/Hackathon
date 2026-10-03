@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Preview screens{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">{% endblock %}
+{% block content %}
+<div class="container page narrow">
+  <p class="eyebrow">Frontend preview · fake data</p>
+  <h1>All screens</h1>
+  <p class="muted">Switch the role in the black bar at the bottom: Guest / Person (Ana) / Company (Northwind Coffee).</p>
+
+  <h2 class="section-title">1. Main demo flow — role: Person</h2>
+  <div class="card stack">
+    <p><a href="{{ url_for('courses.view', course_id=1) }}">Course page</a> — “Pull a perfect espresso shot”</p>
+    <p><a href="{{ url_for('courses.lesson', course_id=1, n=1) }}">Lesson with video</a></p>
+    <p><a href="{{ url_for('quiz.take', course_id=1, n=1) }}">Quiz</a> → answer and submit to see the <b>result</b></p>
+    <p><a href="{{ url_for('courses.lesson', course_id=1, n=2) }}">Lesson 2</a> → pass quiz 2 and 3 to see <b>Congratulations</b></p>
+    <p class="small muted">Tip: answer some questions wrong to see the “failed” result. ↺ in the bar resets progress.</p>
+  </div>
+
+  <h2 class="section-title">2. Creating a course — role: Company</h2>
+  <div class="card stack">
+    <p><a href="{{ url_for('courses.new') }}">New course form</a></p>
+    <p><a href="{{ url_for('courses.edit', course_id=1) }}">Edit course form</a></p>
+    <p><a href="{{ url_for('builder.script', course_id=3) }}">Builder</a> — draft “Latte art”</p>
+    <p><a href="{{ url_for('builder.script', course_id=1) }}">Builder</a> — finished “Espresso”</p>
+    <p><a href="{{ url_for('builder.quiz_edit', course_id=1, lesson_id=courses[0].lessons[0].id) }}">Quiz editor</a></p>
+  </div>
+
+  <h2 class="section-title">3. Accounts and search</h2>
+  <div class="card stack">
+    <p><a href="{{ url_for('main.account') }}">My account</a> — different for Person and Company</p>
+    <p><a href="{{ url_for('courses.company_profile', company_id=1) }}">Company page</a></p>
+    <p><a href="{{ url_for('main.tips') }}">Tips / search</a></p>
+    <p><a href="{{ url_for('courses.private', token='Xk29-private-closing') }}">Private course by invite link</a></p>
+  </div>
+</div>
+{% endblock %}
