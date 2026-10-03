@@ -1,0 +1,27 @@
+{#
+  Side panel with suggested questions from core/questions.py.
+  Needs: recommended = [{"category": "goal", "category_label": "Learning goal", "questions": [question dicts]}]
+  Optional: used_question_ids (set of ids already turned into lessons), can_use (show "Use" buttons)
+#}
+<aside class="suggest-panel card" data-suggest-panel>
+  <p class="side-label">Suggested questions</p>
+  <p class="small muted suggest-intro">Answer them on video — each answer is a great lesson.</p>
+
+  {% for group in recommended %}
+    <div class="suggest-group">
+      <p class="suggest-category">{{ group.category_label }}</p>
+      {% for question in group.questions %}
+        {% set is_used = used_question_ids is defined and question.id in used_question_ids %}
+        <div class="suggest-item {{ 'is-used' if is_used }}" data-levels="{{ question.levels|join(' ') }}">
+          <details>
+            <summary>{{ '✓ ' if is_used }}{{ question.text }}</summary>
+            {% if question.hint %}<p class="small muted">{{ question.hint }}</p>{% endif %}
+          </details>
+          {% if can_use and not is_used %}
+            <button type="button" class="suggest-use" data-use-question="{{ question.id }}" data-question-text="{{ question.text }}">Use</button>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</aside>

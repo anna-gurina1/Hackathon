@@ -16,6 +16,11 @@
       <h1>{{ user.display_name }}</h1>
       <p class="muted">{{ user.email }} · <a href="{{ url_for('courses.company_profile', company_id=user.id) }}">Public page</a></p>
     </div>
+    {% if user.is_pro %}
+      <span class="pro-badge pro-badge-lg">PRO</span>
+    {% else %}
+      <a class="btn btn-outline btn-small" href="{{ url_for('main.pro') }}">Upgrade to Pro</a>
+    {% endif %}
   </div>
 
   {% set total_enrolled = courses|sum(attribute='enrolled') %}
@@ -108,6 +113,22 @@
             {% if item.invite_url %}
               <input type="hidden" id="invite-{{ course.id }}" value="{{ item.invite_url }}">
               <button type="button" class="btn btn-outline" data-copy-from="invite-{{ course.id }}">Copy invite link</button>
+            {% endif %}
+          </div>
+
+          <div class="completers">
+            <p class="completers-title">Completed by</p>
+            {% if item.completers %}
+              <ul class="completers-list">
+                {% for person in item.completers %}
+                  <li>
+                    <a href="mailto:{{ person.email }}" title="{{ person.user.display_name }}">{{ person.email }}</a>
+                    {% if person.score is not none %}<span class="completers-score">{{ person.score }}%</span>{% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="completers-empty">No one has completed this course yet.</p>
             {% endif %}
           </div>
         </div>

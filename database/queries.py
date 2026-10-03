@@ -116,11 +116,26 @@ def company_dashboard(user):
         enrolled = len(course.enrollments)
         completed = sum(1 for e in course.enrollments if e.status == "completed")
         invite_url = f"/course/private/{course.invite_token}" if course.is_private else None
+        # People who finished this course, newest first: their emails are shown on the course card
+        completers = [
+            {
+                "user": e.user,
+                "email": e.user.email,
+                "score": best_score(e.user_id, course.id),
+                "completed_at": e.completed_at,
+            }
+            for e in sorted(
+                (e for e in course.enrollments if e.status == "completed"),
+                key=lambda e: e.completed_at or e.started_at,
+                reverse=True,
+            )
+        ]
         course_rows.append({
             "course": course,
             "enrolled": enrolled,
             "completed": completed,
             "invite_url": invite_url,
+            "completers": completers,
         })
 
     candidates = []
