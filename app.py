@@ -5,10 +5,10 @@ from flask_jwt_extended import JWTManager
 from config import Config, init_cloudinary
 from models import db
 
-from routes.auth import auth_bp
-from routes.courses import courses_bp
-from routes.lessons import lessons_bp
-from routes.enrollment import enrollment_bp
+from backend.routes.auth import auth_bp
+from backend.routes.courses import courses_bp
+from backend.routes.lessons import lessons_bp
+from backend.routes.enrollment import enrollment_bp
 
 
 def create_app():
