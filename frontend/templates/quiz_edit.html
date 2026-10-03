@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Quiz · {{ lesson.title }}{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
+{% endblock %}
+
+{% block content %}
+{% set builder_url = url_for('builder.script', course_id=course.id) ~ ('#q' ~ lesson.question_id if lesson.question_id else '') %}
+<div class="container page narrow">
+  <a class="back-link" href="{{ builder_url }}">← Back to builder</a>
+  <p class="eyebrow">Quiz for lesson {{ lesson.order }}</p>
+  <h1>{{ lesson.title }}</h1>
+  <p class="muted">Add a few quick questions. Learners must pass this quiz to unlock the next lesson.</p>
+
+  {# ---------- Questions already in the quiz ---------- #}
+  {% if quiz and quiz.questions %}
+    <h2 class="section-title">Questions ({{ quiz.questions|length }})</h2>
+    <div class="saved-questions">
+      {% for question in quiz.questions %}
+        <div class="card saved-question">
+          <p>{{ loop.index }}. {{ question.text }}</p>
+          <ul class="saved-answers">
+            {% for answer in question.answers %}
+              <li class="{{ 'is-correct' if answer.is_correct }}">{{ '✓ ' if answer.is_correct }}{{ answer.text }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card empty-state" style="margin-top: 20px;">
+      <p class="muted">No questions yet. Add the first one below.</p>
+    </div>
+  {% endif %}
+
+  {# ---------- Add one new question ---------- #}
+  <h2 class="section-title">Add a question</h2>
+  <form class="card form-card" method="post"
+        action="{{ url_for('builder.quiz_edit', course_id=course.id, lesson_id=lesson.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="field">
+      <label for="pass_score">Pass score, %</label>
+      <input id="pass_score" name="pass_score" type="number" min="1" max="100" step="1" style="max-width: 140px;"
+             value="{{ quiz.pass_score if quiz else 70 }}">
+    </div>
+
+    {% if suggestions %}
+      <p class="field-hint" style="margin-bottom: 8px;">Need an idea? Tap a suggestion:</p>
+      <div class="suggestion-list">
+        {% for suggestion in suggestions %}
+          <button type="button" class="suggestion" data-suggestion="{{ suggestion }}">{{ suggestion }}</button>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="field">
+      <label for="question-text">Question</label>
+      <input id="question-text" name="text" type="text" required placeholder="What should the learner know?">
+    </div>
+
+    <div class="field">
+      <label>Answers <span class="muted small">— mark the correct one</span></label>
+      {% for number in range(1, 5) %}
+        <div class="answer-input-row">
+          <input type="text" name="answer_{{ number }}" placeholder="Answer {{ number }}{{ ' (optional)' if number > 2 }}"
+                 {{ 'required' if number <= 2 }} aria-label="Answer {{ number }}">
+          <label class="correct-pick">
+            <input type="radio" name="correct" value="{{ number }}" {{ 'checked' if number == 1 }} required>
+            Correct
+          </label>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary btn-lg">Add question</button>
+      <a class="btn btn-outline btn-lg" href="{{ builder_url }}">Done</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/quiz_edit.js') }}"></script>
+{% endblock %}

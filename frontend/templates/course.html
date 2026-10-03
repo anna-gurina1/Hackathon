@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as ui %}
+
+{% block title %}{{ course.title }}{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container page">
+  <div class="course-layout">
+
+    {# ---------- 1. Course intro ---------- #}
+    <section class="course-intro">
+      <a class="back-link" href="{{ url_for('courses.company_profile', company_id=course.company.id) }}">
+        by {{ course.company.display_name }}
+      </a>
+      <h1 class="course-title">{{ course.title }}</h1>
+
+      <div class="chip-row">
+        <span class="chip">{{ ui.level_label(course.level) }}</span>
+        <span class="chip">{{ course.duration }} min</span>
+        <span class="chip">{{ course.lesson_count }} lesson{{ 's' if course.lesson_count != 1 }}</span>
+        {% if course.is_private %}<span class="chip chip-dark">Private</span>{% endif %}
+        {% if course.status == 'draft' %}<span class="chip chip-warning">Draft</span>{% endif %}
+      </div>
+
+      {% if course.description %}
+        <p class="lead">{{ course.description }}</p>
+      {% endif %}
+
+      {% if course.outcome %}
+        <div class="card outcome-card">
+          <h2 class="section-title">What you'll learn</h2>
+          <p class="keep-lines">{{ course.outcome }}</p>
+        </div>
+      {% endif %}
+
+      <dl class="info-list">
+        {% if course.topic %}<div><dt>Topic</dt><dd>{{ course.topic }}</dd></div>{% endif %}
+        {% if course.profession %}<div><dt>Profession</dt><dd>{{ course.profession }}</dd></div>{% endif %}
+        <div><dt>Knowledge</dt><dd>{{ ui.type_label(course.knowledge_type) }}</dd></div>
+      </dl>
+    </section>
+
+    {# ---------- 2. Action card: what this visitor can do ---------- #}
+    <aside class="course-actions">
+      <div class="card action-card">
+
+        {% if is_owner %}
+          <p class="side-label">You own this course</p>
+          {% if course.status == 'draft' %}
+            <p class="status-line"><span class="status-dot is-draft"></span>Draft — only you can see it</p>
+            <form method="post" action="{{ url_for('courses.publish', course_id=course.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-primary btn-block">Publish course</button>
+            </form>
+          {% else %}
+            <p class="status-line"><span class="status-dot"></span>Published</p>
+          {% endif %}
+          <a class="btn btn-outline btn-block" href="{{ url_for('builder.script', course_id=course.id) }}">Open builder</a>
+          <a class="btn btn-outline btn-block" href="{{ url_for('courses.edit', course_id=course.id) }}">Edit details</a>
+
+          {% if invite_url %}
+            <div class="invite-box">
+              <p class="small"><strong>Private link</strong> — share it with the people you want to invite.</p>
+              <div class="copy-row">
+                <input type="text" value="{{ invite_url }}" readonly id="invite-link">
+                <button type="button" class="btn btn-outline" data-copy-from="invite-link">Copy</button>
+              </div>
+            </div>
+          {% endif %}
+
+          <form method="post" action="{{ url_for('courses.delete', course_id=course.id) }}"
+                onsubmit="return confirm('Delete this course with all lessons and quizzes? This cannot be undone.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="danger-link">Delete course</button>
+          </form>
+
+        {% elif not current_user.is_authenticated %}
+          <p class="side-label">Ready to learn?</p>
+          <button type="button" class="btn btn-primary btn-lg btn-block" data-open-auth>Log in to start</button>
+          <p class="small muted">Sign up with just your email — no password needed.</p>
+
+        {% elif current_user.is_company %}
+          <p class="side-label">Company account</p>
+          <p class="muted small">Courses are taken by people. Log in with a personal account to start this course.</p>
+
+        {% elif enrollment and enrollment.status == 'completed' %}
+          <p class="side-label">Course completed 🎉</p>
+          {{ ui.progress_bar(100) }}
+          <a class="btn btn-outline btn-block" href="{{ url_for('courses.lesson', course_id=course.id, n=1) }}">Review lessons</a>
+
+        {% elif enrollment %}
+          {% set continue_lesson = [enrollment.current_lesson, course.lesson_count]|min %}
+          <p class="side-label">Your progress</p>
+          {{ ui.progress_bar(enrollment.progress_percent) }}
+          <a class="btn btn-primary btn-lg btn-block" href="{{ url_for('courses.lesson', course_id=course.id, n=continue_lesson) }}">
+            Continue lesson {{ continue_lesson }}
+          </a>
+
+        {% else %}
+          <p class="side-label">{{ course.lesson_count }} short lessons · {{ course.duration }} min</p>
+          <form method="post" action="{{ url_for('courses.start', course_id=course.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-primary btn-lg btn-block">Start course</button>
+          </form>
+          <p class="small muted">Each lesson ends with a short quiz. Retake it as many times as you need.</p>
+        {% endif %}
+
+      </div>
+    </aside>
+
+    {# ---------- 3. Lessons ---------- #}
+    <section class="course-lessons">
+      <h2 class="section-title">Lessons</h2>
+      {% if lessons %}
+        <ol class="lesson-list">
+          {% for lesson in lessons %}
+            {% if is_owner %}
+              {% set lesson_state = 'preview' %}
+            {% elif enrollment and (enrollment.status == 'completed' or lesson.order < enrollment.current_lesson) %}
+              {% set lesson_state = 'done' %}
+            {% elif enrollment and lesson.order == enrollment.current_lesson %}
+              {% set lesson_state = 'current' %}
+            {% else %}
+              {% set lesson_state = 'locked' %}
+            {% endif %}
+
+            <li>
+              {% if lesson_state in ['done', 'current'] %}
+                <a class="lesson-row is-{{ lesson_state }}" href="{{ url_for('courses.lesson', course_id=course.id, n=lesson.order) }}">
+              {% else %}
+                <div class="lesson-row is-{{ lesson_state }}">
+              {% endif %}
+                  <span class="lesson-number">{% if lesson_state == 'done' %}✓{% else %}{{ lesson.order }}{% endif %}</span>
+                  <span class="lesson-name">{{ lesson.title }}</span>
+                  <span class="lesson-state">
+                    {% if lesson_state == 'done' %}Passed
+                    {% elif lesson_state == 'current' %}Up next
+                    {% elif lesson_state == 'locked' %}🔒
+                    {% endif %}
+                  </span>
+              {% if lesson_state in ['done', 'current'] %}</a>{% else %}</div>{% endif %}
+            </li>
+          {% endfor %}
+        </ol>
+      {% else %}
+        <div class="card empty-state">
+          <p class="muted">No lessons yet.</p>
+          {% if is_owner %}
+            <a class="btn btn-primary" href="{{ url_for('builder.script', course_id=course.id) }}">Record the first lesson</a>
+          {% endif %}
+        </div>
+      {% endif %}
+    </section>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/pages.js') }}"></script>
+{% endblock %}

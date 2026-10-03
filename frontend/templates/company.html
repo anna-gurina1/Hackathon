@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as ui %}
+
+{% block title %}{{ company.display_name }}{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container page">
+  <section class="company-hero">
+    {{ ui.avatar(company, 'avatar-lg') }}
+    <div>
+      <p class="eyebrow">Company</p>
+      <h1>{{ company.display_name }}</h1>
+      {% if company.company and company.company.description %}
+        <p class="lead">{{ company.company.description }}</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <h2 class="section-title">Courses ({{ courses|length }})</h2>
+  {% if courses %}
+    <div class="card-grid">
+      {% for course in courses %}
+        {{ ui.course_card(course) }}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card empty-state">
+      <p class="muted">This company has no public courses yet.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
