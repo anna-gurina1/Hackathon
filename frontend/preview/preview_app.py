@@ -96,8 +96,8 @@ def home():
 
 
 @main.route("/tips")
-def tips():
-    return render_template("tips.html")
+def explore():
+    return render_template("explore.html")
 
 
 @main.route("/account")

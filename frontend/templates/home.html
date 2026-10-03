@@ -13,7 +13,7 @@
     <h1>Learn a job skill from people who do it every day</h1>
     <p class="lead">Short video lessons from company experts. Finish a course — and the company may offer you a job.</p>
     <div class="button-row" style="margin-top: 20px;">
-      <a class="btn btn-primary btn-lg" href="{{ url_for('main.tips') }}">Find a course</a>
+      <a class="btn btn-primary btn-lg" href="{{ url_for('main.explore') }}">Find a course</a>
       {% if not current_user.is_authenticated %}
         <button type="button" class="btn btn-outline btn-lg" data-open-auth>Log in or sign up</button>
       {% elif current_user.is_company %}
