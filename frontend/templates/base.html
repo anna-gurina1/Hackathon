@@ -91,8 +91,8 @@
               action="{{ url_for('auth.signup') }}" method="post">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="type-switch" role="radiogroup" aria-label="Account type">
-            <label><input type="radio" name="type" value="person" checked> I'm a person</label>
-            <label><input type="radio" name="type" value="company"> I'm a company</label>
+            <label><input type="radio" name="type" value="person" checked> Person</label>
+            <label><input type="radio" name="type" value="company"> Company</label>
           </div>
 
           <div data-for-type="person">
