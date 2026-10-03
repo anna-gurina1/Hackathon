@@ -11,6 +11,8 @@ The URLs and endpoint names are the same as in the team contract
 here exactly like in the real app.
 """
 from datetime import datetime
+
+p_now = datetime.now
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -95,9 +97,22 @@ def home():
     return render_template("_preview_index.html", courses=list(fake.ALL_COURSES.values()))
 
 
-@main.route("/tips")
+@main.route("/explore")
 def explore():
     return render_template("explore.html")
+
+
+@main.route("/pro", methods=["GET", "POST"])
+def pro():
+    user = get_current_user()
+    if not user.is_company:
+        abort(403)
+    next_url = request.values.get("next") or None
+    if request.method == "POST":
+        user.company.is_pro = True
+        flash("Payment successful — welcome to Pro! (demo)", "success")
+        return redirect(next_url or url_for("main.account"))
+    return render_template("pro.html", user=user, next_url=next_url)
 
 
 @main.route("/account")
@@ -162,15 +177,32 @@ def logout():
 courses = Blueprint("courses", __name__)
 
 
+def read_course_form(course):
+    """Copies the form fields into the course. Private only with Pro."""
+    for field in ["title", "description", "topic", "profession", "outcome", "level"]:
+        setattr(course, field, request.form.get(field, "").strip())
+    wants_private = request.form.get("visibility") == "private"
+    if wants_private and not get_current_user().is_pro:
+        flash("Private courses are a Pro feature. The course stays public.", "info")
+        wants_private = False
+    course.is_private = wants_private
+
+
 @courses.route("/course/new", methods=["GET", "POST"])
 def new():
-    if not get_current_user().is_company:
+    user = get_current_user()
+    if not user.is_company:
         abort(403)
     if request.method == "POST":
-        flash(f"Course “{request.form.get('title')}” created (preview — not saved).", "success")
-        return redirect(url_for("builder.script", course_id=fake.latte_art.id))
-    return render_template("course_form.html", course=None,
-                           LEVELS=fake.LEVELS, TYPES=fake.TYPES, DURATIONS=fake.DURATIONS)
+        course = fake.FakeCourse(id=max(fake.ALL_COURSES) + 1, company=user, invite_token=f"token-{fake.new_id()}",
+                                 status="draft", yes_answers="", knowledge_type=None, duration=None,
+                                 created_at=p_now(), lessons=[])
+        read_course_form(course)
+        fake.ALL_COURSES[course.id] = course
+        flash("Course created. Now add lessons.", "success")
+        return redirect(url_for("builder.script", course_id=course.id))
+    return render_template("course_form.html", course=None, LEVELS=fake.LEVELS, is_pro=user.is_pro,
+                           recommended=fake.recommended_questions())
 
 
 @courses.route("/course/<int:course_id>/edit", methods=["GET", "POST"])
@@ -179,10 +211,11 @@ def edit(course_id):
     if not is_owner(course):
         abort(403)
     if request.method == "POST":
-        flash("Changes saved (preview — not really).", "success")
-        return redirect(url_for("courses.view", course_id=course.id))
-    return render_template("course_form.html", course=course,
-                           LEVELS=fake.LEVELS, TYPES=fake.TYPES, DURATIONS=fake.DURATIONS)
+        read_course_form(course)
+        flash("Saved.", "success")
+        return redirect(url_for("builder.script", course_id=course.id))
+    return render_template("course_form.html", course=course, LEVELS=fake.LEVELS, is_pro=get_current_user().is_pro,
+                           recommended=fake.recommended_questions())
 
 
 @courses.route("/course/<int:course_id>/delete", methods=["POST"])
@@ -346,49 +379,62 @@ def send_offer(user_id, course_id):
 builder = Blueprint("builder", __name__)
 
 
-def build_script(course):
-    lessons_by_question = {l.question_id: l for l in course.lessons if l.question_id}
-    script = []
-    for question in fake.QUESTIONS:
-        if question["only_after"] and question["only_after"] not in course.yes_answer_ids:
-            continue
-        script.append({"q": question, "category_label": fake.CATEGORIES[question["category"]],
-                       "lesson": lessons_by_question.get(question["id"]), "position": len(script) + 1})
-    return script
+def owned_course(course_id):
+    course = find_course(course_id)
+    if not is_owner(course):
+        abort(403)
+    return course
 
 
 @builder.route("/course/<int:course_id>/builder")
 def script(course_id):
-    course = find_course(course_id)
-    if not is_owner(course):
-        abort(403)
-    steps = build_script(course)
-    answered = sum(1 for step in steps if step["lesson"] or step["q"]["id"] in course.yes_answer_ids)
-    return render_template("builder.html", course=course, script=steps, answered=answered, total=len(steps))
+    course = owned_course(course_id)
+    used_question_ids = {lesson.question_id for lesson in course.lessons if lesson.question_id}
+    return render_template("builder.html", course=course, lessons=course.lessons,
+                           recommended=fake.recommended_questions(course.level),
+                           used_question_ids=used_question_ids, is_pro=get_current_user().is_pro)
 
 
-@builder.route("/course/<int:course_id>/builder/<int:question_id>", methods=["POST"])
-def answer(course_id, question_id):
-    course = find_course(course_id)
-    if request.form.get("yes_no"):
-        yes_ids = course.yes_answer_ids
-        if request.form["yes_no"] == "yes":
-            yes_ids.add(question_id)
-        else:
-            yes_ids.discard(question_id)
-        course.yes_answers = ",".join(str(i) for i in sorted(yes_ids))
-    else:
-        existing = next((l for l in course.lessons if l.question_id == question_id), None)
-        uploaded_video = request.files.get("video")
-        if existing:
-            existing.title = request.form.get("title") or existing.title
-            existing.text = request.form.get("text") or None
-        else:
-            course.lessons.append(fake.make_lesson(course.lesson_count + 1, request.form.get("title") or "Untitled",
-                                                   question_id, request.form.get("text") or None,
-                                                   video=bool(uploaded_video and uploaded_video.filename)))
-        flash("Answer saved.", "success")
-    return redirect(url_for("builder.script", course_id=course.id) + f"#q{question_id}")
+@builder.route("/course/<int:course_id>/lessons", methods=["POST"])
+def add_lesson(course_id):
+    course = owned_course(course_id)
+    uploaded_video = request.files.get("video")
+    question_id = request.form.get("question_id", type=int)
+    lesson = fake.make_lesson(course.lesson_count + 1, request.form["title"], question_id,
+                              request.form.get("text") or None, video=bool(uploaded_video and uploaded_video.filename))
+    course.lessons.append(lesson)
+    flash("Lesson added. Now add a quick quiz to it.", "success")
+    return redirect(url_for("builder.script", course_id=course.id) + f"#lesson-{lesson.id}")
+
+
+def find_lesson(course, lesson_id):
+    lesson = next((l for l in course.lessons if l.id == lesson_id), None)
+    if lesson is None:
+        abort(404)
+    return lesson
+
+
+@builder.route("/course/<int:course_id>/lessons/<int:lesson_id>", methods=["POST"])
+def edit_lesson(course_id, lesson_id):
+    course = owned_course(course_id)
+    lesson = find_lesson(course, lesson_id)
+    lesson.title = request.form["title"]
+    lesson.text = request.form.get("text") or None
+    uploaded_video = request.files.get("video")
+    if uploaded_video and uploaded_video.filename:
+        lesson.video_filename = "demo_espresso.mp4"
+    flash("Lesson saved.", "success")
+    return redirect(url_for("builder.script", course_id=course.id) + f"#lesson-{lesson.id}")
+
+
+@builder.route("/course/<int:course_id>/lessons/<int:lesson_id>/delete", methods=["POST"])
+def delete_lesson(course_id, lesson_id):
+    course = owned_course(course_id)
+    course.lessons.remove(find_lesson(course, lesson_id))
+    for number, lesson in enumerate(course.lessons, start=1):
+        lesson.order = number
+    flash("Lesson deleted.", "success")
+    return redirect(url_for("builder.script", course_id=course.id))
 
 
 @builder.route("/course/<int:course_id>/lesson/<int:lesson_id>/quiz/edit", methods=["GET", "POST"])

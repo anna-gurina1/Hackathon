@@ -8,35 +8,44 @@
 
 {% block content %}
 {% set is_editing = course is not none %}
-<div class="container page narrow">
-  {% if is_editing %}
-    <a class="back-link" href="{{ url_for('courses.view', course_id=course.id) }}">← {{ course.title }}</a>
-    <h1>Edit course</h1>
-  {% else %}
-    <a class="back-link" href="{{ url_for('main.account') }}">← My account</a>
-    <h1>Create a course</h1>
-    <p class="muted">Tell us what the course is about. Next, we'll pick questions for your expert to answer on video — each answer becomes a lesson.</p>
-  {% endif %}
+<div class="container page studio">
+  <div class="studio-main">
 
-  <form class="card form-card" method="post"
-        action="{{ url_for('courses.edit', course_id=course.id) if is_editing else url_for('courses.new') }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <a class="back-link" href="{{ url_for('builder.script', course_id=course.id) if is_editing else url_for('main.account') }}">
+      ← {{ course.title if is_editing else 'My account' }}
+    </a>
+    <h1 class="studio-title">{{ 'Course details' if is_editing else 'New course' }}</h1>
 
-    {# ---------- About ---------- #}
-    <div class="form-section">
-      <h2>About the course</h2>
+    {# ---------- General tips ---------- #}
+    <details class="tips-card" {{ 'open' if not is_editing }}>
+      <summary>💡 Tips for great lessons</summary>
+      {% include "partials/creator_tips.html" %}
+    </details>
+
+    {# ---------- The big "+" (hidden when editing: the form is open right away) ---------- #}
+    {% if not is_editing %}
+      <button type="button" class="plus-tile" data-reveal="course-details">
+        <span class="plus-icon">+</span>
+        <span>Add course details</span>
+      </button>
+    {% endif %}
+
+    {# ---------- Course details ---------- #}
+    <form class="card form-card studio-form" id="course-details" method="post"
+          action="{{ url_for('courses.edit', course_id=course.id) if is_editing else url_for('courses.new') }}"
+          {{ 'hidden' if not is_editing }}>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
       <div class="field">
         <label for="title">Course title</label>
         <input id="title" name="title" type="text" maxlength="200" required
-               placeholder="e.g. Pull a perfect espresso shot"
-               value="{{ course.title if is_editing else '' }}">
+               placeholder="e.g. Pull a perfect espresso shot" value="{{ course.title if is_editing else '' }}">
       </div>
 
       <div class="field">
         <label for="description">Short description</label>
-        <textarea id="description" name="description" rows="3"
-                  placeholder="Who is this course for and why it matters">{{ course.description if is_editing else '' }}</textarea>
+        <textarea id="description" name="description" rows="2"
+                  placeholder="Who is this course for?">{{ course.description if is_editing else '' }}</textarea>
       </div>
 
       <div class="form-row">
@@ -54,81 +63,62 @@
 
       <div class="field">
         <label for="outcome">What will people learn?</label>
-        <textarea id="outcome" name="outcome" rows="3"
+        <textarea id="outcome" name="outcome" rows="2"
                   placeholder="After this course you will be able to…">{{ course.outcome if is_editing else '' }}</textarea>
       </div>
-    </div>
-
-    {# ---------- Script settings ---------- #}
-    <div class="form-section">
-      <h2>Course script</h2>
-      <p class="field-hint" style="margin-bottom: 16px;">These settings decide which questions your expert will answer.</p>
 
       <div class="field">
-        <label for="level">Learner level</label>
-        <select id="level" name="level">
+        <label>Learner level</label>
+        <div class="pill-group" data-level-picker>
           {% for level_key, level_name in LEVELS.items() %}
-            <option value="{{ level_key }}" {{ 'selected' if is_editing and course.level == level_key }}>{{ level_name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <div class="field">
-        <label>Type of knowledge</label>
-        <div class="option-grid">
-          {% for type_key, type_name in TYPES.items() %}
-            {% set is_checked = (course.knowledge_type == type_key) if is_editing else loop.first %}
-            <label class="option-card">
-              <input type="radio" name="knowledge_type" value="{{ type_key }}" {{ 'checked' if is_checked }} required>
-              <span class="option-card-body"><strong>{{ type_name }}</strong></span>
-            </label>
-          {% endfor %}
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Course length</label>
-        <div class="pill-group">
-          {% for minutes in DURATIONS %}
-            {% set is_checked = (course.duration == minutes) if is_editing else (minutes == 5) %}
+            {% set is_checked = (course.level == level_key) if is_editing else loop.first %}
             <label class="pill">
-              <input type="radio" name="duration" value="{{ minutes }}" {{ 'checked' if is_checked }} required>
-              <span>{{ minutes }} min</span>
+              <input type="radio" name="level" value="{{ level_key }}" {{ 'checked' if is_checked }} required>
+              <span>{{ level_name }}</span>
             </label>
           {% endfor %}
         </div>
       </div>
-    </div>
 
-    {# ---------- Visibility ---------- #}
-    <div class="form-section">
-      <h2>Who can see it?</h2>
-      {% set is_private = is_editing and course.is_private %}
-      <div class="option-grid">
-        <label class="option-card">
-          <input type="radio" name="visibility" value="public" {{ 'checked' if not is_private }}>
-          <span class="option-card-body">
-            <strong>🌍 Public</strong>
-            <span class="small muted">Anyone can find it in search on Explore.</span>
-          </span>
-        </label>
-        <label class="option-card">
-          <input type="radio" name="visibility" value="private" {{ 'checked' if is_private }}>
-          <span class="option-card-body">
-            <strong>🔒 Private</strong>
-            <span class="small muted">Only people with your invite link.</span>
-          </span>
-        </label>
+      <div class="field">
+        <label>Who can see it?</label>
+        {% set is_private = is_editing and course.is_private %}
+        <div class="option-grid">
+          <label class="option-card">
+            <input type="radio" name="visibility" value="public" {{ 'checked' if not is_private }}>
+            <span class="option-card-body">
+              <strong>🌍 Public</strong>
+              <span class="small muted">Anyone can find it on Explore.</span>
+            </span>
+          </label>
+          <label class="option-card {{ 'is-locked' if not is_pro }}">
+            <input type="radio" name="visibility" value="private" {{ 'checked' if is_private }} {{ 'disabled' if not is_pro }}>
+            <span class="option-card-body">
+              <strong>🔒 Private <span class="pro-badge">PRO</span></strong>
+              {% if is_pro %}
+                <span class="small muted">Only people with your invite link.</span>
+              {% else %}
+                <span class="small muted">Only with an invite link. <a href="{{ url_for('main.pro', next=request.path) }}">Upgrade to Pro</a></span>
+              {% endif %}
+            </span>
+          </label>
+        </div>
       </div>
-    </div>
 
-    <div class="form-actions">
-      <button type="submit" class="btn btn-primary btn-lg">
-        {{ 'Save changes' if is_editing else 'Create course & open builder' }}
-      </button>
-      <a class="btn btn-outline btn-lg"
-         href="{{ url_for('courses.view', course_id=course.id) if is_editing else url_for('main.account') }}">Cancel</a>
-    </div>
-  </form>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary btn-lg">{{ 'Save' if is_editing else 'Create course' }}</button>
+        {% if is_editing %}
+          <a class="btn btn-outline btn-lg" href="{{ url_for('builder.script', course_id=course.id) }}">Cancel</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  {# ---------- Side: suggested questions for the chosen level ---------- #}
+  {% include "partials/suggested_questions.html" %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/studio.js') }}"></script>
 {% endblock %}

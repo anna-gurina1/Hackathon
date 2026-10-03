@@ -32,6 +32,10 @@ class FakeUser(SimpleNamespace):
         return self.type == "company"
 
     @property
+    def is_pro(self):
+        return bool(self.company and getattr(self.company, "is_pro", False))
+
+    @property
     def display_name(self):
         if self.is_company:
             return self.company.name
@@ -61,6 +65,7 @@ def make_company(user_id, name, email, description):
 
 northwind = make_company(1, "Northwind Coffee", "demo-company@test.md",
                          "Specialty coffee bars in Chișinău. We teach baristas the way we work behind the bar.")
+northwind.company.is_pro = False
 greenleaf = make_company(2, "Greenleaf Pharmacy", "hello@greenleaf.md",
                          "Neighbourhood pharmacies with a focus on friendly, clear advice.")
 ana = make_person(10, "Ana", "Rusu", "demo-person@test.md")
@@ -178,17 +183,17 @@ ALL_COURSES = {course.id: course for course in [espresso, closing, latte_art, ph
 # ---------- Questions for the builder (like core/questions.py) ----------
 QUESTIONS = [
     {"id": 1, "text": "What result should the learner get at the end?", "hint": "Show the finished result on camera for 5 seconds.",
-     "category": "goal", "time": 30, "priority": 1, "answer_type": "media", "if_yes": [], "only_after": None},
+     "levels": ["beginner", "intermediate", "advanced"], "category": "goal", "time": 30, "priority": 1, "answer_type": "media", "if_yes": [], "only_after": None},
     {"id": 2, "text": "Show how you prepare your workplace before you start.", "hint": "Film from above so the tools are visible.",
-     "category": "setup", "time": 60, "priority": 1, "answer_type": "media", "if_yes": [], "only_after": None},
+     "levels": ["beginner", "intermediate"], "category": "setup", "time": 60, "priority": 1, "answer_type": "media", "if_yes": [], "only_after": None},
     {"id": 3, "text": "Do it once from start to finish, slowly.", "hint": "Say out loud what you are doing.",
-     "category": "demonstration", "time": 90, "priority": 1, "answer_type": "media", "if_yes": [], "only_after": None},
+     "levels": ["beginner", "intermediate", "advanced"], "category": "demonstration", "time": 90, "priority": 1, "answer_type": "media", "if_yes": [], "only_after": None},
     {"id": 5, "text": "Is there a common mistake beginners make here?", "hint": "",
-     "category": "mistake", "time": 0, "priority": 2, "answer_type": "yes_no", "if_yes": [6], "only_after": None},
+     "levels": ["beginner", "intermediate", "advanced"], "category": "mistake", "time": 0, "priority": 2, "answer_type": "yes_no", "if_yes": [6], "only_after": None},
     {"id": 6, "text": "Show the most common mistake and how to fix it.", "hint": "Do it wrong on purpose, then the right way.",
-     "category": "mistake", "time": 60, "priority": 2, "answer_type": "media", "if_yes": [], "only_after": 5},
+     "levels": ["beginner", "intermediate", "advanced"], "category": "mistake", "time": 60, "priority": 2, "answer_type": "media", "if_yes": [], "only_after": 5},
     {"id": 7, "text": "How do you check that the work is done right?", "hint": "",
-     "category": "verification", "time": 45, "priority": 2, "answer_type": "media", "if_yes": [], "only_after": None},
+     "levels": ["intermediate", "advanced"], "category": "verification", "time": 45, "priority": 2, "answer_type": "media", "if_yes": [], "only_after": None},
 ]
 
 CATEGORIES = {"goal": "Goal", "setup": "Setup", "demonstration": "Demonstration", "explanation": "Explanation",
@@ -200,6 +205,30 @@ QUIZ_TEMPLATES = {
     "setup": ["What do you need to prepare before you start?", "Which tool is used first?"],
     "demonstration": ["What is the first step?", "What comes right after …?"],
 }
+
+
+# Real question bank, if the preview runs inside the team project (D:\\Hackathon\\core\\questions.py)
+try:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from core.questions import CATEGORIES, LEVELS, QUESTIONS, QUIZ_TEMPLATES  # noqa: F811
+except ImportError:
+    pass
+
+
+def recommended_questions(level=None):
+    """Suggested questions grouped by category — the same shape the backend sends."""
+    groups = []
+    for category_key, category_label in CATEGORIES.items():
+        if category_key == "video_quality":
+            continue
+        questions = [q for q in QUESTIONS
+                     if q["category"] == category_key and q["answer_type"] == "media"
+                     and (level is None or level in q["levels"])]
+        if questions:
+            groups.append({"category": category_key, "category_label": category_label, "questions": questions})
+    return groups
 
 
 # ---------- Enrollments, offers (Ana is the demo person) ----------

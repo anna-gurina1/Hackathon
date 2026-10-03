@@ -11,6 +11,8 @@ class TestingConfig(Config):
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     WTF_CSRF_ENABLED = False  # forms in tests are sent without the CSRF token
     SERVER_NAME = "localhost"
+    MAIL_SERVER = ""  # never send real emails from tests: they are printed instead
+    PUBLIC_URL = ""
 
 
 @pytest.fixture

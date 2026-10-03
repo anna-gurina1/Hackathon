@@ -1,4 +1,4 @@
-// builder.js — video upload in the course builder.
+// builder.js — video upload in the course studio.
 // Videos can be up to 15 minutes, so we:
 //   1) check the file BEFORE uploading (format and size),
 //   2) show a real progress bar "Uploading… 42%",
@@ -44,7 +44,7 @@ document.querySelectorAll('[data-video-input]').forEach(function (videoInput) {
 });
 
 // ---------- 2. Upload with a progress bar ----------
-document.querySelectorAll('.answer-form').forEach(function (answerForm) {
+document.querySelectorAll('.lesson-form').forEach(function (answerForm) {
   answerForm.addEventListener('submit', function (event) {
     const videoInput = answerForm.querySelector('[data-video-input]');
     const chosenVideo = videoInput ? videoInput.files[0] : null;
@@ -76,7 +76,6 @@ function uploadWithProgress(answerForm, saveButton) {
   const progressBox = answerForm.querySelector('[data-upload-progress]');
   const progressBar = answerForm.querySelector('[data-upload-bar]');
   const progressText = answerForm.querySelector('[data-upload-text]');
-  const questionAnchor = '#' + answerForm.closest('.script-step').id;   // e.g. "#q12"
 
   const uploadRequest = new XMLHttpRequest();
   uploadRequest.open('POST', answerForm.action);
@@ -93,15 +92,8 @@ function uploadWithProgress(answerForm, saveButton) {
   uploadRequest.addEventListener('load', function () {
     uploadIsRunning = false;
     if (uploadRequest.status < 400) {
-      // The server redirects back to the builder; go there and show the saved answer
-      const builderUrl = uploadRequest.responseURL.split('#')[0];
-      const currentUrl = window.location.href.split('#')[0];
-      if (builderUrl === currentUrl) {
-        window.location.hash = questionAnchor;   // same page: change the anchor…
-        window.location.reload();                // …and reload to see the new lesson
-      } else {
-        window.location.href = builderUrl + questionAnchor;
-      }
+      // The server redirects back to the studio — go there to see the new lesson
+      window.location.href = uploadRequest.responseURL;
     } else {
       showUploadError('Upload failed (error ' + uploadRequest.status + '). Please try again.');
     }

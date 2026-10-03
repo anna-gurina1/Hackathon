@@ -18,10 +18,11 @@
 
   <h2 class="section-title">2. Creating a course — role: Company</h2>
   <div class="card stack">
-    <p><a href="{{ url_for('courses.new') }}">New course form</a></p>
-    <p><a href="{{ url_for('courses.edit', course_id=1) }}">Edit course form</a></p>
-    <p><a href="{{ url_for('builder.script', course_id=3) }}">Builder</a> — draft “Latte art”</p>
-    <p><a href="{{ url_for('builder.script', course_id=1) }}">Builder</a> — finished “Espresso”</p>
+    <p><a href="{{ url_for('courses.new') }}">New course</a> — minimal page with “+”</p>
+    <p><a href="{{ url_for('builder.script', course_id=3) }}">Course studio</a> — draft “Latte art”</p>
+    <p><a href="{{ url_for('builder.script', course_id=1) }}">Course studio</a> — finished “Espresso”</p>
+    <p><a href="{{ url_for('courses.edit', course_id=1) }}">Course details</a></p>
+    <p><a href="{{ url_for('main.pro') }}">Pro (demo payment)</a></p>
     <p><a href="{{ url_for('builder.quiz_edit', course_id=1, lesson_id=courses[0].lessons[0].id) }}">Quiz editor</a></p>
   </div>
 

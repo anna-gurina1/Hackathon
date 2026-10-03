@@ -9,6 +9,17 @@ from email.message import EmailMessage
 from flask import current_app
 
 
+def external_url(endpoint, **values):
+    """Full link for use inside emails. Uses PUBLIC_URL from .env when it is set,
+    otherwise the address the browser used (127.0.0.1 works only on the server's own computer)."""
+    from flask import url_for
+
+    base = current_app.config.get("PUBLIC_URL")
+    if base:
+        return base + url_for(endpoint, **values)
+    return url_for(endpoint, _external=True, **values)
+
+
 def send_email(to, subject, body):
     """Send an email. Returns True on success, False if sending failed."""
     cfg = current_app.config
