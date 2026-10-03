@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Edit profile{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container page narrow">
+  <h1>Edit profile</h1>
+
+  <div class="card">
+    <form method="post" action="{{ url_for('main.edit_profile') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      {% if user.is_person %}
+        <div class="field-row">
+          <div class="field">
+            <label for="first-name">First name</label>
+            <input id="first-name" type="text" name="first_name" maxlength="60" required
+                   value="{{ form.get('first_name', user.person.first_name if user.person else '') }}">
+          </div>
+          <div class="field">
+            <label for="last-name">Last name</label>
+            <input id="last-name" type="text" name="last_name" maxlength="60" required
+                   value="{{ form.get('last_name', user.person.last_name if user.person else '') }}">
+          </div>
+        </div>
+      {% else %}
+        <div class="field">
+          <label for="company-name">Company name</label>
+          <input id="company-name" type="text" name="company_name" maxlength="120" required
+                 value="{{ form.get('company_name', user.company.name if user.company else '') }}">
+        </div>
+        <div class="field">
+          <label for="description">Description</label>
+          <textarea id="description" name="description" rows="4" maxlength="500">{{ form.get('description', (user.company.description or '') if user.company else '') }}</textarea>
+          <p class="field-hint">Shown on your public page. Up to 500 characters.</p>
+        </div>
+      {% endif %}
+
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" value="{{ user.email }}" disabled>
+        <p class="field-hint">The email is your login, so it can't be changed here.</p>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Save</button>
+      <a class="btn btn-outline" href="{{ url_for('main.account') }}">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

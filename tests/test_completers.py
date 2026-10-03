@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from tests.conftest import signup_confirmed
 from database import db
 from database.models import Course, Enrollment, User
 from database.queries import company_dashboard
@@ -7,11 +8,11 @@ from database.queries import company_dashboard
 
 def test_course_card_lists_completers(app):
     client = app.test_client()
-    client.post("/signup", data={"type": "company", "company_name": "Acme", "email": "hr@acme.md"})
+    signup_confirmed(client, {"type": "company", "company_name": "Acme", "email": "hr@acme.md"})
     other = app.test_client()
-    other.post("/signup", data={"type": "person", "first_name": "Ion", "last_name": "P", "email": "ion@x.md"})
+    signup_confirmed(other, {"type": "person", "first_name": "Ion", "last_name": "P", "email": "ion@x.md"})
     third = app.test_client()
-    third.post("/signup", data={"type": "person", "first_name": "Ana", "last_name": "G", "email": "ana@x.md"})
+    signup_confirmed(third, {"type": "person", "first_name": "Ana", "last_name": "G", "email": "ana@x.md"})
 
     with app.app_context():
         company = User.query.filter_by(email="hr@acme.md").one()

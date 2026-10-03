@@ -14,7 +14,7 @@
     {{ ui.avatar(user, 'avatar-lg') }}
     <div>
       <h1>{{ user.display_name }}</h1>
-      <p class="muted">{{ user.email }}</p>
+      <p class="muted">{{ user.email }} · <a href="{{ url_for('main.edit_profile') }}">Edit profile</a></p>
     </div>
   </div>
 

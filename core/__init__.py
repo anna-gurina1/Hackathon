@@ -5,7 +5,7 @@ from flask_login import LoginManager
 from flask_wtf.csrf import CSRFError, CSRFProtect
 
 from core.config import BASE_DIR, Config
-from database import db
+from database import db, migrate
 
 csrf = CSRFProtect()
 login_manager = LoginManager()
@@ -33,6 +33,7 @@ def create_app(config_class=Config):
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
     db.init_app(app)
+    migrate.init_app(app, db)
     csrf.init_app(app)
     login_manager.init_app(app)
 
@@ -69,13 +70,25 @@ def create_app(config_class=Config):
     with app.app_context():
         import database.models  # noqa: F401  (registers the tables)
 
-        db.create_all()
+        if app.config.get("TESTING"):
+            # Tests use a throw-away in-memory database: no migrations needed.
+            db.create_all()
+        else:
+            # The real database is created and updated with migrations:
+            #     flask db upgrade
+            from sqlalchemy import inspect
 
-        # A fresh database always gets the demo company and demo courses,
-        # so there is something to try right after signing up (not in tests).
-        if not app.config.get("TESTING"):
-            from database.seed import ensure_demo_data
+            tables = inspect(db.engine)
+            if not tables.has_table("alembic_version"):
+                app.logger.warning(
+                    "The database is not set up with migrations yet. Run:  flask db upgrade"
+                )
 
-            ensure_demo_data()
+            # A fresh database gets the demo company and demo courses, so there is
+            # something to try right after signing up. Skipped while there are no tables.
+            if tables.has_table("user"):
+                from database.seed import ensure_demo_data
+
+                ensure_demo_data()
 
     return app

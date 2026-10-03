@@ -1,3 +1,4 @@
+from tests.conftest import signup_confirmed
 from database import db
 from database.models import (
     Course,
@@ -16,16 +17,13 @@ from database.models import (
 
 def _signup_company(app, name, email):
     client = app.test_client()
-    client.post("/signup", data={"type": "company", "company_name": name, "email": email})
+    signup_confirmed(client, {"type": "company", "company_name": name, "email": email})
     return client
 
 
 def _signup_person(app, email):
     client = app.test_client()
-    client.post(
-        "/signup",
-        data={"type": "person", "first_name": "Ion", "last_name": "Popescu", "email": email},
-    )
+    signup_confirmed(client, {"type": "person", "first_name": "Ion", "last_name": "Popescu", "email": email})
     return client
 
 

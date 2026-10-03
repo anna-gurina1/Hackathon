@@ -78,6 +78,13 @@ class CompanyProfile(db.Model):
     is_pro = db.Column(db.Boolean, default=False, nullable=False)
 
 
+class EmailThrottle(db.Model):
+    """When we last sent a login / sign-up email to an address.
+    Used to make people wait between two emails to the same address."""
+    key = db.Column(db.String(320), primary_key=True)  # "auth:<email>"
+    sent_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+
 # ---------------------------------------------------------------------------
 # Courses
 # ---------------------------------------------------------------------------

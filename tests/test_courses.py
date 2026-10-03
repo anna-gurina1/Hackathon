@@ -1,3 +1,4 @@
+from tests.conftest import signup_confirmed
 from database import db
 from database.models import Course, Enrollment, Lesson, Quiz, User
 
@@ -6,17 +7,14 @@ from database.models import Course, Enrollment, Lesson, Quiz, User
 
 def _signup_company(app, name, email):
     client = app.test_client()
-    client.post("/signup", data={"type": "company", "company_name": name, "email": email})
+    signup_confirmed(client, {"type": "company", "company_name": name, "email": email})
     return client
 
 
 def _signup_person(app, email):
     # NOTE: person form field names (first_name / last_name) are assumed from PersonProfile
     client = app.test_client()
-    client.post(
-        "/signup",
-        data={"type": "person", "first_name": "Ion", "last_name": "Popescu", "email": email},
-    )
+    signup_confirmed(client, {"type": "person", "first_name": "Ion", "last_name": "Popescu", "email": email})
     return client
 
 

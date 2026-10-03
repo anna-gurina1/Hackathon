@@ -4,7 +4,10 @@ from flask import Blueprint, current_app, flash, redirect, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
+from sqlalchemy.exc import IntegrityError
+
 from backend.email import external_url, send_email
+from backend.throttle import claim_email_slot
 from database import db
 from database.models import CompanyProfile, PersonProfile, User
 
@@ -12,10 +15,26 @@ bp = Blueprint("auth", __name__)
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 LINK_MAX_AGE = 15 * 60  # login link is valid for 15 minutes
+SIGNUP_LINK_MAX_AGE = 24 * 60 * 60  # sign-up confirmation link is valid for 24 hours
 
 
 def _serializer():
     return URLSafeTimedSerializer(current_app.config["SECRET_KEY"], salt="login-link")
+
+
+def _signup_serializer():
+    # a different salt, so a login link can never be used as a sign-up link
+    return URLSafeTimedSerializer(current_app.config["SECRET_KEY"], salt="signup-confirm")
+
+
+def make_signup_token(data):
+    """data: the checked sign-up form (type, email, names / company name, description).
+    The account is NOT created yet: it is created when the link from the email is opened."""
+    return _signup_serializer().dumps(data)
+
+
+def _wait_message(seconds):
+    return f"An email was just sent to this address. You can request another in {seconds} s."
 
 
 def _back_to_form(message, tab):
@@ -51,25 +70,80 @@ def signup():
     if User.query.filter_by(email=email).first():
         return _back_to_form("An account with this email already exists. Log in instead.", "login")
 
-    user = User(type=account_type, email=email)
-
     if account_type == "person":
         first = form.get("first_name", "").strip()
         last = form.get("last_name", "").strip()
         if not first or not last:
             return _back_to_form("Enter your first and last name.", "signup")
-        user.person = PersonProfile(first_name=first[:60], last_name=last[:60])
+        data = {"type": "person", "email": email, "first_name": first[:60], "last_name": last[:60]}
     else:
         name = form.get("company_name", "").strip()
         description = form.get("description", "").strip()
         if not name:
             return _back_to_form("Enter the company name.", "signup")
-        user.company = CompanyProfile(name=name[:120], description=description[:500] or None)
+        data = {
+            "type": "company", "email": email,
+            "company_name": name[:120], "description": description[:500],
+        }
+
+    wait = claim_email_slot(email)
+    if wait:
+        return _back_to_form(_wait_message(wait), "signup")
+
+    link = external_url("auth.confirm_signup", token=make_signup_token(data))
+    send_email(
+        email,
+        "Confirm your email",
+        "Hi,\n\n"
+        "Click the link to confirm your email and finish creating your account "
+        f"(valid for 24 hours):\n{link}\n\n"
+        "If this was not you, just ignore this email: nothing will be created.\n",
+    )
+    flash(f"We sent a confirmation link to {email}. Open it to finish signing up.", "info")
+    return redirect(url_for("main.home"))
+
+
+@bp.route("/signup/confirm/<token>")
+def confirm_signup(token):
+    """The link from the sign-up email: only now the account is created and logged in."""
+    if current_user.is_authenticated:
+        return redirect(url_for("main.home"))
+
+    try:
+        data = _signup_serializer().loads(token, max_age=SIGNUP_LINK_MAX_AGE)
+    except SignatureExpired:
+        return _back_to_form("This confirmation link has expired. Sign up again.", "signup")
+    except BadSignature:
+        return _back_to_form("This confirmation link is not valid.", "signup")
+
+    email = str(data.get("email", "")).strip().lower()
+    account_type = data.get("type")
+    if not EMAIL_RE.match(email) or account_type not in ("person", "company"):
+        return _back_to_form("This confirmation link is not valid.", "signup")
+
+    if User.query.filter_by(email=email).first():
+        return _back_to_form("This email is already confirmed. Log in.", "login")
+
+    user = User(type=account_type, email=email)
+    if account_type == "person":
+        user.person = PersonProfile(
+            first_name=str(data.get("first_name", ""))[:60],
+            last_name=str(data.get("last_name", ""))[:60],
+        )
+    else:
+        user.company = CompanyProfile(
+            name=str(data.get("company_name", ""))[:120],
+            description=str(data.get("description", ""))[:500] or None,
+        )
 
     db.session.add(user)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError:  # the link was opened twice at the same moment
+        db.session.rollback()
+        return _back_to_form("This email is already confirmed. Log in.", "login")
 
-    login_user(user)
+    login_user(user, remember=True)
     flash(f"Welcome, {user.display_name}!", "success")
     return redirect(url_for("main.home"))
 
@@ -86,6 +160,10 @@ def login():
     user = User.query.filter_by(email=email).first()
     if not user:
         return _back_to_form("No account with this email. Sign up first.", "signup")
+
+    wait = claim_email_slot(email)
+    if wait:
+        return _back_to_form(_wait_message(wait), "login")
 
     if not send_login_link(user):
         return _back_to_form("Could not send the email right now. Try again later.", "login")
