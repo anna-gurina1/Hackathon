@@ -695,28 +695,6 @@ a.lesson-row:hover { border-color: var(--accent); }
 }
 .studio-form, .studio-new-lesson { margin-top: 4px; }
 
-/* PRO */
-.pro-badge {
-  display: inline-block;
-  padding: 1px 7px;
-  border-radius: 6px;
-  background: var(--primary);
-  color: var(--primary-ink);
-  font-size: .7rem;
-  font-weight: 800;
-  letter-spacing: .05em;
-  vertical-align: middle;
-}
-.pro-badge-lg { padding: 4px 12px; font-size: .85rem; margin-left: auto; }
-.option-card.is-locked .option-card-body { background: var(--soft); }
-.option-card.is-locked { cursor: default; }
-.pro-card { text-align: center; padding: 36px 24px; }
-.pro-card .pro-badge-lg { margin: 0 0 12px; }
-.pro-features { list-style: none; padding: 0; margin: 20px auto; display: grid; gap: 8px; max-width: 320px; text-align: left; }
-.pro-price { font-size: 1.1rem; margin: 0 0 14px; }
-.pro-price strong { font-family: var(--font-display); font-size: 2.4rem; }
-.pro-note { margin: 10px 0 0; }
-.pro-card .status-line { justify-content: center; }
 
 /* Lessons in the studio */
 .studio-lessons { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 10px; }
@@ -775,10 +753,6 @@ a.lesson-row:hover { border-color: var(--accent); }
 /* Studio in the brand colours (purple panels, lime buttons) */
 .studio-lesson:hover { border-color: var(--accent); }
 .suggest-panel { border-top: 4px solid var(--accent); }
-.pro-card { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-.pro-card .lead, .pro-card .muted { color: var(--accent-soft); }
-.pro-card .pro-price strong { color: var(--primary); }
-.pro-card .status-dot { background: var(--primary); }
 
 /* Course page owner panel: "Delete course" readable on purple */
 .action-card .danger-link {
