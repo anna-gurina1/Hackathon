@@ -797,6 +797,25 @@ a.lesson-row:hover { border-color: var(--accent); }
 }
 .suggest-group[open] { padding-bottom: 8px; }
 
+/* ---------- AI suggestions: the question from the AI, its label and the pop-up message ---------- */
+.suggest-ai { border-top: 1px dashed var(--accent); }
+.suggest-ai-body { display: flex; flex-direction: column; gap: 4px; }
+.suggest-ai-body em { font-size: .9rem; line-height: 1.4; }
+.ai-tag {
+  align-self: flex-start; padding: 1px 8px; border-radius: 999px;
+  background: var(--info-bg); color: var(--accent);
+  font-size: .68rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+}
+.toast {
+  position: fixed; left: 50%; bottom: 28px; z-index: 1000;
+  max-width: min(440px, calc(100vw - 32px)); padding: 12px 18px;
+  border-radius: var(--radius-sm); background: var(--ink); color: #fff;
+  font-size: .92rem; line-height: 1.4; box-shadow: var(--shadow);
+  opacity: 0; transform: translate(-50%, 12px); transition: opacity .3s ease, transform .3s ease;
+  pointer-events: none;
+}
+.toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
+
 /* My account: "Delete account" block */
 .danger-zone { margin-top: 40px; padding: 0; border-color: var(--line); }
 .danger-zone > summary {
