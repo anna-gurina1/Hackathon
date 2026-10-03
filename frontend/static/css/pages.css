@@ -779,3 +779,24 @@ a.lesson-row:hover { border-color: var(--accent); }
 .pro-card .lead, .pro-card .muted { color: var(--accent-soft); }
 .pro-card .pro-price strong { color: var(--primary); }
 .pro-card .status-dot { background: var(--primary); }
+
+/* Course page owner panel: "Delete course" readable on purple */
+.action-card .danger-link {
+  display: block; width: 100%; margin-top: 12px; padding: 10px 16px;
+  border: 1px solid rgba(255, 255, 255, .75); border-radius: 999px;
+  color: var(--accent-ink); text-decoration: none; font-weight: 600; text-align: center;
+}
+.action-card .danger-link:hover { background: #ffffff; color: var(--error-ink); border-color: #ffffff; }
+.action-card .status-dot { background: var(--primary); }
+.action-card .status-dot.is-draft { background: #ffffff; }
+
+/* Company account: who completed each course */
+.completers { grid-column: 1 / -1; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--soft); border: 1px solid var(--line); }
+.completers-title { margin: 0 0 8px; font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.completers-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.completers-list li { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: .9rem; }
+.completers-list a { color: var(--ink); text-decoration: none; font-weight: 600; }
+.completers-list a:hover { color: var(--accent); }
+.completers-score { font-size: .8rem; color: var(--ink-soft); }
+.completers-empty { margin: 0; font-size: .9rem; color: var(--ink-soft); }
+.manage-numbers strong { font-family: var(--font-body); font-weight: 800; }
