@@ -36,9 +36,12 @@ function showQuestionsForLevel(levelKey) {
   document.querySelectorAll('.suggest-item').forEach(function (item) {
     item.hidden = !item.dataset.levels.split(' ').includes(levelKey);
   });
-  // hide a category title when all its questions are hidden
+  // hide a module when all its questions are hidden, and update the number next to its name
   document.querySelectorAll('.suggest-group').forEach(function (group) {
-    group.hidden = group.querySelectorAll('.suggest-item:not([hidden])').length === 0;
+    const visibleCount = group.querySelectorAll('.suggest-item:not([hidden])').length;
+    group.hidden = visibleCount === 0;
+    const counter = group.querySelector('[data-suggest-count]');
+    if (counter) counter.textContent = visibleCount;
   });
 }
 
@@ -62,7 +65,7 @@ document.querySelectorAll('[data-use-question]').forEach(function (useButton) {
     if (addLessonButton) addLessonButton.hidden = true;
 
     const questionPrompt = newLessonBlock.querySelector('[data-question-prompt]');
-    questionPrompt.textContent = '🎙 Answer on video: ' + useButton.dataset.questionText;
+    questionPrompt.textContent = '💡 Idea for this lesson: ' + useButton.dataset.questionText;
     questionPrompt.hidden = false;
     newLessonBlock.querySelector('[data-question-id]').value = useButton.dataset.useQuestion;
 

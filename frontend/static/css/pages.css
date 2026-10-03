@@ -800,3 +800,25 @@ a.lesson-row:hover { border-color: var(--accent); }
 .completers-score { font-size: .8rem; color: var(--ink-soft); }
 .completers-empty { margin: 0; font-size: .9rem; color: var(--ink-soft); }
 .manage-numbers strong { font-family: var(--font-body); font-weight: 800; }
+
+/* Question ideas: modules are folded, questions open with the arrow */
+.suggest-group { border-top: 1px solid var(--line); }
+.suggest-group:first-of-type { border-top: 0; }
+.suggest-group + .suggest-group { margin-top: 0; }
+.suggest-group > summary.suggest-category {
+  display: flex; align-items: center; gap: 8px;
+  margin: 0; padding: 12px 0;
+  cursor: pointer; list-style: none;
+}
+.suggest-group > summary.suggest-category::-webkit-details-marker { display: none; }
+.suggest-group > summary.suggest-category::before {
+  content: "▸"; font-size: .9rem; line-height: 1; transition: transform .15s ease;
+}
+.suggest-group[open] > summary.suggest-category::before { transform: rotate(90deg); }
+.suggest-group > summary.suggest-category:hover { color: var(--ink); }
+.suggest-count {
+  margin-left: auto; min-width: 22px; padding: 1px 7px;
+  border-radius: 999px; background: var(--soft); color: var(--accent);
+  font-size: .72rem; text-align: center; letter-spacing: 0;
+}
+.suggest-group[open] { padding-bottom: 8px; }
