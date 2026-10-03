@@ -56,7 +56,8 @@ def send_email(to, subject, body):
     """
     cfg = current_app.config
 
-    if not cfg.get("MAIL_SERVER"):
+    # Demo accounts (database/seed.py) have made-up addresses: their emails are always printed.
+    if not cfg.get("MAIL_SERVER") or to.lower().endswith("@bitwise.demo"):
         print("\n" + "=" * 60)
         print(f"EMAIL to: {to}")
         print(f"Subject:  {subject}")
