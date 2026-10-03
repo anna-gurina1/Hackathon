@@ -1,83 +1,70 @@
-document.addEventListener("DOMContentLoaded", () => {
-  // Avatar dropdown
-  const avatarBtn = document.getElementById("avatar-btn");
-  const dropdown = document.getElementById("avatar-dropdown");
-  if (avatarBtn && dropdown) {
-    const setOpen = (open) => {
-      dropdown.hidden = !open;
-      avatarBtn.setAttribute("aria-expanded", String(open));
-    };
-    avatarBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      setOpen(dropdown.hidden);
+// main.js — runs on every page: login window and the account menu.
+
+// ---------- Login / sign up window ----------
+const authModal = document.querySelector('[data-auth-modal]');
+
+if (authModal) {
+  // Any button with data-open-auth opens the window
+  document.querySelectorAll('[data-open-auth]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      authModal.showModal();
     });
-    document.addEventListener("click", (e) => {
-      if (!dropdown.contains(e.target)) setOpen(false);
-    });
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") setOpen(false);
-    });
-  }
-
-  // Auth modal (guests)
-  const modal = document.getElementById("auth-modal");
-  if (modal) {
-    document
-      .querySelectorAll("#auth-open, [data-open-auth]")
-      .forEach((btn) => btn.addEventListener("click", () => modal.showModal()));
-    const closeBtn = document.getElementById("auth-close");
-    if (closeBtn) closeBtn.addEventListener("click", () => modal.close());
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) modal.close();
-    });
-
-    // Tabs: "Log in" / "Sign up"
-    const tabs = modal.querySelectorAll("[data-auth-tab]");
-    const showTab = (name) => {
-      tabs.forEach((tab) => {
-        const active = tab.dataset.authTab === name;
-        tab.classList.toggle("is-active", active);
-        tab.setAttribute("aria-selected", String(active));
-        document.getElementById(tab.getAttribute("aria-controls")).hidden = !active;
-      });
-    };
-    tabs.forEach((tab) =>
-      tab.addEventListener("click", () => showTab(tab.dataset.authTab))
-    );
-
-    // Sign up: switch fields between "person" and "company" without reload.
-    // Hidden fields are disabled so the browser does not validate or send them.
-    const typeRadios = modal.querySelectorAll('input[name="type"]');
-    const applyType = () => {
-      const type = modal.querySelector('input[name="type"]:checked').value;
-      modal.querySelectorAll("[data-for-type]").forEach((block) => {
-        const on = block.dataset.forType === type;
-        block.hidden = !on;
-        block.querySelectorAll("input, textarea").forEach((field) => {
-          field.disabled = !on;
-          if (field.name === "first_name" || field.name === "last_name" ||
-              field.name === "company_name") {
-            field.required = on;
-          }
-        });
-      });
-    };
-    typeRadios.forEach((radio) => radio.addEventListener("change", applyType));
-    if (typeRadios.length) applyType();
-
-    // After a server error the page opens with ?auth=login or ?auth=signup
-    const wanted = new URLSearchParams(window.location.search).get("auth");
-    if (wanted === "login" || wanted === "signup") {
-      showTab(wanted);
-      modal.showModal();
-      history.replaceState(null, "", window.location.pathname);
-    }
-  }
-
-  // Dismissible flash messages
-  document.querySelectorAll(".flash-close").forEach((btn) => {
-    if (btn.closest(".flash")) {
-      btn.addEventListener("click", () => btn.closest(".flash").remove());
-    }
   });
+
+  authModal.querySelector('[data-close-auth]').addEventListener('click', function () {
+    authModal.close();
+  });
+
+  // Click on the dark background closes the window
+  authModal.addEventListener('click', function (event) {
+    if (event.target === authModal) authModal.close();
+  });
+
+  // Tabs: "Log in" / "Sign up"
+  const authTabs = authModal.querySelectorAll('[data-auth-tab]');
+  authTabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      authTabs.forEach(function (otherTab) {
+        otherTab.classList.toggle('is-active', otherTab === tab);
+      });
+      authModal.querySelectorAll('[data-auth-panel]').forEach(function (panel) {
+        panel.hidden = panel.dataset.authPanel !== tab.dataset.authTab;
+      });
+    });
+  });
+
+  // Sign up: show name fields for a person, company name for a company
+  const personFields = authModal.querySelector('[data-person-fields]');
+  const companyFields = authModal.querySelector('[data-company-fields]');
+  const companyNameInput = companyFields.querySelector('input');
+
+  authModal.querySelectorAll('[data-account-type]').forEach(function (typeOption) {
+    typeOption.addEventListener('change', function () {
+      const isCompany = typeOption.value === 'company' && typeOption.checked;
+      personFields.hidden = isCompany;
+      companyFields.hidden = !isCompany;
+      companyNameInput.required = isCompany;
+    });
+  });
+}
+
+// ---------- Account menu under the avatar ----------
+const userMenuButton = document.querySelector('[data-user-menu-button]');
+const userMenu = document.querySelector('[data-user-menu]');
+
+if (userMenuButton) {
+  userMenuButton.addEventListener('click', function (event) {
+    event.stopPropagation();
+    userMenu.hidden = !userMenu.hidden;
+  });
+
+  // Click anywhere else closes the menu
+  document.addEventListener('click', function () {
+    userMenu.hidden = true;
+  });
+}
+
+// ---------- Flash messages disappear after 6 seconds ----------
+document.querySelectorAll('.flash').forEach(function (message) {
+  setTimeout(function () { message.remove(); }, 6000);
 });

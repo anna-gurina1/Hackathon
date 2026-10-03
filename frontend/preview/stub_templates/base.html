@@ -15,7 +15,7 @@
       <a class="logo" href="{{ url_for('main.home') }}">SkillShot</a>
       <nav class="site-nav">
         <a href="{{ url_for('main.home') }}">Home</a>
-        <a href="{{ url_for('main.explore') }}">Explore</a>
+        <a href="{{ url_for('main.tips') }}">Tips</a>
         {% if current_user.is_authenticated %}
           <a class="avatar-link" href="{{ url_for('main.account') }}" title="My account">{{ current_user.initials }}</a>
           <form method="post" action="{{ url_for('auth.logout') }}" style="display:inline">
