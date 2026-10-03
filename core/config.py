@@ -32,3 +32,5 @@ class Config:
     MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
     MAIL_FROM = os.environ.get("MAIL_FROM", "noreply@bitwise.local")
+    # 1 = send in a background thread (the page does not wait for the mail server).
+    MAIL_BACKGROUND = os.environ.get("MAIL_BACKGROUND", "1") == "1"

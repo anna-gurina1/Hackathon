@@ -2,11 +2,18 @@
 
 In development (MAIL_SERVER is empty) the email is printed to the console
 instead of being sent, so login links can be copied from the terminal.
+
+With a real SMTP server the email is sent in a background thread, so the page
+does not wait for Gmail (it can take up to 15 seconds).
 """
 import smtplib
+from concurrent.futures import ThreadPoolExecutor
 from email.message import EmailMessage
 
 from flask import current_app
+
+# A few worker threads are enough; extra emails wait in the queue.
+_executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="mail")
 
 
 def external_url(endpoint, **values):
@@ -20,8 +27,33 @@ def external_url(endpoint, **values):
     return url_for(endpoint, _external=True, **values)
 
 
+def _deliver(settings, msg, logger):
+    """Talk to the SMTP server. Runs in a worker thread, so it must not touch
+    flask.request / current_app (settings and logger are passed in)."""
+    try:
+        if settings["MAIL_USE_SSL"]:
+            smtp = smtplib.SMTP_SSL(settings["MAIL_SERVER"], settings["MAIL_PORT"], timeout=15)
+        else:
+            smtp = smtplib.SMTP(settings["MAIL_SERVER"], settings["MAIL_PORT"], timeout=15)
+        with smtp:
+            if settings["MAIL_USE_TLS"] and not settings["MAIL_USE_SSL"]:
+                smtp.starttls()
+            if settings["MAIL_USERNAME"]:
+                smtp.login(settings["MAIL_USERNAME"], settings["MAIL_PASSWORD"])
+            smtp.send_message(msg)
+    except Exception:
+        logger.exception("Could not send email to %s", msg["To"])
+        return False
+    return True
+
+
 def send_email(to, subject, body):
-    """Send an email. Returns True on success, False if sending failed."""
+    """Send an email.
+
+    Returns True when the email was printed (development) or handed to the
+    background sender. A delivery error in the background is only written to
+    the log: the person who clicked the button has already got the page.
+    """
     cfg = current_app.config
 
     if not cfg.get("MAIL_SERVER"):
@@ -39,18 +71,16 @@ def send_email(to, subject, body):
     msg["Subject"] = subject
     msg.set_content(body)
 
-    try:
-        if cfg.get("MAIL_USE_SSL"):
-            smtp = smtplib.SMTP_SSL(cfg["MAIL_SERVER"], cfg["MAIL_PORT"], timeout=15)
-        else:
-            smtp = smtplib.SMTP(cfg["MAIL_SERVER"], cfg["MAIL_PORT"], timeout=15)
-        with smtp:
-            if cfg.get("MAIL_USE_TLS") and not cfg.get("MAIL_USE_SSL"):
-                smtp.starttls()
-            if cfg.get("MAIL_USERNAME"):
-                smtp.login(cfg["MAIL_USERNAME"], cfg["MAIL_PASSWORD"])
-            smtp.send_message(msg)
-    except Exception:
-        current_app.logger.exception("Could not send email to %s", to)
-        return False
-    return True
+    settings = {
+        key: cfg.get(key)
+        for key in (
+            "MAIL_SERVER", "MAIL_PORT", "MAIL_USE_TLS", "MAIL_USE_SSL",
+            "MAIL_USERNAME", "MAIL_PASSWORD",
+        )
+    }
+    logger = current_app.logger
+
+    if cfg.get("MAIL_BACKGROUND", True):
+        _executor.submit(_deliver, settings, msg, logger)
+        return True
+    return _deliver(settings, msg, logger)  # MAIL_BACKGROUND=0: wait for the result

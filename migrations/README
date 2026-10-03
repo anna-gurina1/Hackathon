@@ -1,0 +1,5 @@
+Single-database configuration for Flask (Flask-Migrate).
+
+    flask db upgrade                       - create / update the database (everyone runs this)
+    flask db migrate -m "what changed"     - after editing database/models.py: make a new migration
+    flask db upgrade                       - apply it; commit the new file from migrations/versions/

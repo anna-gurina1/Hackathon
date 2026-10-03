@@ -2,19 +2,20 @@ import io
 
 import pytest
 
+from tests.conftest import signup_confirmed
 from database import db
 from database.models import Course, Lesson
 
 
 def company_client(app, email="hr@acme.md", name="Acme"):
     client = app.test_client()
-    client.post("/signup", data={"type": "company", "company_name": name, "email": email})
+    signup_confirmed(client, {"type": "company", "company_name": name, "email": email})
     return client
 
 
 def person_client(app, email="ion@test.md"):
     client = app.test_client()
-    client.post("/signup", data={"type": "person", "first_name": "Ion", "last_name": "Popescu", "email": email})
+    signup_confirmed(client, {"type": "person", "first_name": "Ion", "last_name": "Popescu", "email": email})
     return client
 
 
