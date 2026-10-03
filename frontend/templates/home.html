@@ -10,7 +10,7 @@
 <div class="container page">
   <section class="hero search-hero">
     <p class="eyebrow">Microlearning from real experts</p>
-    <h1>Learn a job skill from people who do it every day</h1>
+    <h1>Learn a job skill from people who <mark class="hl">do it every day</mark></h1>
     <p class="lead">Short video lessons from company experts. Finish a course — and the company may offer you a job.</p>
     <div class="button-row" style="margin-top: 20px;">
       <a class="btn btn-primary btn-lg" href="{{ url_for('main.explore') }}">Find a course</a>
@@ -32,7 +32,7 @@
   </div>
 
   <h2 class="section-title">For companies</h2>
-  <div class="card">
+  <div class="card company-card">
     <p style="margin-top: 0;">Create a course in minutes: we suggest the questions, your expert answers them on video, and every answer becomes a lesson. People who finish your course appear in your <strong>Candidates</strong>.</p>
     {% if not current_user.is_authenticated %}
       <button type="button" class="btn btn-primary" data-open-auth>Sign up as a company</button>

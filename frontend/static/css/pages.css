@@ -14,7 +14,7 @@
   font-weight: 700;
   letter-spacing: .08em;
   text-transform: uppercase;
-  color: var(--primary);
+  color: var(--accent);
 }
 .section-title { font-size: 1.25rem; margin: 32px 0 14px; }
 .card .section-title:first-child { margin-top: 0; }
@@ -41,14 +41,14 @@
   display: inline-block;
   padding: 4px 10px;
   border-radius: 999px;
-  background: var(--bg);
+  background: var(--soft);
   border: 1px solid var(--line);
   font-size: .8rem;
   font-weight: 600;
   color: var(--ink-soft);
   white-space: nowrap;
 }
-.chip-dark { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+.chip-dark { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .chip-warning { background: var(--info-bg); border-color: transparent; color: var(--info-ink); }
 .chip-success { background: var(--success-bg); border-color: transparent; color: var(--success-ink); }
 .chip-error { background: var(--error-bg); border-color: transparent; color: var(--error-ink); }
@@ -92,7 +92,7 @@
   text-decoration: none;
   transition: transform .15s ease, border-color .15s ease;
 }
-.course-card:hover { transform: translateY(-2px); border-color: var(--primary); }
+.course-card:hover { transform: translateY(-2px); border-color: var(--accent); }
 .course-card-title { margin: 0; font-size: 1.15rem; }
 .course-card-text { margin: 0; flex-grow: 1; }
 
@@ -112,6 +112,7 @@
 .course-title { font-size: clamp(1.8rem, 6vw, 2.6rem); margin: 0 0 12px; }
 .course-intro .chip-row { margin-bottom: 16px; }
 .outcome-card { margin-top: 20px; border-left: 4px solid var(--accent); }
+.outcome-card h2, .outcome-card h3 { color: var(--accent); }
 .outcome-card p { margin: 0; }
 .info-list {
   display: grid;
@@ -144,7 +145,7 @@
 }
 
 /* Invite link with copy button */
-.invite-box { margin: 16px 0; padding: 14px; border-radius: var(--radius-sm); background: var(--bg); }
+.invite-box { margin: 16px 0; padding: 14px; border-radius: var(--radius-sm); background: var(--soft); }
 .invite-box p { margin: 0 0 8px; }
 .copy-row { display: flex; gap: 8px; }
 .copy-row input {
@@ -172,7 +173,7 @@
   color: inherit;
   text-decoration: none;
 }
-a.lesson-row:hover { border-color: var(--primary); }
+a.lesson-row:hover { border-color: var(--accent); }
 .lesson-number {
   display: inline-flex;
   align-items: center;
@@ -181,7 +182,7 @@ a.lesson-row:hover { border-color: var(--primary); }
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: var(--bg);
+  background: var(--soft);
   border: 1px solid var(--line);
   font-weight: 700;
   font-size: .9rem;
@@ -189,7 +190,7 @@ a.lesson-row:hover { border-color: var(--primary); }
 .lesson-name { flex: 1; font-weight: 600; }
 .lesson-state { font-size: .8rem; color: var(--ink-soft); white-space: nowrap; }
 .lesson-row.is-done .lesson-number { background: var(--success-bg); border-color: transparent; color: var(--success-ink); }
-.lesson-row.is-current { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary) inset; }
+.lesson-row.is-current { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
 .lesson-row.is-current .lesson-number { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
 .lesson-row.is-locked { opacity: .6; }
 .lesson-list.compact .lesson-row { padding: 10px 12px; }
@@ -214,9 +215,9 @@ a.lesson-row:hover { border-color: var(--primary); }
   flex-direction: column;
   gap: 16px;
   margin-top: 20px;
-  background: var(--ink);
-  color: var(--surface);
-  border-color: var(--ink);
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
 }
 .next-step-card h2 { margin: 0 0 4px; font-size: 1.25rem; }
 .next-step-card p { margin: 0; opacity: .8; }
@@ -236,7 +237,7 @@ a.lesson-row:hover { border-color: var(--primary); }
   font-weight: 700;
   font-size: 1.05rem;
 }
-.question-number { color: var(--primary); }
+.question-number { color: var(--accent); }
 .answer-list { display: grid; gap: 10px; clear: both; }
 .answer-option {
   display: flex;
@@ -250,8 +251,8 @@ a.lesson-row:hover { border-color: var(--primary); }
   transition: border-color .15s ease, background .15s ease;
 }
 .answer-option:hover { border-color: var(--ink-soft); }
-.answer-option input { width: 20px; height: 20px; accent-color: var(--primary); flex-shrink: 0; margin: 0; }
-.answer-option:has(input:checked) { border-color: var(--primary); background: var(--success-bg); }
+.answer-option input { width: 20px; height: 20px; accent-color: var(--accent); flex-shrink: 0; margin: 0; }
+.answer-option:has(input:checked) { border-color: var(--accent); background: var(--success-bg); }
 .quiz-footer {
   position: sticky;
   bottom: 0;
@@ -260,7 +261,7 @@ a.lesson-row:hover { border-color: var(--primary); }
   justify-content: space-between;
   gap: 12px;
   padding: 14px 0;
-  background: var(--bg);
+  background: var(--soft);
   border-top: 1px solid var(--line);
 }
 
@@ -343,8 +344,8 @@ a.lesson-row:hover { border-color: var(--primary); }
 }
 .option-card-body strong { display: block; }
 .option-card-body .small { display: block; margin-top: 2px; }
-.option-card input:checked + .option-card-body { border-color: var(--primary); background: var(--success-bg); box-shadow: 0 0 0 1px var(--primary) inset; }
-.option-card input:focus-visible + .option-card-body { outline: 2px solid var(--primary); outline-offset: 2px; }
+.option-card input:checked + .option-card-body { border-color: var(--accent); background: var(--success-bg); box-shadow: 0 0 0 1px var(--primary) inset; }
+.option-card input:focus-visible + .option-card-body { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* Pills — small options like duration */
 .pill-group { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -360,8 +361,8 @@ a.lesson-row:hover { border-color: var(--primary); }
   text-align: center;
   font-weight: 600;
 }
-.pill input:checked + span { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
-.pill input:focus-visible + span { outline: 2px solid var(--primary); outline-offset: 2px; }
+.pill input:checked + span { background: var(--primary); border-color: var(--ink); color: var(--primary-ink); }
+.pill input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
 .form-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
 
 /* ---------- Builder ---------- */
@@ -378,12 +379,12 @@ a.lesson-row:hover { border-color: var(--primary); }
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: var(--ink);
-  color: var(--surface);
+  background: var(--accent);
+  color: var(--accent-ink);
   font-weight: 700;
   font-size: .85rem;
 }
-.script-step.is-done .step-number { background: var(--success-ink); }
+.script-step.is-done .step-number { background: var(--primary); color: var(--primary-ink); }
 .step-question { font-size: 1.2rem; margin-bottom: 14px; }
 .step-hint { margin: -6px 0 16px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--info-bg); color: var(--info-ink); font-size: .9rem; }
 .yes-no-form { display: flex; gap: 10px; }
@@ -412,14 +413,14 @@ a.lesson-row:hover { border-color: var(--primary); }
   padding: 16px;
   border: 2px dashed var(--line);
   border-radius: var(--radius-sm);
-  background: var(--bg);
+  background: var(--soft);
   text-align: center;
   font-weight: 600 !important;
   color: var(--ink-soft);
   cursor: pointer;
 }
-.upload-box:hover { border-color: var(--primary); color: var(--ink); }
-.upload-box.has-file { border-style: solid; border-color: var(--primary); color: var(--ink); background: var(--success-bg); }
+.upload-box:hover { border-color: var(--accent); color: var(--ink); }
+.upload-box.has-file { border-style: solid; border-color: var(--accent); color: var(--ink); background: var(--success-bg); }
 .upload-box input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .builder-footer { margin-top: 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .builder-footer p { margin: 0; }
@@ -433,10 +434,10 @@ a.lesson-row:hover { border-color: var(--primary); }
 .suggestion-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
 .suggestion {
   padding: 8px 12px;
-  border: 1px dashed var(--primary);
+  border: 1px dashed var(--accent);
   border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--primary);
+  color: var(--accent);
   font: inherit;
   font-size: .85rem;
   text-align: left;
@@ -528,12 +529,12 @@ a.lesson-row:hover { border-color: var(--primary); }
   border-radius: 999px;
   background: var(--surface);
 }
-.search-box input:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
+.search-box input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .search-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
 .search-tabs::-webkit-scrollbar { display: none; }
 .search-status { margin: 20px 0 12px; }
 .result-company { display: flex; gap: 14px; align-items: flex-start; color: inherit; text-decoration: none; }
-.result-company:hover { border-color: var(--primary); }
+.result-company:hover { border-color: var(--accent); }
 .result-company h3 { margin: 0 0 4px; font-size: 1.1rem; }
 .result-company p { margin: 0 0 8px; }
 
@@ -586,7 +587,52 @@ a.lesson-row:hover { border-color: var(--primary); }
   font-weight: 600;
   cursor: pointer;
 }
-.speed-button.is-active { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+.speed-button.is-active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .resume-note { margin-left: auto; }
 .upload-progress { margin-bottom: 14px; }
 .upload-progress p { margin: 6px 0 0; }
+
+
+/* =========================================================
+   BRAND ACCENTS (purple panels with white text)
+   ========================================================= */
+/* Home: big purple welcome block */
+.hero.search-hero {
+  margin-top: 8px;
+  padding: 48px 40px;
+  border-radius: 24px;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.hero.search-hero .eyebrow { color: var(--primary); }
+.hero.search-hero h1 { color: var(--accent-ink); max-width: 18ch; }
+.hero.search-hero .hl { background: none; color: var(--primary); padding: 0; }
+.hero.search-hero .lead { color: var(--accent-soft); }
+.hero.search-hero .btn-outline { color: var(--accent-ink); border-color: rgba(255, 255, 255, .6); }
+.hero.search-hero .btn-outline:hover { background: rgba(255, 255, 255, .12); border-color: var(--accent-ink); }
+
+/* Course page: "Ready to learn?" panel */
+.action-card { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.action-card .side-label { color: var(--primary); }
+.action-card .muted, .action-card .small { color: var(--accent-soft); }
+.action-card .btn-outline { color: var(--accent-ink); border-color: rgba(255, 255, 255, .6); }
+.action-card .btn-outline:hover { background: rgba(255, 255, 255, .12); border-color: var(--accent-ink); }
+.action-card .invite-box { background: rgba(255, 255, 255, .12); }
+.action-card .invite-box input { color: var(--ink); }
+
+/* Course completed */
+.celebrate-card { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.celebrate-card .muted, .celebrate-card .lead { color: var(--accent-soft); }
+.celebrate-card .btn-outline { color: var(--accent-ink); border-color: rgba(255, 255, 255, .6); }
+
+/* Lesson CTA: lime button on purple */
+.next-step-card p { color: var(--accent-soft); opacity: 1; }
+
+/* Small touches */
+
+@media (max-width: 600px) {
+  .hero.search-hero { padding: 32px 22px; border-radius: 18px; }
+}
+
+.company-card { border-left: 4px solid var(--primary); }
+.stat-number { font-family: var(--font-body); font-weight: 800; }

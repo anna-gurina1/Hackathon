@@ -4,7 +4,7 @@ const confettiCanvas = document.querySelector('[data-confetti]');
 
 if (confettiCanvas) {
   const pen = confettiCanvas.getContext('2d');
-  const colors = ['#f0a33a', '#2c6e5a', '#e35d5b', '#4a7fd4', '#f5d04c'];
+  const colors = ['#C6FF33', '#7D39EB', '#000000', '#e9d5ff', '#b4f01c'];
   const pieces = [];
   let framesLeft = 180; // about 3 seconds
 
