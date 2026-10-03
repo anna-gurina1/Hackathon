@@ -10,6 +10,7 @@ from flask import current_app
 
 
 def send_email(to, subject, body):
+    """Send an email. Returns True on success, False if sending failed."""
     cfg = current_app.config
 
     if not cfg.get("MAIL_SERVER"):
@@ -19,17 +20,26 @@ def send_email(to, subject, body):
         print("-" * 60)
         print(body)
         print("=" * 60 + "\n", flush=True)
-        return
+        return True
 
     msg = EmailMessage()
-    msg["From"] = cfg["MAIL_FROM"]
+    msg["From"] = cfg.get("MAIL_FROM") or cfg.get("MAIL_USERNAME")
     msg["To"] = to
     msg["Subject"] = subject
     msg.set_content(body)
 
-    with smtplib.SMTP(cfg["MAIL_SERVER"], cfg["MAIL_PORT"]) as smtp:
-        if cfg.get("MAIL_USE_TLS"):
-            smtp.starttls()
-        if cfg.get("MAIL_USERNAME"):
-            smtp.login(cfg["MAIL_USERNAME"], cfg["MAIL_PASSWORD"])
-        smtp.send_message(msg)
+    try:
+        if cfg.get("MAIL_USE_SSL"):
+            smtp = smtplib.SMTP_SSL(cfg["MAIL_SERVER"], cfg["MAIL_PORT"], timeout=15)
+        else:
+            smtp = smtplib.SMTP(cfg["MAIL_SERVER"], cfg["MAIL_PORT"], timeout=15)
+        with smtp:
+            if cfg.get("MAIL_USE_TLS") and not cfg.get("MAIL_USE_SSL"):
+                smtp.starttls()
+            if cfg.get("MAIL_USERNAME"):
+                smtp.login(cfg["MAIL_USERNAME"], cfg["MAIL_PASSWORD"])
+            smtp.send_message(msg)
+    except Exception:
+        current_app.logger.exception("Could not send email to %s", to)
+        return False
+    return True
