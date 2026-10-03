@@ -6,9 +6,6 @@ from config import Config, init_cloudinary
 from models import db
 
 from backend.routes.auth import auth_bp
-from backend.routes.courses import courses_bp
-from backend.routes.lessons import lessons_bp
-from backend.routes.enrollment import enrollment_bp
 
 
 def create_app():
@@ -19,11 +16,6 @@ def create_app():
     JWTManager(app)
     db.init_app(app)
     init_cloudinary()
-
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(courses_bp)
-    app.register_blueprint(lessons_bp)
-    app.register_blueprint(enrollment_bp)
 
     with app.app_context():
         db.create_all()
