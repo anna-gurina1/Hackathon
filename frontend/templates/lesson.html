@@ -19,7 +19,16 @@
 
       {% if video_url %}
         <div class="video-frame">
-          <video src="{{ video_url }}" controls playsinline preload="metadata"></video>
+          <video src="{{ video_url }}" controls playsinline preload="metadata"
+                 data-lesson-video data-video-key="course-{{ course.id }}-lesson-{{ n }}"></video>
+        </div>
+        <div class="player-tools">
+          <span class="small muted">Speed</span>
+          <button type="button" class="speed-button is-active" data-speed="1">1×</button>
+          <button type="button" class="speed-button" data-speed="1.25">1.25×</button>
+          <button type="button" class="speed-button" data-speed="1.5">1.5×</button>
+          <button type="button" class="speed-button" data-speed="2">2×</button>
+          <span class="small muted resume-note" data-resume-note hidden></span>
         </div>
       {% endif %}
 
@@ -80,4 +89,8 @@
 
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/lesson.js') }}"></script>
 {% endblock %}

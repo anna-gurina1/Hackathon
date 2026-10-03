@@ -95,9 +95,9 @@ def home():
     return render_template("_preview_index.html", courses=list(fake.ALL_COURSES.values()))
 
 
-@main.route("/explore")
-def explore():
-    return render_template("explore.html")
+@main.route("/tips")
+def tips():
+    return render_template("tips.html")
 
 
 @main.route("/account")

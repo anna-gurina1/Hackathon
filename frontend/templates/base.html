@@ -1,142 +1,122 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Bitwise{% endblock %} · Bitwise</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}Microlearning{% endblock %} · SkillShot</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   {% block head %}{% endblock %}
 </head>
 <body>
+
+  {# ---------- Header ---------- #}
   <header class="site-header">
-    <div class="container header-inner">
-      <a class="brand" href="{{ url_for('main.home') }}">Bitwise</a>
+    <div class="container site-header-inner">
+      <a class="logo" href="{{ url_for('main.home') }}">SkillShot</a>
 
-      <nav class="main-nav" aria-label="Main">
-        <a href="{{ url_for('main.home') }}"
-           class="nav-link{% if request.endpoint == 'main.home' %} is-active{% endif %}">Home</a>
-        <a href="{{ url_for('main.explore') }}"
-           class="nav-link{% if request.endpoint == 'main.explore' %} is-active{% endif %}">Explore</a>
-      </nav>
+      <nav class="site-nav">
+        <a href="{{ url_for('main.home') }}">Home</a>
+        <a href="{{ url_for('main.tips') }}">Tips</a>
 
-      <div class="header-user">
         {% if current_user.is_authenticated %}
-          <div class="avatar-menu">
-            <button class="avatar" id="avatar-btn" type="button"
-                    aria-haspopup="true" aria-expanded="false"
-                    aria-label="Open account menu">{{ current_user.initials }}</button>
-            <div class="dropdown" id="avatar-dropdown" hidden>
-              <p class="dropdown-name">{{ current_user.display_name }}</p>
+          <div class="user-menu">
+            <button type="button" class="avatar-button" data-user-menu-button aria-label="Account menu">
+              {{ current_user.initials }}
+            </button>
+            <div class="user-menu-list" data-user-menu hidden>
+              <p class="user-menu-name">{{ current_user.display_name }}</p>
               <a href="{{ url_for('main.account') }}">My account</a>
-              <form action="{{ url_for('auth.logout') }}" method="post">
+              <form method="post" action="{{ url_for('auth.logout') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="dropdown-btn">Log out</button>
+                <button type="submit">Log out</button>
               </form>
             </div>
           </div>
         {% else %}
-          <button class="btn btn-primary" id="auth-open" type="button">Log in / Sign up</button>
+          <button type="button" class="btn btn-primary btn-small" data-open-auth>Log in</button>
         {% endif %}
-      </div>
+      </nav>
     </div>
   </header>
 
-  <div class="flash-area" aria-live="polite">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% for category, message in messages %}
-        <div class="flash flash-{{ category }}" role="status">
-          <span>{{ message }}</span>
-          <button type="button" class="flash-close" aria-label="Dismiss message">&times;</button>
-        </div>
-      {% endfor %}
-    {% endwith %}
-  </div>
+  {# ---------- Flash messages (success / error / info) ---------- #}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="container flash-area">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
 
-  <main class="container page">
+  <main>
     {% block content %}{% endblock %}
   </main>
 
-  {# Filled in by the login / sign-up prompt #}
+  {# ---------- Login / sign up window. Any button with data-open-auth opens it ---------- #}
+  {% block auth_modal %}
   {% if not current_user.is_authenticated %}
-    <dialog id="auth-modal" class="modal">
-      <div class="modal-head">
-        <h2>Log in / Sign up</h2>
-        <button type="button" class="flash-close" id="auth-close" aria-label="Close">&times;</button>
+  <dialog class="auth-modal" data-auth-modal>
+    <div class="card">
+      <button type="button" class="auth-close" data-close-auth aria-label="Close">&times;</button>
+
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab is-active" data-auth-tab="login">Log in</button>
+        <button type="button" class="auth-tab" data-auth-tab="signup">Sign up</button>
       </div>
-      {% block auth_modal %}
-        <div class="auth-tabs" role="tablist">
-          <button type="button" class="auth-tab is-active" role="tab" data-auth-tab="login"
-                  aria-selected="true" aria-controls="auth-login">Log in</button>
-          <button type="button" class="auth-tab" role="tab" data-auth-tab="signup"
-                  aria-selected="false" aria-controls="auth-signup">Sign up</button>
+
+      {# Log in: we email a one-time link, no password #}
+      <form method="post" action="{{ url_for('auth.login') }}" data-auth-panel="login">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <p class="muted small">We'll email you a one-time login link. No password needed.</p>
+        <div class="field">
+          <label for="login-email">Email</label>
+          <input id="login-email" type="email" name="email" required placeholder="you@example.com" autocomplete="email">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Send login link</button>
+      </form>
+
+      {# Sign up: person or company #}
+      <form method="post" action="{{ url_for('auth.signup') }}" data-auth-panel="signup" hidden>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="pill-switch">
+          <label><input type="radio" name="type" value="person" checked data-account-type><span>I want to learn</span></label>
+          <label><input type="radio" name="type" value="company" data-account-type><span>I'm a company</span></label>
         </div>
 
-        {# Log in: we email a one-time link #}
-        <form id="auth-login" class="auth-panel" role="tabpanel"
-              action="{{ url_for('auth.login') }}" method="post">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div data-person-fields>
+          <div class="field-row">
+            <div class="field">
+              <label for="first-name">First name</label>
+              <input id="first-name" type="text" name="first_name" autocomplete="given-name">
+            </div>
+            <div class="field">
+              <label for="last-name">Last name</label>
+              <input id="last-name" type="text" name="last_name" autocomplete="family-name">
+            </div>
+          </div>
+        </div>
+
+        <div data-company-fields hidden>
           <div class="field">
-            <label for="login-email">Email</label>
-            <input id="login-email" name="email" type="email" required autocomplete="email">
+            <label for="company-name">Company name</label>
+            <input id="company-name" type="text" name="company_name" autocomplete="organization">
           </div>
-          <p class="muted small">We will email you a one-time login link.</p>
-          <button type="submit" class="btn btn-primary btn-block">Send login link</button>
-        </form>
+        </div>
 
-        {# Sign up: person or company #}
-        <form id="auth-signup" class="auth-panel" role="tabpanel" hidden
-              action="{{ url_for('auth.signup') }}" method="post">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="type-switch" role="radiogroup" aria-label="Account type">
-            <label><input type="radio" name="type" value="person" checked> I'm a person</label>
-            <label><input type="radio" name="type" value="company"> I'm a company</label>
-          </div>
-
-          <div data-for-type="person">
-            <div class="field">
-              <label for="su-first">First name</label>
-              <input id="su-first" name="first_name" maxlength="60" required autocomplete="given-name">
-            </div>
-            <div class="field">
-              <label for="su-last">Last name</label>
-              <input id="su-last" name="last_name" maxlength="60" required autocomplete="family-name">
-            </div>
-          </div>
-
-          <div data-for-type="company" hidden>
-            <div class="field">
-              <label for="su-company">Company name</label>
-              <input id="su-company" name="company_name" maxlength="120" disabled>
-            </div>
-            <div class="field">
-              <label for="su-desc">Short description</label>
-              <textarea id="su-desc" name="description" maxlength="500" rows="3" disabled
-                        placeholder="What does your company do?"></textarea>
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="su-email">Email</label>
-            <input id="su-email" name="email" type="email" required autocomplete="email">
-          </div>
-          <button type="submit" class="btn btn-primary btn-block">Create account</button>
-        </form>
-      {% endblock %}
-    </dialog>
-  {% endif %}
-
-  <footer class="site-footer">
-    <div class="container footer-inner">
-      <span>&copy; {{ now_year }} Bitwise. Learn in minutes.</span>
-      <nav aria-label="Footer">
-        <a href="{{ url_for('main.home') }}">Home</a>
-        <a href="{{ url_for('main.explore') }}">Explore</a>
-      </nav>
+        <div class="field">
+          <label for="signup-email">Email</label>
+          <input id="signup-email" type="email" name="email" required placeholder="you@example.com" autocomplete="email">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Create account</button>
+      </form>
     </div>
-  </footer>
+  </dialog>
+  {% endif %}
+  {% endblock %}
 
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
   {% block scripts %}{% endblock %}

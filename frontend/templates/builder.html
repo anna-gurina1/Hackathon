@@ -26,6 +26,7 @@
         <input type="file" name="video" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov" data-video-input>
         <span data-file-name>🎥 Tap to record or choose a video (mp4, webm, mov)</span>
       </label>
+      <p class="field-hint">Up to 15 min and 500 MB. Tip: a 15-min video compressed to 720p is about 200 MB and uploads much faster.</p>
       {% if lesson and lesson.video_filename %}
         <p class="field-hint">Current video: {{ lesson.video_filename }}. Choose a new file to replace it.</p>
       {% endif %}
@@ -35,6 +36,11 @@
       <label for="text-{{ question.id }}">Text answer <span class="muted small">(optional)</span></label>
       <textarea id="text-{{ question.id }}" name="text" rows="4"
                 placeholder="Key steps, numbers or tips to show under the video">{{ lesson.text if lesson and lesson.text else '' }}</textarea>
+    </div>
+
+    <div class="upload-progress" data-upload-progress hidden>
+      <div class="progress"><div class="progress-fill" data-upload-bar style="width: 0%"></div></div>
+      <p class="small muted" data-upload-text>Uploading… 0%</p>
     </div>
 
     <button type="submit" class="btn btn-primary" data-save-button>Save answer</button>
