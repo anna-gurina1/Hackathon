@@ -16,11 +16,6 @@
       <h1>{{ user.display_name }}</h1>
       <p class="muted">{{ user.email }} · <a href="{{ url_for('courses.company_profile', company_id=user.id) }}">Public page</a></p>
     </div>
-    {% if user.is_pro %}
-      <span class="pro-badge pro-badge-lg">PRO</span>
-    {% else %}
-      <a class="btn btn-outline btn-small" href="{{ url_for('main.pro') }}">Upgrade to Pro</a>
-    {% endif %}
   </div>
 
   {% set total_enrolled = courses|sum(attribute='enrolled') %}
