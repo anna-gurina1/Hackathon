@@ -78,8 +78,6 @@ def test_company_creates_course_and_goes_to_builder(app):
             "profession": "Welder",
             "outcome": "Weld a seam",
             "level": "beginner",
-            "knowledge_type": "procedure",
-            "duration": "5",
             "visibility": "public",
         },
     )

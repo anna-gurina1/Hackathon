@@ -13,7 +13,8 @@ from flask import (
 from flask_login import current_user, login_required
 
 from backend.uploads import delete_video
-from core.questions import DURATIONS, LEVELS, TYPES
+from core.course_builder import recommended_questions
+from core.questions import LEVELS
 from database import db
 from database.models import CompanyProfile, Course, Enrollment, User  # noqa: F401
 from database.queries import course_visible_to, search_companies
@@ -46,23 +47,30 @@ def _read_form():
         "profession": f.get("profession", "").strip(),
         "outcome": f.get("outcome", "").strip(),
         "level": f.get("level", ""),
-        "knowledge_type": f.get("knowledge_type", ""),
         "is_private": f.get("visibility") == "private",
     }
-    try:
-        data["duration"] = int(f.get("duration", ""))
-    except ValueError:
-        data["duration"] = None
-
     if not data["title"]:
         return data, "Please enter a course title."
     if data["level"] not in LEVELS:
         return data, "Please choose a level."
-    if data["knowledge_type"] not in TYPES:
-        return data, "Please choose a knowledge type."
-    if data["duration"] not in DURATIONS:
-        return data, "Please choose a duration."
     return data, None
+
+
+def _apply_plan_rules(data):
+    """Private courses are a Pro feature: a non-Pro company's course stays public."""
+    if data["is_private"] and not current_user.is_pro:
+        data["is_private"] = False
+        flash("Private courses are a Pro feature. The course stays public.", "info")
+
+
+def _render_form(course, status=200):
+    return render_template(
+        "course_form.html",
+        course=course,
+        LEVELS=LEVELS,
+        is_pro=current_user.is_pro,
+        recommended=recommended_questions(None),
+    ), status
 
 
 def _render_course(course):
@@ -96,16 +104,13 @@ def new():
         data, error = _read_form()
         if error:
             flash(error, "error")
-            return render_template(
-                "course_form.html", course=None, LEVELS=LEVELS, TYPES=TYPES, DURATIONS=DURATIONS
-            ), 400
+            return _render_form(None, 400)
+        _apply_plan_rules(data)
         course = Course(company_id=current_user.id, **data)
         db.session.add(course)
         db.session.commit()
         return redirect(url_for("builder.script", course_id=course.id))
-    return render_template(
-        "course_form.html", course=None, LEVELS=LEVELS, TYPES=TYPES, DURATIONS=DURATIONS
-    )
+    return _render_form(None)
 
 
 @bp.route("/course/<int:course_id>/edit", methods=["GET", "POST"])
@@ -116,17 +121,14 @@ def edit(course_id):
         data, error = _read_form()
         if error:
             flash(error, "error")
-            return render_template(
-                "course_form.html", course=course, LEVELS=LEVELS, TYPES=TYPES, DURATIONS=DURATIONS
-            ), 400
+            return _render_form(course, 400)
+        _apply_plan_rules(data)
         for key, value in data.items():
             setattr(course, key, value)
         db.session.commit()
         flash("Course saved.", "success")
         return redirect(url_for("builder.script", course_id=course.id))
-    return render_template(
-        "course_form.html", course=course, LEVELS=LEVELS, TYPES=TYPES, DURATIONS=DURATIONS
-    )
+    return _render_form(course)
 
 
 @bp.route("/course/<int:course_id>/delete", methods=["POST"])

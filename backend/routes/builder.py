@@ -1,25 +1,29 @@
-"""Course builder for the master.
+"""Course studio for the master.
 
-The system picks interview questions (core/course_builder.py) by the course
-level, knowledge type and duration. The master answers each question with a
-video and/or text, and every answer becomes a lesson. Then the master adds a
-short quiz to each lesson.
+The master builds the course lesson by lesson. A lesson = title + video and/or text.
+Next to the lesson list the page shows recommended questions (core/questions.py)
+for the course level; a question can be attached to a lesson with the "Use" button
+(then the lesson keeps its question_id). Time is only a hint and is never checked.
 
-    builder.script     GET  /course/<id>/builder
-    builder.answer     POST /course/<id>/builder/<question_id>
-    builder.quiz_edit  GET/POST /course/<id>/lesson/<lesson_id>/quiz/edit
+    builder.script         GET  /course/<id>/builder
+    builder.add_lesson     POST /course/<id>/lessons
+    builder.edit_lesson    POST /course/<id>/lessons/<lesson_id>
+    builder.delete_lesson  POST /course/<id>/lessons/<lesson_id>/delete
+    builder.quiz_edit      GET/POST /course/<id>/lesson/<lesson_id>/quiz/edit
 """
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from backend.uploads import delete_video, save_video
-from core.course_builder import category_label, select_questions
+from core.course_builder import recommended_questions
 from core.questions import QUESTIONS, QUIZ_TEMPLATES
 from database import db
 from database.models import Course, Lesson, Quiz, QuizAnswer, QuizQuestion
 
 bp = Blueprint("builder", __name__)
 
+# Only questions that are answered with a video/text can be attached to a lesson
+MEDIA_QUESTION_IDS = {q["id"] for q in QUESTIONS if q["answer_type"] == "media"}
 QUESTIONS_BY_ID = {q["id"]: q for q in QUESTIONS}
 
 
@@ -37,123 +41,170 @@ def _owned_course_or_abort(course_id):
     return course
 
 
-def _script_for(course):
-    """Questions for this course, in teaching order."""
-    return select_questions(
-        course.level, course.knowledge_type, course.duration, course.yes_answer_ids
-    )
-
-
-def _set_yes(course, question_id, said_yes):
-    ids = course.yes_answer_ids
-    if said_yes:
-        ids.add(question_id)
-    else:
-        ids.discard(question_id)
-    course.yes_answers = ",".join(str(i) for i in sorted(ids))
+def _lesson_or_abort(course, lesson_id):
+    lesson = db.session.get(Lesson, lesson_id)
+    if lesson is None or lesson.course_id != course.id:
+        abort(404)
+    return lesson
 
 
 def _renumber_lessons(course):
-    """Lesson order follows the question order in the script (1, 2, 3, ...).
-    Lessons whose question is no longer in the script keep their place at the end."""
-    position = {q["id"]: index for index, q in enumerate(_script_for(course))}
+    """Lesson order is 1, 2, 3, ... without gaps."""
     lessons = sorted(
         Lesson.query.filter_by(course_id=course.id).all(),
-        key=lambda l: (position.get(l.question_id, len(position)), l.order or 0, l.id),
+        key=lambda l: (l.order or 0, l.id),
     )
     for number, lesson in enumerate(lessons, start=1):
         lesson.order = number
 
 
-# ---------- the script page ----------
+def _back_to_script(course, lesson=None):
+    anchor = f"#lesson-{lesson.id}" if lesson is not None else ""
+    return redirect(url_for("builder.script", course_id=course.id) + anchor)
+
+
+def _read_question_id(course, current_lesson=None):
+    """question_id from the form. Returns (question_id, error).
+    Empty -> (None, None). A question can be used by one lesson of the course only."""
+    raw = request.form.get("question_id", "").strip()
+    if not raw:
+        return None, None
+    try:
+        question_id = int(raw)
+    except ValueError:
+        return None, "Unknown question."
+    if question_id not in MEDIA_QUESTION_IDS:
+        return None, "Unknown question."
+    taken = Lesson.query.filter_by(course_id=course.id, question_id=question_id).first()
+    if taken is not None and taken is not current_lesson:
+        return None, "This question is already used by another lesson."
+    return question_id, None
+
+
+def _read_video():
+    """Uploaded video file or None."""
+    video = request.files.get("video")
+    return video if video is not None and video.filename else None
+
+
+# ---------- the studio page ----------
 
 @bp.route("/course/<int:course_id>/builder")
 @login_required
 def script(course_id):
     course = _owned_course_or_abort(course_id)
-    lessons = {l.question_id: l for l in course.lessons if l.question_id is not None}
-
-    items = []
-    for position, question in enumerate(_script_for(course), start=1):
-        items.append({
-            "q": question,
-            "category_label": category_label(question["category"]),
-            "lesson": lessons.get(question["id"]),
-            "position": position,
-        })
-
-    # Progress counts only questions that become lessons (yes/no questions are switches)
-    media_items = [item for item in items if item["q"]["answer_type"] == "media"]
-    answered = sum(1 for item in media_items if item["lesson"] is not None)
-
+    lessons = course.lessons
     return render_template(
         "builder.html",
         course=course,
-        script=items,
-        answered=answered,
-        total=len(media_items),
+        lessons=lessons,
+        recommended=recommended_questions(course.level),
+        used_question_ids={l.question_id for l in lessons if l.question_id is not None},
+        is_pro=current_user.is_pro,
     )
 
 
-# ---------- saving one answer ----------
+# ---------- add / edit / delete a lesson ----------
 
-@bp.route("/course/<int:course_id>/builder/<int:question_id>", methods=["POST"])
+@bp.route("/course/<int:course_id>/lessons", methods=["POST"])
 @login_required
-def answer(course_id, question_id):
+def add_lesson(course_id):
     course = _owned_course_or_abort(course_id)
-    question = QUESTIONS_BY_ID.get(question_id)
-    if question is None or question_id not in {q["id"] for q in _script_for(course)}:
-        abort(404)
-    back = url_for("builder.script", course_id=course.id) + f"#q{question_id}"
 
-    # yes/no: a switch that adds or removes follow-up questions
-    if question["answer_type"] == "yes_no":
-        value = request.form.get("yes_no")
-        if value not in ("yes", "no"):
-            flash("Choose Yes or No.", "error")
-            return redirect(back)
-        _set_yes(course, question_id, value == "yes")
-        _renumber_lessons(course)
-        db.session.commit()
-        if value == "yes":
-            flash("Follow-up questions were added to the script.", "success")
-        return redirect(back)
-
-    # media: the answer becomes a lesson
-    lesson = Lesson.query.filter_by(course_id=course.id, question_id=question_id).first()
-    title = request.form.get("title", "").strip()[:200] or question["text"][:200]
+    title = request.form.get("title", "").strip()[:200]
     text = request.form.get("text", "").strip()
-    video = request.files.get("video")
-    has_new_video = video is not None and bool(video.filename)
+    if not title:
+        flash("Enter the lesson title.", "error")
+        return _back_to_script(course)
 
-    if not has_new_video and not text and not (lesson and lesson.video_filename):
-        flash("Add a video or a text answer.", "error")
-        return redirect(back)
+    question_id, error = _read_question_id(course)
+    if error:
+        flash(error, "error")
+        return _back_to_script(course)
 
-    new_filename = None
-    if has_new_video:
+    filename = None
+    video = _read_video()
+    if video is not None:
         try:
-            new_filename = save_video(video)
+            filename = save_video(video)
         except (ValueError, RuntimeError) as error:  # RuntimeError: video storage is not configured
             flash(str(error), "error")
-            return redirect(back)
+            return _back_to_script(course)
 
-    if lesson is None:
-        lesson = Lesson(course_id=course.id, question_id=question_id, order=0, title=title)
-        db.session.add(lesson)
-
-    lesson.title = title
-    lesson.text = text or None
-    if new_filename:
-        if lesson.video_filename:
-            delete_video(lesson.video_filename)
-        lesson.video_filename = new_filename
-
+    lesson = Lesson(
+        course_id=course.id,
+        order=len(course.lessons) + 1,
+        title=title,
+        text=text or None,
+        question_id=question_id,
+        video_filename=filename,
+    )
+    db.session.add(lesson)
     db.session.flush()
     _renumber_lessons(course)
     db.session.commit()
-    flash(f"Saved as lesson {lesson.order}. Now add a quick quiz to it.", "success")
-    return redirect(back)
+    flash(f"Lesson {lesson.order} added. Now add a quick quiz to it.", "success")
+    return _back_to_script(course, lesson)
+
+
+@bp.route("/course/<int:course_id>/lessons/<int:lesson_id>", methods=["POST"])
+@login_required
+def edit_lesson(course_id, lesson_id):
+    course = _owned_course_or_abort(course_id)
+    lesson = _lesson_or_abort(course, lesson_id)
+
+    title = request.form.get("title", "").strip()[:200]
+    text = request.form.get("text", "").strip()
+    if not title:
+        flash("Enter the lesson title.", "error")
+        return _back_to_script(course, lesson)
+
+    question_id, error = _read_question_id(course, current_lesson=lesson)
+    if error:
+        flash(error, "error")
+        return _back_to_script(course, lesson)
+
+    new_filename = None
+    video = _read_video()
+    if video is not None:
+        try:
+            new_filename = save_video(video)
+        except (ValueError, RuntimeError) as error:
+            flash(str(error), "error")
+            return _back_to_script(course, lesson)
+
+    lesson.title = title
+    lesson.text = text or None
+    lesson.question_id = question_id
+    old_filename = None
+    if new_filename:
+        old_filename = lesson.video_filename
+        lesson.video_filename = new_filename
+    db.session.commit()
+
+    # the old video is removed only after the new one is really saved in the database
+    if old_filename:
+        delete_video(old_filename)
+    flash("Lesson saved.", "success")
+    return _back_to_script(course, lesson)
+
+
+@bp.route("/course/<int:course_id>/lessons/<int:lesson_id>/delete", methods=["POST"])
+@login_required
+def delete_lesson(course_id, lesson_id):
+    course = _owned_course_or_abort(course_id)
+    lesson = _lesson_or_abort(course, lesson_id)
+
+    video_id = lesson.video_filename
+    db.session.delete(lesson)
+    db.session.flush()
+    _renumber_lessons(course)
+    db.session.commit()
+
+    if video_id:
+        delete_video(video_id)
+    flash("Lesson deleted.", "info")
+    return _back_to_script(course)
 
 
 # ---------- quiz for one lesson ----------

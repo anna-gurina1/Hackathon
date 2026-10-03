@@ -42,6 +42,10 @@ class User(db.Model, UserMixin):
         return self.type == "company"
 
     @property
+    def is_pro(self):
+        return bool(self.is_company and self.company and self.company.is_pro)
+
+    @property
     def display_name(self):
         if self.is_company and self.company:
             return self.company.name
@@ -70,6 +74,8 @@ class CompanyProfile(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     name = db.Column(db.String(120), nullable=False)
     description = db.Column(db.String(500), nullable=True)
+    # Pro plan (demo payment). Only Pro companies can make private courses.
+    is_pro = db.Column(db.Boolean, default=False, nullable=False)
 
 
 # ---------------------------------------------------------------------------
@@ -87,8 +93,9 @@ class Course(db.Model):
     outcome = db.Column(db.Text, nullable=True)  # what the learner will be able to do
 
     level = db.Column(db.String(20), nullable=False)          # key from LEVELS
-    knowledge_type = db.Column(db.String(30), nullable=False)  # key from TYPES
-    duration = db.Column(db.Integer, nullable=False)          # minutes, one of DURATIONS
+    # No longer asked in the course form (kept nullable so old data still loads)
+    knowledge_type = db.Column(db.String(30), nullable=True)
+    duration = db.Column(db.Integer, nullable=True)
 
     is_private = db.Column(db.Boolean, default=False, nullable=False)
     invite_token = db.Column(
@@ -96,7 +103,7 @@ class Course(db.Model):
     )
     status = db.Column(db.String(20), default="draft", nullable=False)  # "draft" | "published"
 
-    # Comma-separated ids of yes_no questions the master answered "yes" to.
+    # Not used anymore (the studio has no yes/no questions); kept so the table does not change.
     yes_answers = db.Column(db.String(300), default="", nullable=False)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
