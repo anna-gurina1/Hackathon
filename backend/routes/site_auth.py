@@ -27,7 +27,7 @@ def _back_to_form(message, tab):
 def send_login_link(user):
     token = _serializer().dumps({"id": user.id, "n": user.login_nonce})
     link = url_for("auth.magic_login", token=token, _external=True)
-    send_email(
+    return send_email(
         user.email,
         "Your login link",
         f"Hi {user.display_name},\n\n"
@@ -87,7 +87,8 @@ def login():
     if not user:
         return _back_to_form("No account with this email. Sign up first.", "signup")
 
-    send_login_link(user)
+    if not send_login_link(user):
+        return _back_to_form("Could not send the email right now. Try again later.", "login")
     flash(f"We sent a login link to {email}. Check your inbox.", "info")
     return redirect(url_for("main.home"))
 
