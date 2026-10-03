@@ -869,3 +869,4 @@ a.lesson-row:hover { border-color: var(--accent); }
 }
 .action-card .btn[disabled] { opacity: .75; cursor: default; color: var(--accent-ink); border-color: rgba(255, 255, 255, .6); }
 .avatar-photo { box-shadow: 0 0 0 1px var(--line); }  /* white logos stay visible on white cards */
+.suggest-ai-button { margin: 0 0 12px; }

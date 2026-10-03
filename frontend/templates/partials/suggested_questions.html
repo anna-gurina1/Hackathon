@@ -2,6 +2,8 @@
   Side panel with question ideas from core/questions.py.
   Needs: recommended = [{"category": "goal", "category_label": "Learning goal", "questions": [question dicts]}]
   Optional: used_question_ids (set of ids already turned into lessons), can_use (show "Use" buttons)
+  Optional: ai_url (shows the purple "Show AI suggestions" button; it posts to this url),
+            ai_form (id of the form whose fields the AI should read; without it the server uses the saved course)
   Each module (category) is folded: only its name is shown, the questions open with the arrow.
 #}
 <aside class="suggest-panel card" data-suggest-panel>
@@ -10,6 +12,12 @@
     Not sure where to start or how to put it into words? These questions can help you shape your thoughts.
     They are only hints — use any of them, change them, or teach in your own way.
   </p>
+
+  {% if ai_url is defined %}
+    <button type="button" class="btn btn-accent btn-small btn-block suggest-ai-button" data-ai-suggest
+            data-ai-url="{{ ai_url }}" data-csrf="{{ csrf_token() }}"
+            {% if ai_form is defined %}data-ai-form="{{ ai_form }}"{% endif %}>Show AI suggestions</button>
+  {% endif %}
 
   {% for group in recommended %}
     <details class="suggest-group" data-category="{{ group.category }}">

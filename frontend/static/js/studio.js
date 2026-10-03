@@ -92,22 +92,28 @@ function showToast(message) {
 const aiButton = document.querySelector('[data-ai-suggest]');
 
 if (aiButton) {
-  const courseForm = aiButton.closest('form');
+  // On the "New course" page the AI reads the form; on the course page the server uses the saved course.
+  const courseForm = aiButton.dataset.aiForm ? document.getElementById(aiButton.dataset.aiForm) : null;
   const aiFieldNames = ['title', 'description', 'topic', 'profession', 'outcome'];
+  const emptyMessage = 'Fill in the course details first (topic, profession, what people will learn) so the AI knows what to suggest.';
 
   aiButton.addEventListener('click', async function () {
-    // read what the company has typed so far
-    const typed = {};
-    aiFieldNames.forEach(function (name) {
-      const field = courseForm.elements[name];
-      typed[name] = field ? field.value.trim() : '';
-    });
-    const checkedLevel = courseForm.querySelector('input[name="level"]:checked');
-    typed.level = checkedLevel ? checkedLevel.value : '';
+    let body = '{}';
+    if (courseForm) {
+      // read what the company has typed so far
+      const typed = {};
+      aiFieldNames.forEach(function (name) {
+        const field = courseForm.elements[name];
+        typed[name] = field ? field.value.trim() : '';
+      });
+      const checkedLevel = courseForm.querySelector('input[name="level"]:checked');
+      typed.level = checkedLevel ? checkedLevel.value : '';
 
-    if (!aiFieldNames.some(function (name) { return typed[name] !== ''; })) {
-      showToast('Fill in the course details first (title, topic or profession) so the AI knows what to suggest.');
-      return;
+      if (!aiFieldNames.some(function (name) { return typed[name] !== ''; })) {
+        showToast(emptyMessage);
+        return;
+      }
+      body = JSON.stringify(typed);
     }
 
     const normalLabel = aiButton.textContent;
@@ -119,14 +125,18 @@ if (aiButton) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRFToken': courseForm.elements['csrf_token'].value,
+          'X-CSRFToken': aiButton.dataset.csrf,
         },
-        body: JSON.stringify(typed),
+        body: body,
       });
+      const data = await response.json().catch(function () { return {}; });
+      if (response.status === 400 && data.error === 'empty') {
+        showToast(emptyMessage);                     // nothing typed in the saved course either
+        return;
+      }
       if (!response.ok) throw new Error('AI request failed: ' + response.status);
-      const data = await response.json();
       showAiQuestions(data.questions || {});
-      showToast('Done! One tip from AI was added to each topic on the right.');
+      showToast('Done! One tip from AI was added to each topic.');
     } catch (error) {
       showToast('AI suggestions are not available right now. Please try again later.');
     } finally {
@@ -168,7 +178,9 @@ function showAiQuestions(questionsByCategory) {
   });
 
   // refresh the numbers next to the topic names, open the first topic so the change is noticed
-  const levelNow = levelPicker && levelPicker.querySelector('input:checked');
-  if (levelNow) showQuestionsForLevel(levelNow.value);
+  document.querySelectorAll('.suggest-group').forEach(function (group) {
+    const counter = group.querySelector('[data-suggest-count]');
+    if (counter) counter.textContent = group.querySelectorAll('.suggest-item:not([hidden])').length;
+  });
   if (firstGroup) firstGroup.open = true;
 }
