@@ -1,9 +1,0 @@
-{% extends "base.html" %}
-{% block title %}{{ code }}{% endblock %}
-{% block content %}
-<div class="container page" style="text-align:center">
-  <h1>{{ code }}</h1>
-  <p class="lead">{{ message }}</p>
-  <a class="btn btn-primary" href="{{ url_for('main.home') }}">Back to screens</a>
-</div>
-{% endblock %}

@@ -11,3 +11,7 @@ app.db
 *.mp4
 .vscode/
 .pytest_cache/
+*.bak
+*.bak
+*.bak
+*.bak
