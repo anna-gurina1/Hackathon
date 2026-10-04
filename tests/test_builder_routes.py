@@ -250,7 +250,12 @@ def test_quiz_edit_other_course_lesson(app):
     assert other.get(f"/course/{course.id}/lesson/{lesson.id}/quiz/edit").status_code == 403
 
 
-# ---------- private courses are free for every company ----------
+# ---------- private courses (Per course and Monthly plans only, see tests/test_plans.py) ----------
+
+def buy_monthly(client):
+    """Private courses and several courses need a paid plan."""
+    client.post("/pricing/choose", data={"plan": "monthly"})
+
 
 def edit_course(client, course, visibility):
     return client.post(f"/course/{course.id}/edit", data={
@@ -261,6 +266,7 @@ def edit_course(client, course, visibility):
 
 def test_company_creates_private_course(app):
     client = company_client(app)
+    buy_monthly(client)
     with app.app_context():
         course = create_course(client, visibility="private")
         assert course.is_private is True
@@ -269,6 +275,7 @@ def test_company_creates_private_course(app):
 
 def test_unknown_visibility_becomes_public(app):
     client = company_client(app)
+    buy_monthly(client)
     with app.app_context():
         assert create_course(client, visibility="secret").is_private is False
         assert create_course(client, visibility="").is_private is False
@@ -276,6 +283,7 @@ def test_unknown_visibility_becomes_public(app):
 
 def test_edit_keeps_private_and_can_switch(app):
     client = company_client(app)
+    buy_monthly(client)
     with app.app_context():
         course = create_course(client, visibility="private")
         course_id, token = course.id, course.invite_token
@@ -302,6 +310,7 @@ def test_private_course_stays_private_after_publish(app):
     other.post(f"/course/{public_course.id}/publish")
 
     client = company_client(app)
+    buy_monthly(client)
     with app.app_context():
         course = create_course(client, visibility="private")
         course_id, token = course.id, course.invite_token

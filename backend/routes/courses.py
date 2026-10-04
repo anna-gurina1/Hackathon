@@ -12,6 +12,7 @@ from flask import (
 )
 from flask_login import current_user, login_required
 
+from backend.plans import can_create_course
 from backend.uploads import delete_video
 from backend.email import external_url, send_email
 from backend.ai_tips import AiUnavailable, generate_category_questions
@@ -58,6 +59,22 @@ def _read_form():
     return data, None
 
 
+def _apply_plan_rules(data):
+    """Private courses need the Per course or Monthly plan: on Free the course stays public."""
+    company = current_user.company
+    if data["is_private"] and not (company and company.is_pro):
+        data["is_private"] = False
+        flash("Private courses are a Pro feature. The course stays public.", "info")
+
+
+def _no_free_course_slot():
+    """Redirect to the pricing page when the company has used all courses of its plan, else None."""
+    if can_create_course(current_user):
+        return None
+    flash("You have used all courses on your plan. Choose a plan to add more.", "info")
+    return redirect(url_for("main.pricing"))
+
+
 def _render_form(course, status=200):
     return render_template(
         "course_form.html",
@@ -102,11 +119,15 @@ def _render_course(course, invite_token=None):
 def new():
     if not current_user.is_company:
         abort(403)
+    no_slot = _no_free_course_slot()
+    if no_slot:
+        return no_slot
     if request.method == "POST":
         data, error = _read_form()
         if error:
             flash(error, "error")
             return _render_form(None, 400)
+        _apply_plan_rules(data)
         course = Course(company_id=current_user.id, **data)
         db.session.add(course)
         db.session.commit()
@@ -123,6 +144,7 @@ def edit(course_id):
         if error:
             flash(error, "error")
             return _render_form(course, 400)
+        _apply_plan_rules(data)
         for key, value in data.items():
             setattr(course, key, value)
         db.session.commit()
