@@ -104,8 +104,24 @@
   {# ---------- Courses ---------- #}
   <div class="page-header" style="margin-top: 32px; margin-bottom: 14px;">
     <h2 class="section-title" style="margin: 0;">Your courses</h2>
-    <a class="btn btn-primary" href="{{ url_for('courses.new') }}">+ New course</a>
+    {% if can_create_course | default(true) %}
+      <a class="btn btn-primary" href="{{ url_for('courses.new') }}">+ New course</a>
+    {% else %}
+      <a class="btn btn-outline" href="{{ url_for('main.pricing') }}">Upgrade to add a course</a>
+    {% endif %}
   </div>
+
+  {% if plan_label is defined %}
+    <p class="small muted">
+      Plan: <strong>{{ plan_label }}</strong> ·
+      {% if course_limit is none %}
+        {{ courses_used }} courses, no limit
+      {% else %}
+        {{ courses_used }} of {{ course_limit }} courses used
+      {% endif %}
+      · <a href="{{ url_for('main.pricing') }}">Change plan</a>
+    </p>
+  {% endif %}
 
   {% if courses %}
     <div class="manage-list">

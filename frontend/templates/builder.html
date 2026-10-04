@@ -22,15 +22,22 @@
              value="{{ lesson.title if lesson else '' }}" data-lesson-title>
     </div>
 
+    {# Replacing a video in a lesson that already has one does not count as a new video #}
+    {% set has_video = lesson and lesson.video_filename %}
+    {% set video_blocked = not has_video and not (can_add_video | default(true)) %}
     <div class="field">
       <label>Video</label>
       <label class="upload-box">
-        <input type="file" name="video" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov" data-video-input>
-        <span data-file-name>🎥 Record or choose a video</span>
+        <input type="file" name="video" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov" data-video-input {{ 'disabled' if video_blocked }}>
+        <span data-file-name>{{ '🔒 No videos left on your plan' if video_blocked else '🎥 Record or choose a video' }}</span>
       </label>
       <p class="field-hint">
-        {% if lesson and lesson.video_filename %}Current: {{ lesson.video_filename }}. Choose a file to replace it. {% endif %}
+        {% if has_video %}Current: {{ lesson.video_filename }}. Choose a file to replace it. {% endif %}
         mp4, webm or mov, up to 500 MB.
+        {% if video_limit is defined and video_limit is not none %}
+          <br>Videos in this course: {{ videos_used }} of {{ video_limit }} on your plan.
+          {% if video_blocked %}<a href="{{ url_for('main.pricing') }}">Upgrade</a> or add a text-only lesson.{% endif %}
+        {% endif %}
       </p>
     </div>
 

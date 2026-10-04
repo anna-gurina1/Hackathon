@@ -6,14 +6,32 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
 {% endblock %}
 
-{# Payments are not connected yet: every button just takes you further #}
+{# Payments are not connected yet (demo).
+   A company chooses a plan with a form; guests and people just go further. #}
 {% set next_step_url = url_for('main.account') if current_user.is_authenticated else url_for('main.home') %}
+
+{# One plan button. current_plan comes from the backend, so the form shows up only when it is ready. #}
+{% macro plan_button(plan, label, button_style, next_step_url, current_plan) %}
+  {% if current_plan is defined and current_user.is_authenticated and current_user.is_company %}
+    <form method="post" action="{{ url_for('main.choose_plan') }}" class="pricing-button">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="plan" value="{{ plan }}">
+      {% if current_plan == plan and plan != 'per_course' %}
+        <button type="button" class="btn {{ button_style }}" style="width: 100%;" disabled>Your plan</button>
+      {% else %}
+        <button type="submit" class="btn {{ button_style }}" style="width: 100%;">{{ label }}</button>
+      {% endif %}
+    </form>
+  {% else %}
+    <a class="btn {{ button_style }} pricing-button" href="{{ next_step_url }}">{{ label }}</a>
+  {% endif %}
+{% endmacro %}
 
 {% block content %}
 <div class="container page">
   <section class="pricing-intro">
     <h1>Simple plans for every team</h1>
-    <p class="lead">Start free. Pay when you need more courses or longer videos.</p>
+    <p class="lead">Start free. Pay when you need more courses or videos.</p>
   </section>
 
   <div class="pricing-plans">
@@ -28,7 +46,7 @@
         <li>Up to 3 videos per course</li>
         <li>See who completed your course and send job offers</li>
       </ul>
-      <a class="btn btn-outline pricing-button" href="{{ next_step_url }}">Start free</a>
+      {{ plan_button('free', 'Start free', 'btn-outline', next_step_url, current_plan) }}
     </article>
 
     {# ---------- Per course ---------- #}
@@ -42,7 +60,7 @@
         <li>Private courses by invite link</li>
         <li>See who completed your course and send job offers</li>
       </ul>
-      <a class="btn btn-outline pricing-button" href="{{ next_step_url }}">Buy a course</a>
+      {{ plan_button('per_course', 'Buy a course', 'btn-outline', next_step_url, current_plan) }}
     </article>
 
     {# ---------- Monthly (main plan) ---------- #}
@@ -57,13 +75,12 @@
         <li>Private courses by invite link</li>
         <li>See who completed your course and send job offers</li>
       </ul>
-      <a class="btn btn-primary pricing-button" href="{{ next_step_url }}">Subscribe</a>
+      {{ plan_button('monthly', 'Subscribe', 'btn-primary', next_step_url, current_plan) }}
     </article>
 
   </div>
 
   <aside class="pricing-note">
-    <strong>Why limit video length?</strong>
     <strong>Tip:</strong>
     short lessons are easier to remember. We recommend 1–3 minutes per video — split longer topics into several lessons.
   </aside>
