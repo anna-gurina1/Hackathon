@@ -192,3 +192,12 @@ img, video { max-width: 100%; }
 /* Header: profile photo instead of initials */
 .avatar-button.has-photo { padding: 0; overflow: hidden; background: var(--soft); }
 .avatar-button.has-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* the header got one more link (Pricing): on phones the logo already leads home */
+@media (max-width: 480px) {
+  .site-nav .nav-home { display: none; }
+  .site-nav { gap: 10px; font-size: .9rem; }
+  .site-nav .btn { white-space: nowrap; padding: 8px 14px; }
+  .logo { font-size: 1.05rem; gap: 8px; }
+  .logo-mark { height: 30px; }
+}
