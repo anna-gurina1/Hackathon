@@ -1,0 +1,11 @@
+.git
+.venv
+venv
+__pycache__
+*.py[cod]
+.pytest_cache
+.env
+*.db
+*.db-*
+uploads/*
+!uploads/.gitkeep
