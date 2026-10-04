@@ -491,7 +491,10 @@ def _get_or_create_company(data):
     user = User.query.filter_by(email=data["email"]).first()
     if user is None:
         user = User(type="company", email=data["email"])
-        user.company = CompanyProfile(name=data["name"], description=data["description"])
+        # demo companies are on the top plan: they have many courses and private ones
+        user.company = CompanyProfile(
+            name=data["name"], description=data["description"], plan="monthly"
+        )
         db.session.add(user)
         db.session.flush()
     if not user.avatar and data.get("logo"):  # the logo is a file in frontend/static, no Cloudinary needed

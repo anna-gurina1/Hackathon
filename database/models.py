@@ -94,9 +94,15 @@ class CompanyProfile(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     name = db.Column(db.String(120), nullable=False)
     description = db.Column(db.String(500), nullable=True)
-    # Not used anymore: the Pro plan was removed (private courses are free for everyone).
-    # The column stays so existing app.db files keep working.
-    is_pro = db.Column(db.Boolean, default=False, nullable=False)
+    # Tariff (demo payment, see backend/plans.py): "free" | "per_course" | "monthly"
+    plan = db.Column(db.String(20), default="free", server_default="free", nullable=False)
+    # How many courses were bought on the "per_course" plan (the limit is 1 + course_credits)
+    course_credits = db.Column(db.Integer, default=0, server_default="0", nullable=False)
+
+    @property
+    def is_pro(self):
+        """True on the plans that allow private courses (kept for older code and templates)."""
+        return self.plan in ("per_course", "monthly")
 
 
 class EmailThrottle(db.Model):

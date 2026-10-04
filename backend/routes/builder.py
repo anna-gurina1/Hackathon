@@ -14,6 +14,7 @@ for the course level; a question can be attached to a lesson with the "Use" butt
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
+from backend.plans import can_add_video, video_limit, videos_used
 from backend.uploads import delete_video, save_video
 from core.course_builder import recommended_questions
 from core.questions import QUESTIONS, QUIZ_TEMPLATES
@@ -87,6 +88,17 @@ def _read_video():
     return video if video is not None and video.filename else None
 
 
+def _video_limit_reached(course):
+    """True (and an error message is flashed) when the plan allows no more videos in this course."""
+    if can_add_video(course):
+        return False
+    flash(
+        f"Your plan allows {video_limit(course.company)} videos per course. Upgrade to add more.",
+        "error",
+    )
+    return True
+
+
 # ---------- the studio page ----------
 
 @bp.route("/course/<int:course_id>/builder")
@@ -100,6 +112,9 @@ def script(course_id):
         lessons=lessons,
         recommended=recommended_questions(course.level),
         used_question_ids={l.question_id for l in lessons if l.question_id is not None},
+        video_limit=video_limit(current_user),
+        videos_used=videos_used(course),
+        can_add_video=can_add_video(course),
     )
 
 
@@ -124,6 +139,8 @@ def add_lesson(course_id):
     filename = None
     video = _read_video()
     if video is not None:
+        if _video_limit_reached(course):
+            return _back_to_script(course)
         try:
             filename = save_video(video)
         except (ValueError, RuntimeError) as error:  # RuntimeError: video storage is not configured
@@ -166,6 +183,9 @@ def edit_lesson(course_id, lesson_id):
     new_filename = None
     video = _read_video()
     if video is not None:
+        # replacing the video of a lesson that already has one does not add a new video
+        if not lesson.video_filename and _video_limit_reached(course):
+            return _back_to_script(course, lesson)
         try:
             new_filename = save_video(video)
         except (ValueError, RuntimeError) as error:

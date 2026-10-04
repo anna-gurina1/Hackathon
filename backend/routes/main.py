@@ -1,6 +1,7 @@
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, logout_user
 
+from backend import plans
 from database import db
 from backend.uploads import delete_image, delete_video, save_image
 from database.models import AccessRequest, CompanyProfile, Course, Enrollment, Offer, PersonProfile, QuizAttempt
@@ -21,7 +22,28 @@ def explore():
 
 @bp.route("/pricing")
 def pricing():
-    return render_template("pricing.html")
+    current_plan = plans.plan_of(current_user) if current_user.is_authenticated and current_user.is_company else None
+    return render_template("pricing.html", current_plan=current_plan)
+
+
+@bp.route("/pricing/choose", methods=["POST"])
+@login_required
+def choose_plan():
+    """Demo payment: no money is taken, the button just switches the plan of the company."""
+    if not current_user.is_company or current_user.company is None:
+        abort(403)
+    plan = request.form.get("plan", "")
+    if plan not in plans.PLAN_LABELS:
+        abort(400)
+
+    company = current_user.company
+    company.plan = plan
+    if plan == "per_course":
+        company.course_credits = (company.course_credits or 0) + 1  # one more course bought
+    # "free": courses are not deleted; new ones just cannot be created until the company fits the limit
+    db.session.commit()
+    flash(f"Plan updated: {plans.PLAN_LABELS[plan]}.", "success")
+    return redirect(url_for("main.account"))
 
 
 @bp.route("/account")
@@ -32,7 +54,13 @@ def account():
             "account_person.html", user=current_user, **person_dashboard(current_user)
         )
     return render_template(
-        "account_company.html", user=current_user, **company_dashboard(current_user)
+        "account_company.html",
+        user=current_user,
+        plan_label=plans.PLAN_LABELS[plans.plan_of(current_user)],
+        course_limit=plans.course_limit(current_user),
+        courses_used=plans.courses_used(current_user),
+        can_create_course=plans.can_create_course(current_user),
+        **company_dashboard(current_user),
     )
 
 
