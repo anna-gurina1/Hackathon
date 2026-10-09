@@ -7,33 +7,32 @@
   Each module (category) is folded: only its name is shown, the questions open with the arrow.
 #}
 <aside class="suggest-panel card" data-suggest-panel>
-  <p class="side-label">Need ideas?</p>
+  <p class="side-label">{{ _("Need ideas?") }}</p>
   <p class="small muted suggest-intro">
-    Not sure where to start or how to put it into words? These questions can help you shape your thoughts.
-    They are only hints — use any of them, change them, or teach in your own way.
+    {{ _("Not sure where to start or how to put it into words? These questions can help you shape your thoughts. They are only hints — use any of them, change them, or teach in your own way.") }}
   </p>
 
   {% if ai_url is defined %}
     <button type="button" class="btn btn-accent btn-small btn-block suggest-ai-button" data-ai-suggest
             data-ai-url="{{ ai_url }}" data-csrf="{{ csrf_token() }}"
-            {% if ai_form is defined %}data-ai-form="{{ ai_form }}"{% endif %}>Show AI suggestions</button>
+            {% if ai_form is defined %}data-ai-form="{{ ai_form }}"{% endif %}>{{ _("Show AI suggestions") }}</button>
   {% endif %}
 
   {% for group in recommended %}
     <details class="suggest-group" data-category="{{ group.category }}">
       <summary class="suggest-category">
-        <span>{{ group.category_label }}</span>
+        <span>{{ _(group.category_label) }}</span>
         <span class="suggest-count" data-suggest-count>{{ group.questions|length }}</span>
       </summary>
       {% for question in group.questions %}
         {% set is_used = used_question_ids is defined and question.id in used_question_ids %}
         <div class="suggest-item {{ 'is-used' if is_used }}" data-levels="{{ question.levels|join(' ') }}">
           <details>
-            <summary>{{ '✓ ' if is_used }}{{ question.text }}</summary>
-            {% if question.hint %}<p class="small muted">{{ question.hint }}</p>{% endif %}
+            <summary>{{ '✓ ' if is_used }}{{ _(question.text) }}</summary>
+            {% if question.hint %}<p class="small muted">{{ _(question.hint) }}</p>{% endif %}
           </details>
           {% if can_use and not is_used %}
-            <button type="button" class="suggest-use" data-use-question="{{ question.id }}" data-question-text="{{ question.text }}">Use</button>
+            <button type="button" class="suggest-use" data-use-question="{{ question.id }}" data-question-text="{{ _(question.text) }}">{{ _("Use") }}</button>
           {% endif %}
         </div>
       {% endfor %}

@@ -2,14 +2,14 @@
 
 {% macro level_label(level_key) -%}
   {%- set level_names = {"beginner": "Beginner", "intermediate": "Intermediate", "advanced": "Professional"} -%}
-  {{ level_names.get(level_key, level_key|replace('_', ' ')|capitalize) }}
+  {{ _(level_names[level_key]) if level_key in level_names else level_key|replace('_', ' ')|capitalize }}
 {%- endmacro %}
 
 {% macro progress_bar(percent, label=true) %}
   <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ percent }}">
     <div class="progress-fill" style="width: {{ percent }}%"></div>
   </div>
-  {% if label %}<p class="progress-label small muted">{{ percent }}% complete</p>{% endif %}
+  {% if label %}<p class="progress-label small muted">{{ _("{percent}% complete", percent=percent) }}</p>{% endif %}
 {% endmacro %}
 
 {% macro avatar(user, size="") %}
@@ -36,8 +36,8 @@
     {% endif %}
     <span class="chip-row">
       <span class="chip">{{ level_label(course.level) }}</span>
-      <span class="chip">{{ course.lesson_count }} lesson{{ 's' if course.lesson_count != 1 }}</span>
-      {% if course.is_private %}<span class="chip chip-dark">🔒 By request</span>{% endif %}
+      <span class="chip">{{ _n(course.lesson_count, "{count} lesson", "{count} lessons") }}</span>
+      {% if course.is_private %}<span class="chip chip-dark">{{ _("🔒 By request") }}</span>{% endif %}
     </span>
   </div>
 {% endmacro %}

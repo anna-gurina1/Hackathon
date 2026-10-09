@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Course completed · {{ course.title }}{% endblock %}
+{% block title %}{{ _("Course completed") }} · {{ course.title }}{% endblock %}
 
 {% block head %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
@@ -12,18 +12,18 @@
     <canvas class="confetti-canvas" data-confetti></canvas>
 
     <div class="trophy" aria-hidden="true">🏆</div>
-    <p class="eyebrow">Course completed</p>
-    <h1>Congratulations!</h1>
-    <p class="lead">You finished <strong>{{ course.title }}</strong> and passed every quiz.</p>
+    <p class="eyebrow">{{ _("Course completed") }}</p>
+    <h1>{{ _("Congratulations!") }}</h1>
+    <p class="lead">{{ _html("You finished <strong>{course}</strong> and passed every quiz.", course=course.title) }}</p>
 
     <div class="notice-box">
-      <strong><a class="company-link" href="{{ url_for('courses.company_profile', company_id=course.company.id) }}">{{ course.company.display_name }}</a></strong> has been notified about your result.
-      If they'd like to work with you, their offer will appear in your account.
+      {% set company_link %}<strong><a class="company-link" href="{{ url_for('courses.company_profile', company_id=course.company.id) }}">{{ course.company.display_name }}</a></strong>{% endset %}
+      {{ _html("{company} has been notified about your result. If they'd like to work with you, their offer will appear in your account.", company=company_link) }}
     </div>
 
     <div class="button-row">
-      <a class="btn btn-primary btn-lg" href="{{ url_for('main.account') }}">Go to my account</a>
-      <a class="btn btn-outline btn-lg" href="{{ url_for('main.explore') }}">Find more courses</a>
+      <a class="btn btn-primary btn-lg" href="{{ url_for('main.account') }}">{{ _("Go to my account") }}</a>
+      <a class="btn btn-outline btn-lg" href="{{ url_for('main.explore') }}">{{ _("Find more courses") }}</a>
     </div>
   </div>
 </div>

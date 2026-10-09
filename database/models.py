@@ -25,6 +25,10 @@ class User(db.Model, UserMixin):
     # Profile photo / company logo: Cloudinary public_id of the image (None = show initials)
     avatar = db.Column(db.String(255), nullable=True)
 
+    # Site language chosen with the EN / RU switch: "en", "ru" or None (not chosen yet).
+    # Emails to this person are written in it (backend/i18n.py).
+    language = db.Column(db.String(5), nullable=True)
+
     person = db.relationship(
         "PersonProfile", backref="user", uselist=False, cascade="all, delete-orphan"
     )

@@ -14,6 +14,7 @@ for the course level; a question can be attached to a lesson with the "Use" butt
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
+from backend.i18n import _
 from backend.plans import can_add_video, video_limit, videos_used
 from backend.uploads import delete_video, save_video
 from core.course_builder import recommended_questions
@@ -73,12 +74,12 @@ def _read_question_id(course, current_lesson=None):
     try:
         question_id = int(raw)
     except ValueError:
-        return None, "Unknown question."
+        return None, _("Unknown question.")
     if question_id not in MEDIA_QUESTION_IDS:
-        return None, "Unknown question."
+        return None, _("Unknown question.")
     taken = Lesson.query.filter_by(course_id=course.id, question_id=question_id).first()
     if taken is not None and taken is not current_lesson:
-        return None, "This question is already used by another lesson."
+        return None, _("This question is already used by another lesson.")
     return question_id, None
 
 
@@ -93,7 +94,7 @@ def _video_limit_reached(course):
     if can_add_video(course):
         return False
     flash(
-        f"Your plan allows {video_limit(course.company)} videos per course. Upgrade to add more.",
+        _("Your plan allows {count} videos per course. Upgrade to add more.", count=video_limit(course.company)),
         "error",
     )
     return True
@@ -128,7 +129,7 @@ def add_lesson(course_id):
     title = request.form.get("title", "").strip()[:200]
     text = request.form.get("text", "").strip()
     if not title:
-        flash("Enter the lesson title.", "error")
+        flash(_("Enter the lesson title."), "error")
         return _back_to_script(course)
 
     question_id, error = _read_question_id(course)
@@ -159,7 +160,7 @@ def add_lesson(course_id):
     db.session.flush()
     _renumber_lessons(course)
     db.session.commit()
-    flash(f"Lesson {lesson.order} added. Now add a quick quiz to it.", "success")
+    flash(_("Lesson {number} added. Now add a quick quiz to it.", number=lesson.order), "success")
     return _back_to_script(course, lesson)
 
 
@@ -172,7 +173,7 @@ def edit_lesson(course_id, lesson_id):
     title = request.form.get("title", "").strip()[:200]
     text = request.form.get("text", "").strip()
     if not title:
-        flash("Enter the lesson title.", "error")
+        flash(_("Enter the lesson title."), "error")
         return _back_to_script(course, lesson)
 
     question_id, error = _read_question_id(course, current_lesson=lesson)
@@ -204,7 +205,7 @@ def edit_lesson(course_id, lesson_id):
     # the old video is removed only after the new one is really saved in the database
     if old_filename:
         delete_video(old_filename)
-    flash("Lesson saved.", "success")
+    flash(_("Lesson saved."), "success")
     return _back_to_script(course, lesson)
 
 
@@ -222,7 +223,7 @@ def delete_lesson(course_id, lesson_id):
 
     if video_id:
         delete_video(video_id)
-    flash("Lesson deleted.", "info")
+    flash(_("Lesson deleted."), "info")
     return _back_to_script(course)
 
 
@@ -245,7 +246,7 @@ def quiz_edit(course_id, lesson_id):
             flash(error, "error")
         else:
             db.session.commit()
-            flash("Question added.", "success")
+            flash(_("Question added."), "success")
         return redirect(url_for("builder.quiz_edit", course_id=course.id, lesson_id=lesson.id))
 
     return render_template(
@@ -262,16 +263,16 @@ def _add_quiz_question(lesson, category):
     form = request.form
     text = form.get("text", "").strip()
     if not text:
-        return "Enter the question."
+        return _("Enter the question.")
 
     answers = {n: form.get(f"answer_{n}", "").strip() for n in range(1, 5)}
     filled = {n: a for n, a in answers.items() if a}
     if len(filled) < 2:
-        return "Add at least two answers."
+        return _("Add at least two answers.")
 
     correct = form.get("correct", type=int)
     if correct not in filled:
-        return "Mark which filled-in answer is correct."
+        return _("Mark which filled-in answer is correct.")
 
     pass_score = form.get("pass_score", type=int)
     if pass_score is None or not 1 <= pass_score <= 100:

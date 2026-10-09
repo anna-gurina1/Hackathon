@@ -5,6 +5,7 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, u
 from flask_login import current_user, login_required
 
 from backend.email import send_email
+from backend.i18n import _, use_language
 from database import db
 from database.models import Course, Enrollment, Offer, QuizAttempt, User
 
@@ -101,13 +102,14 @@ def submit(course_id, n):
     if just_completed:
         # the progress is already saved, a mail failure must not break the page
         try:
-            send_email(
-                course.company.email,
-                "New candidate",
-                f"{current_user.display_name} ({current_user.email}) has completed "
-                f"your course \"{course.title}\".\n"
-                f"Result of the last quiz: {score}%.\n",
-            )
+            with use_language(course.company.language):  # in the company's language
+                send_email(
+                    course.company.email,
+                    _("New candidate"),
+                    _("{name} ({email}) has completed your course “{course}”.",
+                      name=current_user.display_name, email=current_user.email, course=course.title)
+                    + "\n" + _("Result of the last quiz: {score}%.", score=score) + "\n",
+                )
         except Exception:  # noqa: BLE001
             log.exception("Could not send the completion email")
 
@@ -153,7 +155,7 @@ def send_offer(user_id, course_id):
 
     text = request.form.get("text", "").strip()
     if not text:
-        flash("Please write a message for the offer.", "error")
+        flash(_("Please write a message for the offer."), "error")
         return redirect(url_for("main.account"))
 
     db.session.add(
@@ -161,6 +163,7 @@ def send_offer(user_id, course_id):
     )
     db.session.commit()
 
-    send_email(person.email, f"Job offer from {current_user.display_name}", text)
-    flash(f"Offer sent to {person.display_name}.", "success")
+    with use_language(person.language):  # the subject is in the learner's language, the text is the company's own
+        send_email(person.email, _("Job offer from {company}", company=current_user.display_name), text)
+    flash(_("Offer sent to {name}.", name=person.display_name), "success")
     return redirect(url_for("main.account"))

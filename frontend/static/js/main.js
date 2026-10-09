@@ -1,4 +1,42 @@
-// main.js — runs on every page: login window and the account menu.
+// main.js — runs on every page: translations, login window and the account menu.
+
+// ---------- Translations (EN / RU) ----------
+// base.html puts the texts of translations/<lang>/scripts.json into window.TRANSLATIONS.
+// t('Copied ✓')                                  -> 'Скопировано ✓'
+// t('Lesson {number}', { number: 2 })            -> 'Урок 2'
+// tn(5, '{count} course', '{count} courses')     -> '5 курсов'
+// A text without a translation stays in English.
+const translations = window.TRANSLATIONS || {};
+
+function fillIn(text, values) {
+  return text.replace(/\{(\w+)\}/g, function (placeholder, name) {
+    return values && name in values ? values[name] : placeholder;
+  });
+}
+
+function t(text, values) {
+  let translated = translations[text];
+  if (Array.isArray(translated)) translated = translated[0];
+  return fillIn(translated || text, values);
+}
+
+// Russian has 3 forms: 1 курс, 2 курса, 5 курсов
+function russianPluralForm(count) {
+  const lastDigit = count % 10;
+  const lastTwoDigits = count % 100;
+  if (lastDigit === 1 && lastTwoDigits !== 11) return 0;
+  if (lastDigit >= 2 && lastDigit <= 4 && (lastTwoDigits < 12 || lastTwoDigits > 14)) return 1;
+  return 2;
+}
+
+function tn(count, singular, plural, values) {
+  const allValues = Object.assign({ count: count }, values);
+  const forms = translations[singular];
+  if (Array.isArray(forms) && forms.length === 3) {
+    return fillIn(forms[russianPluralForm(Math.abs(count))], allValues);
+  }
+  return fillIn(count === 1 ? singular : plural, allValues);
+}
 
 // ---------- Login / sign up window ----------
 const authModal = document.querySelector('[data-auth-modal]');

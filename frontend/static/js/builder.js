@@ -28,14 +28,15 @@ document.querySelectorAll('[data-video-input]').forEach(function (videoInput) {
     if (!chosenVideo) return;
 
     const sizeInMb = getSizeInMb(chosenVideo);
-    let message = '✓ ' + chosenVideo.name + ' (' + sizeInMb.toFixed(0) + ' MB)';
+    let message = '✓ ' + chosenVideo.name + ' (' + t('{size} MB', { size: sizeInMb.toFixed(0) }) + ')';
 
     if (!ALLOWED_VIDEO_TYPES.includes(getExtension(chosenVideo.name))) {
-      message = '✕ ' + chosenVideo.name + ' — please choose mp4, webm or mov';
+      message = '✕ ' + chosenVideo.name + ' — ' + t('please choose mp4, webm or mov');
     } else if (sizeInMb > MAX_VIDEO_SIZE_MB) {
-      message = '✕ Too big: ' + sizeInMb.toFixed(0) + ' MB (max ' + MAX_VIDEO_SIZE_MB + ' MB). Record in 720p or compress the video.';
+      message = '✕ ' + t('Too big: {size} MB (max {max} MB). Record in 720p or compress the video.',
+        { size: sizeInMb.toFixed(0), max: MAX_VIDEO_SIZE_MB });
     } else if (sizeInMb > BIG_VIDEO_WARNING_MB) {
-      message += ' — big file, upload may take a while';
+      message += ' — ' + t('big file, upload may take a while');
     }
 
     fileNameLabel.textContent = message;
@@ -53,18 +54,18 @@ document.querySelectorAll('.lesson-form').forEach(function (answerForm) {
     // No video — send the form the usual way
     if (!chosenVideo) {
       saveButton.disabled = true;
-      saveButton.textContent = 'Saving…';
+      saveButton.textContent = t('Saving…');
       return;
     }
 
     event.preventDefault();
 
     if (!ALLOWED_VIDEO_TYPES.includes(getExtension(chosenVideo.name))) {
-      alert('Please choose an mp4, webm or mov video.');
+      alert(t('Please choose an mp4, webm or mov video.'));
       return;
     }
     if (getSizeInMb(chosenVideo) > MAX_VIDEO_SIZE_MB) {
-      alert('This video is bigger than ' + MAX_VIDEO_SIZE_MB + ' MB. Record it in 720p or compress it first.');
+      alert(t('This video is bigger than {max} MB. Record it in 720p or compress it first.', { max: MAX_VIDEO_SIZE_MB }));
       return;
     }
 
@@ -85,8 +86,8 @@ function uploadWithProgress(answerForm, saveButton) {
     const percent = Math.round((event.loaded / event.total) * 100);
     progressBar.style.width = percent + '%';
     progressText.textContent = percent < 100
-      ? 'Uploading… ' + percent + '% — please keep this page open'
-      : 'Processing on the server…';
+      ? t('Uploading… {percent}% — please keep this page open', { percent: percent })
+      : t('Processing on the server…');
   });
 
   uploadRequest.addEventListener('load', function () {
@@ -95,25 +96,25 @@ function uploadWithProgress(answerForm, saveButton) {
       // The server redirects back to the studio — go there to see the new lesson
       window.location.href = uploadRequest.responseURL;
     } else {
-      showUploadError('Upload failed (error ' + uploadRequest.status + '). Please try again.');
+      showUploadError(t('Upload failed (error {code}). Please try again.', { code: uploadRequest.status }));
     }
   });
 
   uploadRequest.addEventListener('error', function () {
     uploadIsRunning = false;
-    showUploadError('Connection lost. Check your internet and try again.');
+    showUploadError(t('Connection lost. Check your internet and try again.'));
   });
 
   function showUploadError(message) {
     progressText.textContent = message;
     progressBar.style.width = '0%';
     saveButton.disabled = false;
-    saveButton.textContent = 'Try again';
+    saveButton.textContent = t('Try again');
   }
 
   progressBox.hidden = false;
   saveButton.disabled = true;
-  saveButton.textContent = 'Uploading…';
+  saveButton.textContent = t('Uploading…');
   uploadIsRunning = true;
 
   uploadRequest.send(new FormData(answerForm));   // includes csrf_token, title, text and video

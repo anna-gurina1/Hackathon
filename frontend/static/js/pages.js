@@ -8,7 +8,7 @@ document.querySelectorAll('[data-copy-from]').forEach(function (copyButton) {
     const oldText = copyButton.textContent;
 
     navigator.clipboard.writeText(linkInput.value).then(function () {
-      copyButton.textContent = 'Copied ✓';
+      copyButton.textContent = t('Copied ✓');
       setTimeout(function () { copyButton.textContent = oldText; }, 1500);
     });
   });

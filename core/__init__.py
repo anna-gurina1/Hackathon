@@ -5,6 +5,7 @@ from flask_login import LoginManager
 from flask_wtf.csrf import CSRFError, CSRFProtect
 
 from core.config import BASE_DIR, Config
+from backend.i18n import _ as translate
 from database import db, migrate
 
 csrf = CSRFProtect()
@@ -12,6 +13,8 @@ login_manager = LoginManager()
 login_manager.login_view = "main.home"
 login_manager.login_message = "Please log in to continue."
 login_manager.login_message_category = "info"
+# the "Please log in" message is translated at the moment it is shown
+login_manager.localize_callback = translate
 
 
 @login_manager.user_loader
@@ -37,6 +40,11 @@ def create_app(config_class=Config):
     migrate.init_app(app, db, directory=os.path.join(BASE_DIR, "migrations"))
     csrf.init_app(app)
     login_manager.init_app(app)
+
+    # EN / RU: _() and the other helpers in every template (backend/i18n.py)
+    from backend import i18n
+
+    i18n.init_app(app)
 
     from backend.routes.site_auth import bp as auth_bp
     from backend.routes.main import bp as main_bp

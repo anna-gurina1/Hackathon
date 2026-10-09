@@ -16,14 +16,14 @@ async function runSearch() {
   const searchText = searchInput.value.trim();
   const searchBy = searchForm.querySelector('input[name="by"]:checked').value;
 
-  searchStatus.textContent = 'Searching…';
+  searchStatus.textContent = t('Searching…');
 
   try {
     const response = await fetch('/api/search?q=' + encodeURIComponent(searchText) + '&by=' + searchBy);
     const results = await response.json();
     showResults(results, searchText, searchBy === 'company');
   } catch (error) {
-    searchStatus.textContent = 'Something went wrong. Please try again.';
+    searchStatus.textContent = t('Something went wrong. Please try again.');
   }
 }
 
@@ -32,15 +32,15 @@ function showResults(results, searchText, isCompanySearch) {
 
   if (results.length === 0) {
     searchStatus.textContent = searchText
-      ? 'Nothing found for “' + searchText + '”. Try another word or search by something else.'
-      : 'No courses yet.';
+      ? t('Nothing found for “{text}”. Try another word or search by something else.', { text: searchText })
+      : t('No courses yet.');
     return;
   }
 
   if (isCompanySearch) {
-    searchStatus.textContent = results.length === 1 ? '1 company found' : results.length + ' companies found';
+    searchStatus.textContent = tn(results.length, '{count} company found', '{count} companies found');
   } else {
-    searchStatus.textContent = results.length === 1 ? '1 course found' : results.length + ' courses found';
+    searchStatus.textContent = tn(results.length, '{count} course found', '{count} courses found');
   }
 
   results.forEach(function (item) {
@@ -78,9 +78,9 @@ function makeCourseCard(course) {
   const chips = makeElement('span', 'chip-row');
   chips.append(
     makeElement('span', 'chip', course.level),
-    makeElement('span', 'chip', course.lesson_count === 1 ? '1 lesson' : course.lesson_count + ' lessons')
+    makeElement('span', 'chip', tn(course.lesson_count, '{count} lesson', '{count} lessons'))
   );
-  if (course.is_private) chips.append(makeElement('span', 'chip chip-dark', '🔒 By request'));
+  if (course.is_private) chips.append(makeElement('span', 'chip chip-dark', t('🔒 By request')));
 
   card.append(companyLink, title, description, chips);
   return card;
@@ -101,7 +101,7 @@ function makeCompanyCard(company) {
   }
   const info = makeElement('div');
   const courseCount = makeElement('span', 'chip',
-    company.course_count === 1 ? '1 course' : company.course_count + ' courses');
+    tn(company.course_count, '{count} course', '{count} courses'));
 
   info.append(
     makeElement('h3', '', company.name),

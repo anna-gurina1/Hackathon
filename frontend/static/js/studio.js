@@ -66,7 +66,7 @@ document.querySelectorAll('[data-use-question]').forEach(function (useButton) {
     if (addLessonButton) addLessonButton.hidden = true;
 
     const questionPrompt = newLessonBlock.querySelector('[data-question-prompt]');
-    questionPrompt.textContent = '💡 Idea for this lesson: ' + useButton.dataset.questionText;
+    questionPrompt.textContent = '💡 ' + t('Idea for this lesson:') + ' ' + useButton.dataset.questionText;
     questionPrompt.hidden = false;
     newLessonBlock.querySelector('[data-question-id]').value = useButton.dataset.useQuestion;
 
@@ -95,7 +95,7 @@ if (aiButton) {
   // On the "New course" page the AI reads the form; on the course page the server uses the saved course.
   const courseForm = aiButton.dataset.aiForm ? document.getElementById(aiButton.dataset.aiForm) : null;
   const aiFieldNames = ['title', 'description', 'topic', 'profession', 'outcome'];
-  const emptyMessage = 'Fill in the course details first (topic, profession, what people will learn) so the AI knows what to suggest.';
+  const emptyMessage = t('Fill in the course details first (topic, profession, what people will learn) so the AI knows what to suggest.');
 
   aiButton.addEventListener('click', async function () {
     let body = '{}';
@@ -118,7 +118,7 @@ if (aiButton) {
 
     const normalLabel = aiButton.textContent;
     aiButton.disabled = true;
-    aiButton.textContent = 'Thinking…';
+    aiButton.textContent = t('Thinking…');
 
     try {
       const response = await fetch(aiButton.dataset.aiUrl, {
@@ -136,9 +136,9 @@ if (aiButton) {
       }
       if (!response.ok) throw new Error('AI request failed: ' + response.status);
       showAiQuestions(data.questions || {});
-      showToast('Done! One tip from AI was added to each topic.');
+      showToast(t('Done! One tip from AI was added to each topic.'));
     } catch (error) {
-      showToast('AI suggestions are not available right now. Please try again later.');
+      showToast(t('AI suggestions are not available right now. Please try again later.'));
     } finally {
       aiButton.disabled = false;
       aiButton.textContent = normalLabel;
@@ -169,7 +169,7 @@ function showAiQuestions(questionsByCategory) {
     question.textContent = text;                     // textContent: the AI text is never run as HTML
     const tag = document.createElement('span');
     tag.className = 'ai-tag';
-    tag.textContent = 'tip from AI';
+    tag.textContent = t('tip from AI');
     body.append(question, tag);
     item.appendChild(body);
 

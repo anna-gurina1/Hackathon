@@ -45,3 +45,14 @@ Offer: компания, человек, курс, текст.
 - pricing.html: current_plan (str или None для гостя и person).
 - account_company.html (кроме прежних): plan_label, course_limit (int или None), courses_used, can_create_course.
 - builder.html (кроме прежних): video_limit (int или None), videos_used, can_add_video.
+## Языки (EN / RU)
+- Весь текст интерфейса пишется в коде на английском и оборачивается в `_("...")` (Python и шаблоны) или `t("...")` (JavaScript). Английский текст сам служит ключом.
+- Переводы лежат в `translations/ru/`: `interface.json` (шаблоны), `messages.json` (flash-сообщения, письма, ошибки), `questions.json` (вопросы мастера, подсказки, категории, уровни, шаблоны квиза), `scripts.json` (тексты для JS). Если перевода нет, показывается английский.
+- Числа с окончаниями: `_n("{count} course", "{count} courses", count)`; в JSON для русского значение — список из 3 форм: `["{count} курс", "{count} курса", "{count} курсов"]`.
+- Текст с HTML-разметкой: `_html(...)` (подставленные значения экранируются). Даты: `format_date(date)`.
+- Выбор языка (`backend/i18n.py`, `current_language()`): cookie `lang` → `User.language` → заголовок Accept-Language браузера → английский.
+- Переключатель EN/RU в шапке рядом с Home ведёт на `/language/<code>?next=...`: ставит cookie на год и сохраняет язык в профиль, если пользователь вошёл.
+- Письма другим людям отправляются на языке получателя (`with use_language(user.language): ...`).
+- Пользовательский контент (курсы, уроки, названия компаний) не переводится.
+- Проверка переводов: `python translations/check.py` — покажет недостающие переводы и ошибки в `{подстановках}`.
+- Новый язык: создать `translations/<код>/` с теми же файлами и добавить код в `LANGUAGES` в `backend/i18n.py`.

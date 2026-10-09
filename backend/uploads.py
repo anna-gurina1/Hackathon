@@ -23,6 +23,8 @@ import cloudinary.utils
 from cloudinary.exceptions import Error as CloudinaryError
 from dotenv import load_dotenv
 
+from backend.i18n import _
+
 ALLOWED_EXTENSIONS = {"mp4", "webm", "mov"}
 CLOUDINARY_FOLDER = "hackathon-lessons"  # папка в Cloudinary, чтобы видео не лежали кучей в корне
 CHUNK_SIZE = 20 * 1024 * 1024            # большие видео уходят кусками по 20 МБ
@@ -55,10 +57,10 @@ def _configure():
 
     # если задан CLOUDINARY_URL, библиотека сама заполнит config() при импорте
     if not cloudinary.config().cloud_name:
-        raise RuntimeError(
+        raise RuntimeError(_(
             "Cloudinary is not configured: set CLOUDINARY_CLOUD_NAME, "
             "CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET in the .env file."
-        )
+        ))
     _configured = True
 
 
@@ -87,10 +89,10 @@ def _compress(stream, ext, workdir):
     ffmpeg = _find_ffmpeg()
     if ffmpeg is None:
         log.error("ffmpeg not found: run `pip install imageio-ffmpeg`")
-        raise ValueError(
-            f"The video is larger than {MAX_VIDEO_BYTES // (1024 * 1024)} MB "
-            "and the server cannot compress it."
-        )
+        raise ValueError(_(
+            "The video is larger than {size} MB and the server cannot compress it.",
+            size=MAX_VIDEO_BYTES // (1024 * 1024),
+        ))
 
     src = os.path.join(workdir, f"source.{ext}")
     dst = os.path.join(workdir, "compressed.mp4")
@@ -110,21 +112,21 @@ def _compress(stream, ext, workdir):
             subprocess.run(command, check=True, capture_output=True, timeout=COMPRESS_TIMEOUT)
         except subprocess.TimeoutExpired:
             log.error("ffmpeg timed out")
-            raise ValueError("Compressing the video took too long. Try a shorter video.")
+            raise ValueError(_("Compressing the video took too long. Try a shorter video."))
         except subprocess.CalledProcessError as error:
             log.error("ffmpeg failed: %s", error.stderr.decode(errors="replace")[-500:])
-            raise ValueError("Could not compress the video. Is it a valid video file?")
+            raise ValueError(_("Could not compress the video. Is it a valid video file?"))
         except OSError:
             log.exception("could not start ffmpeg")
-            raise ValueError("Could not compress the video.")
+            raise ValueError(_("Could not compress the video."))
 
         if os.path.getsize(dst) <= MAX_VIDEO_BYTES:
             return dst
 
-    raise ValueError(
-        f"Even after compression the video is larger than {MAX_VIDEO_BYTES // (1024 * 1024)} MB. "
-        "Try a shorter video."
-    )
+    raise ValueError(_(
+        "Even after compression the video is larger than {size} MB. Try a shorter video.",
+        size=MAX_VIDEO_BYTES // (1024 * 1024),
+    ))
 
 
 def save_video(file_storage):
@@ -135,12 +137,12 @@ def save_video(file_storage):
     неподдерживаемый формат, его не удалось сжать или загрузка не удалась.
     """
     if file_storage is None or not file_storage.filename:
-        raise ValueError("No video file selected.")
+        raise ValueError(_("No video file selected."))
 
     ext = _extension(file_storage.filename)
     if ext not in ALLOWED_EXTENSIONS:
         allowed = ", ".join(sorted(ALLOWED_EXTENSIONS))
-        raise ValueError(f"Unsupported video format. Allowed formats: {allowed}.")
+        raise ValueError(_("Unsupported video format. Allowed formats: {formats}.", formats=allowed))
 
     _configure()
 
@@ -149,7 +151,7 @@ def save_video(file_storage):
     size = stream.tell()
     stream.seek(0)
     if size == 0:
-        raise ValueError("The video file is empty.")
+        raise ValueError(_("The video file is empty."))
 
     # временная папка удалится сама, даже если что-то пошло не так
     with tempfile.TemporaryDirectory() as workdir:
@@ -168,7 +170,7 @@ def save_video(file_storage):
             )
         except (CloudinaryError, OSError):
             log.exception("Cloudinary video upload failed")
-            raise ValueError("Could not upload the video. Please try again.")
+            raise ValueError(_("Could not upload the video. Please try again."))
         finally:
             if source is not stream:
                 source.close()
@@ -219,20 +221,20 @@ def save_image(file_storage):
     Бросает ValueError с понятным текстом, RuntimeError если Cloudinary не настроен.
     """
     if file_storage is None or not file_storage.filename:
-        raise ValueError("No image selected.")
+        raise ValueError(_("No image selected."))
 
     ext = _extension(file_storage.filename)
     if ext not in ALLOWED_IMAGE_EXTENSIONS:
-        raise ValueError("Unsupported image format. Allowed formats: png, jpg, webp, gif.")
+        raise ValueError(_("Unsupported image format. Allowed formats: png, jpg, webp, gif."))
 
     stream = file_storage.stream
     stream.seek(0, os.SEEK_END)
     size = stream.tell()
     stream.seek(0)
     if size == 0:
-        raise ValueError("The image file is empty.")
+        raise ValueError(_("The image file is empty."))
     if size > MAX_IMAGE_BYTES:
-        raise ValueError("The image is too big (max 5 MB).")
+        raise ValueError(_("The image is too big (max 5 MB)."))
 
     _configure()
     try:
@@ -244,7 +246,7 @@ def save_image(file_storage):
         )
     except (CloudinaryError, OSError):
         log.exception("Cloudinary image upload failed")
-        raise ValueError("Could not upload the image. Please try again.")
+        raise ValueError(_("Could not upload the image. Please try again."))
     return result["public_id"]
 
 

@@ -201,3 +201,34 @@ img, video { max-width: 100%; }
   .logo { font-size: 1.05rem; gap: 8px; }
   .logo-mark { height: 30px; }
 }
+/* ---------- EN / RU switch in the header (backend/i18n.py) ---------- */
+.lang-switch {
+  display: inline-flex;
+  border: 1px solid rgba(255, 255, 255, .35);
+  border-radius: 999px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.lang-switch a {
+  padding: 4px 9px;
+  color: #ffffff;
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  text-decoration: none;
+}
+.lang-switch a:hover { color: var(--primary); }
+.lang-switch a.is-active { background: var(--primary); color: var(--primary-ink); }
+@media (max-width: 480px) {
+  .lang-switch a { padding: 3px 7px; font-size: .75rem; }
+}
+/* on phones there is no room for the word "Bitwise" next to the EN / RU switch: only the logo mark stays */
+@media (max-width: 480px) {
+  .logo { font-size: 0; gap: 0; }
+}
+@media (max-width: 360px) {
+  .logo { flex-shrink: 0; }
+  .logo-mark { height: 30px; }
+  .site-nav { gap: 8px; font-size: .85rem; }
+  .site-nav .btn { padding: 6px 10px; }
+}

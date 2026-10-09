@@ -14,7 +14,7 @@
   <div class="lesson-layout">
 
     <article class="lesson-main">
-      <p class="eyebrow">Lesson {{ n }} of {{ course.lesson_count }}</p>
+      <p class="eyebrow">{{ _("Lesson {number} of {total}", number=n, total=course.lesson_count) }}</p>
       <h1>{{ lesson.title }}</h1>
 
       {% if video_url %}
@@ -23,7 +23,7 @@
                  data-lesson-video data-video-key="course-{{ course.id }}-lesson-{{ n }}"></video>
         </div>
         <div class="player-tools">
-          <span class="small muted">Speed</span>
+          <span class="small muted">{{ _("Speed") }}</span>
           <button type="button" class="speed-button is-active" data-speed="1">1×</button>
           <button type="button" class="speed-button" data-speed="1.25">1.25×</button>
           <button type="button" class="speed-button" data-speed="1.5">1.5×</button>
@@ -37,27 +37,27 @@
       {% endif %}
 
       {% if not video_url and not lesson.text %}
-        <div class="card empty-state"><p class="muted">This lesson has no content yet.</p></div>
+        <div class="card empty-state"><p class="muted">{{ _("This lesson has no content yet.") }}</p></div>
       {% endif %}
 
       <div class="card next-step-card">
         {% if quiz_url %}
           <div>
-            <h2>Ready to check yourself?</h2>
-            <p>Pass a short quiz to unlock the next lesson. You can rewatch and retry as many times as you like.</p>
+            <h2>{{ _("Ready to check yourself?") }}</h2>
+            <p>{{ _("Pass a short quiz to unlock the next lesson. You can rewatch and retry as many times as you like.") }}</p>
           </div>
-          <a class="btn btn-primary btn-lg" href="{{ quiz_url }}">Take the quiz</a>
+          <a class="btn btn-primary btn-lg" href="{{ quiz_url }}">{{ _("Take the quiz") }}</a>
         {% else %}
           <div>
-            <h2>No quiz for this lesson yet</h2>
-            <p>The author hasn't added a quiz here. Check back soon.</p>
+            <h2>{{ _("No quiz for this lesson yet") }}</h2>
+            <p>{{ _("The author hasn't added a quiz here. Check back soon.") }}</p>
           </div>
         {% endif %}
       </div>
     </article>
 
     <aside class="card lesson-side">
-      <p class="side-label">Your progress</p>
+      <p class="side-label">{{ _("Your progress") }}</p>
       {{ ui.progress_bar(enrollment.progress_percent) }}
 
       <ol class="lesson-list compact" style="margin-top: 16px;">

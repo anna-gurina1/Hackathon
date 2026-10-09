@@ -2,6 +2,7 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, u
 from flask_login import current_user, login_required, logout_user
 
 from backend import plans
+from backend.i18n import COOKIE_MAX_AGE, COOKIE_NAME, LANGUAGES, _, safe_next_url
 from database import db
 from backend.uploads import delete_image, delete_video, save_image
 from database.models import AccessRequest, CompanyProfile, Course, Enrollment, Offer, PersonProfile, QuizAttempt
@@ -18,6 +19,19 @@ def home():
 @bp.route("/explore")
 def explore():
     return render_template("explore.html")
+
+
+@bp.route("/language/<code>")
+def set_language(code):
+    """The EN / RU switch in the header. Remembers the choice and goes back to the same page."""
+    if code not in LANGUAGES:
+        abort(404)
+    response = redirect(safe_next_url(request.args.get("next"), url_for("main.home")))
+    response.set_cookie(COOKIE_NAME, code, max_age=COOKIE_MAX_AGE, samesite="Lax")
+    if current_user.is_authenticated and current_user.language != code:
+        current_user.language = code  # emails to this person will come in this language
+        db.session.commit()
+    return response
 
 
 @bp.route("/pricing")
@@ -42,7 +56,7 @@ def choose_plan():
         company.course_credits = (company.course_credits or 0) + 1  # one more course bought
     # "free": courses are not deleted; new ones just cannot be created until the company fits the limit
     db.session.commit()
-    flash(f"Plan updated: {plans.PLAN_LABELS[plan]}.", "success")
+    flash(_("Plan updated: {plan}.", plan=_(plans.PLAN_LABELS[plan])), "success")
     return redirect(url_for("main.account"))
 
 
@@ -56,7 +70,7 @@ def account():
     return render_template(
         "account_company.html",
         user=current_user,
-        plan_label=plans.PLAN_LABELS[plans.plan_of(current_user)],
+        plan_label=_(plans.PLAN_LABELS[plans.plan_of(current_user)]),
         course_limit=plans.course_limit(current_user),
         courses_used=plans.courses_used(current_user),
         can_create_course=plans.can_create_course(current_user),
@@ -74,7 +88,7 @@ def edit_profile():
             first = form.get("first_name", "").strip()
             last = form.get("last_name", "").strip()
             if not first or not last:
-                flash("Enter your first and last name.", "error")
+                flash(_("Enter your first and last name."), "error")
                 return render_template("profile_edit.html", user=current_user, form=form)
             profile = current_user.person
             if profile is None:
@@ -85,7 +99,7 @@ def edit_profile():
             name = form.get("company_name", "").strip()
             description = form.get("description", "").strip()
             if not name:
-                flash("Enter the company name.", "error")
+                flash(_("Enter the company name."), "error")
                 return render_template("profile_edit.html", user=current_user, form=form)
             profile = current_user.company
             if profile is None:
@@ -93,7 +107,7 @@ def edit_profile():
             profile.name = name[:120]
             profile.description = description[:500] or None
         db.session.commit()
-        flash("Profile saved.", "success")
+        flash(_("Profile saved."), "success")
         return redirect(url_for("main.account"))
     return render_template("profile_edit.html", user=current_user, form={})
 
@@ -115,7 +129,7 @@ def upload_avatar():
     db.session.commit()
     if old:
         delete_image(old)
-    flash("Photo updated." if current_user.is_person else "Logo updated.", "success")
+    flash(_("Photo updated.") if current_user.is_person else _("Logo updated."), "success")
     return redirect(url_for("main.edit_profile"))
 
 
@@ -127,7 +141,7 @@ def delete_avatar():
         current_user.avatar = None
         db.session.commit()
         delete_image(old)
-        flash("Photo removed." if current_user.is_person else "Logo removed.", "info")
+        flash(_("Photo removed.") if current_user.is_person else _("Logo removed."), "info")
     return redirect(url_for("main.edit_profile"))
 
 
@@ -142,7 +156,7 @@ def delete_account():
     user = current_user._get_current_object()
     typed = request.form.get("confirm_email", "").strip().lower()
     if typed != user.email.lower():
-        flash("The email does not match. Your account was not deleted.", "error")
+        flash(_("The email does not match. Your account was not deleted."), "error")
         return redirect(url_for("main.account") + "#delete-account")
 
     video_ids = []
@@ -168,5 +182,5 @@ def delete_account():
     if avatar:
         delete_image(avatar)
 
-    flash("Your account has been deleted.", "info")
+    flash(_("Your account has been deleted."), "info")
     return redirect(url_for("main.home"))

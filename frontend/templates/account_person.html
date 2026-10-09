@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% import "partials/macros.html" as ui %}
 
-{% block title %}My account{% endblock %}
+{% block title %}{{ _("My account") }}{% endblock %}
 
 {% block head %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
@@ -14,24 +14,24 @@
     {{ ui.avatar(user, 'avatar-lg') }}
     <div>
       <h1>{{ user.display_name }}</h1>
-      <p class="muted">{{ user.email }} · <a href="{{ url_for('main.edit_profile') }}">Edit profile</a></p>
+      <p class="muted">{{ user.email }} · <a href="{{ url_for('main.edit_profile') }}">{{ _("Edit profile") }}</a></p>
     </div>
   </div>
 
   <div class="stat-grid">
-    <div class="card stat-card"><span class="stat-number">{{ stats.started }}</span><span class="stat-name">Courses started</span></div>
-    <div class="card stat-card"><span class="stat-number">{{ stats.completed }}</span><span class="stat-name">Completed</span></div>
-    <div class="card stat-card"><span class="stat-number">{{ offers|length }}</span><span class="stat-name">Job offers</span></div>
+    <div class="card stat-card"><span class="stat-number">{{ stats.started }}</span><span class="stat-name">{{ _("Courses started") }}</span></div>
+    <div class="card stat-card"><span class="stat-number">{{ stats.completed }}</span><span class="stat-name">{{ _("Completed") }}</span></div>
+    <div class="card stat-card"><span class="stat-number">{{ offers|length }}</span><span class="stat-name">{{ _("Job offers") }}</span></div>
   </div>
 
   {# ---------- Offers from companies ---------- #}
   {% if offers %}
-    <h2 class="section-title">Job offers 🎉</h2>
+    <h2 class="section-title">{{ _("Job offers") }} 🎉</h2>
     <div class="stack">
       {% for offer in offers %}
         <div class="card offer-card">
           <h3>{{ ui.company_link(offer.company) }}</h3>
-          <p class="small muted">After “{{ offer.course.title }}” · {{ offer.created_at.strftime('%b %d, %Y') }}</p>
+          <p class="small muted">{{ _("After “{course}”", course=offer.course.title) }} · {{ format_date(offer.created_at) }}</p>
           <p class="offer-text keep-lines">{{ offer.text }}</p>
         </div>
       {% endfor %}
@@ -40,7 +40,7 @@
 
   {# ---------- Requests to private courses that are not accepted yet ---------- #}
   {% if requests %}
-    <h2 class="section-title">My requests</h2>
+    <h2 class="section-title">{{ _("My requests") }}</h2>
     <div class="stack">
       {% for access_request in requests %}
         <div class="card request-card">
@@ -49,9 +49,9 @@
             <p class="small muted">{{ ui.company_link(access_request.course.company) }}</p>
           </div>
           {% if access_request.status == 'pending' %}
-            <span class="chip chip-warning">Waiting for approval</span>
+            <span class="chip chip-warning">{{ _("Waiting for approval") }}</span>
           {% else %}
-            <span class="chip chip-error">Declined</span>
+            <span class="chip chip-error">{{ _("Declined") }}</span>
           {% endif %}
         </div>
       {% endfor %}
@@ -59,7 +59,7 @@
   {% endif %}
 
   {# ---------- My courses ---------- #}
-  <h2 class="section-title">My courses</h2>
+  <h2 class="section-title">{{ _("My courses") }}</h2>
   {% if enrollments %}
     <div class="card-grid">
       {% for enrollment in enrollments %}
@@ -68,11 +68,11 @@
         <div class="card enrollment-card">
           <div class="chip-row">
             {% if is_completed %}
-              <span class="chip chip-success">Completed</span>
+              <span class="chip chip-success">{{ _("Completed") }}</span>
             {% else %}
-              <span class="chip chip-warning">In progress</span>
+              <span class="chip chip-warning">{{ _("In progress") }}</span>
             {% endif %}
-            <span class="chip">{{ course.lesson_count }} lesson{{ 's' if course.lesson_count != 1 }}</span>
+            <span class="chip">{{ _n(course.lesson_count, "{count} lesson", "{count} lessons") }}</span>
           </div>
           <div>
             <h3>{{ course.title }}</h3>
@@ -82,18 +82,18 @@
             {{ ui.progress_bar(enrollment.progress_percent) }}
           </div>
           {% if is_completed %}
-            <a class="btn btn-outline btn-block" href="{{ url_for('courses.view', course_id=course.id) }}">View course</a>
+            <a class="btn btn-outline btn-block" href="{{ url_for('courses.view', course_id=course.id) }}">{{ _("View course") }}</a>
           {% else %}
             {% set continue_lesson = [enrollment.current_lesson, course.lesson_count]|min %}
-            <a class="btn btn-primary btn-block" href="{{ url_for('courses.lesson', course_id=course.id, n=continue_lesson) }}">Continue lesson {{ continue_lesson }}</a>
+            <a class="btn btn-primary btn-block" href="{{ url_for('courses.lesson', course_id=course.id, n=continue_lesson) }}">{{ _("Continue lesson {number}", number=continue_lesson) }}</a>
           {% endif %}
         </div>
       {% endfor %}
     </div>
   {% else %}
     <div class="card empty-state">
-      <p class="muted">You haven't started any courses yet.</p>
-      <a class="btn btn-primary" href="{{ url_for('main.explore') }}">Find a course</a>
+      <p class="muted">{{ _("You haven't started any courses yet.") }}</p>
+      <a class="btn btn-primary" href="{{ url_for('main.explore') }}">{{ _("Find a course") }}</a>
     </div>
   {% endif %}
 

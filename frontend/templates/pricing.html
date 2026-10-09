@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Pricing{% endblock %}
+{% block title %}{{ _("Pricing") }}{% endblock %}
 
 {% block head %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
@@ -17,7 +17,7 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="plan" value="{{ plan }}">
       {% if current_plan == plan and plan != 'per_course' %}
-        <button type="button" class="btn {{ button_style }}" style="width: 100%;" disabled>Your plan</button>
+        <button type="button" class="btn {{ button_style }}" style="width: 100%;" disabled>{{ _("Your plan") }}</button>
       {% else %}
         <button type="submit" class="btn {{ button_style }}" style="width: 100%;">{{ label }}</button>
       {% endif %}
@@ -30,61 +30,60 @@
 {% block content %}
 <div class="container page">
   <section class="pricing-intro">
-    <h1>Simple plans for every team</h1>
-    <p class="lead">Start free. Pay when you need more courses or videos.</p>
+    <h1>{{ _("Simple plans for every team") }}</h1>
+    <p class="lead">{{ _("Start free. Pay when you need more courses or videos.") }}</p>
   </section>
 
   <div class="pricing-plans">
 
     {# ---------- Free ---------- #}
     <article class="card pricing-card">
-      <h2 class="pricing-name">Free</h2>
+      <h2 class="pricing-name">{{ _("Free") }}</h2>
       <p class="pricing-price">€0</p>
-      <p class="muted">Try it out</p>
+      <p class="muted">{{ _("Try it out") }}</p>
       <ul class="pricing-features">
-        <li>1 public course</li>
-        <li>Up to 3 videos per course</li>
-        <li>See who completed your course and send job offers</li>
+        <li>{{ _("1 public course") }}</li>
+        <li>{{ _("Up to 3 videos per course") }}</li>
+        <li>{{ _("See who completed your course and send job offers") }}</li>
       </ul>
-      {{ plan_button('free', 'Start free', 'btn-outline', next_step_url, current_plan) }}
+      {{ plan_button('free', _('Start free'), 'btn-outline', next_step_url, current_plan) }}
     </article>
 
     {# ---------- Per course ---------- #}
     <article class="card pricing-card">
-      <h2 class="pricing-name">Per course</h2>
-      <p class="pricing-price">€29 <span class="pricing-period">per course, one-time</span></p>
-      <p class="muted">For 1–2 courses</p>
+      <h2 class="pricing-name">{{ _("Per course") }}</h2>
+      <p class="pricing-price">€29 <span class="pricing-period">{{ _("per course, one-time") }}</span></p>
+      <p class="muted">{{ _("For 1–2 courses") }}</p>
       <ul class="pricing-features">
-        <li>Pay for each new course</li>
-        <li>Up to 10 videos per course</li>
-        <li>Private courses by invite link</li>
-        <li>See who completed your course and send job offers</li>
+        <li>{{ _("Pay for each new course") }}</li>
+        <li>{{ _("Up to 10 videos per course") }}</li>
+        <li>{{ _("Private courses by invite link") }}</li>
+        <li>{{ _("See who completed your course and send job offers") }}</li>
       </ul>
-      {{ plan_button('per_course', 'Buy a course', 'btn-outline', next_step_url, current_plan) }}
+      {{ plan_button('per_course', _('Buy a course'), 'btn-outline', next_step_url, current_plan) }}
     </article>
 
     {# ---------- Monthly (main plan) ---------- #}
     <article class="card card-accent pricing-card pricing-card-main">
-      <span class="pricing-badge">Popular</span>
-      <h2 class="pricing-name">Monthly</h2>
-      <p class="pricing-price">€79 <span class="pricing-period">per month</span></p>
-      <p class="muted">For teams that train all the time</p>
+      <span class="pricing-badge">{{ _("Popular") }}</span>
+      <h2 class="pricing-name">{{ _("Monthly") }}</h2>
+      <p class="pricing-price">€79 <span class="pricing-period">{{ _("per month") }}</span></p>
+      <p class="muted">{{ _("For teams that train all the time") }}</p>
       <ul class="pricing-features">
-        <li>Unlimited courses</li>
-        <li>Unlimited videos</li>
-        <li>Private courses by invite link</li>
-        <li>See who completed your course and send job offers</li>
+        <li>{{ _("Unlimited courses") }}</li>
+        <li>{{ _("Unlimited videos") }}</li>
+        <li>{{ _("Private courses by invite link") }}</li>
+        <li>{{ _("See who completed your course and send job offers") }}</li>
       </ul>
-      {{ plan_button('monthly', 'Subscribe', 'btn-primary', next_step_url, current_plan) }}
+      {{ plan_button('monthly', _('Subscribe'), 'btn-primary', next_step_url, current_plan) }}
     </article>
 
   </div>
 
   <aside class="pricing-note">
-    <strong>Tip:</strong>
-    short lessons are easier to remember. We recommend 1–3 minutes per video — split longer topics into several lessons.
+    {{ _html("<strong>Tip:</strong> short lessons are easier to remember. We recommend 1–3 minutes per video — split longer topics into several lessons.") }}
   </aside>
 
-  <p class="small muted pricing-demo">Demo prices — payments are not connected yet.</p>
+  <p class="small muted pricing-demo">{{ _("Demo prices — payments are not connected yet.") }}</p>
 </div>
 {% endblock %}

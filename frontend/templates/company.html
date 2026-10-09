@@ -12,7 +12,7 @@
   <section class="company-hero">
     {{ ui.avatar(company, 'avatar-lg') }}
     <div>
-      <p class="eyebrow">Company</p>
+      <p class="eyebrow">{{ _("Company") }}</p>
       <h1>{{ company.display_name }}</h1>
       {% if company.company and company.company.description %}
         <p class="lead">{{ company.company.description }}</p>
@@ -20,7 +20,7 @@
     </div>
   </section>
 
-  <h2 class="section-title">Courses ({{ courses|length }})</h2>
+  <h2 class="section-title">{{ _("Courses ({count})", count=courses|length) }}</h2>
   {% if courses %}
     <div class="card-grid">
       {% for course in courses %}
@@ -29,7 +29,7 @@
     </div>
   {% else %}
     <div class="card empty-state">
-      <p class="muted">This company has no public courses yet.</p>
+      <p class="muted">{{ _("This company has no public courses yet.") }}</p>
     </div>
   {% endif %}
 </div>

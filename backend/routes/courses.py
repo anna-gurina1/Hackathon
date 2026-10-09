@@ -15,6 +15,7 @@ from flask_login import current_user, login_required
 from backend.plans import can_create_course
 from backend.uploads import delete_video
 from backend.email import external_url, send_email
+from backend.i18n import _, current_language, use_language
 from backend.ai_tips import AiUnavailable, generate_category_questions
 from core.course_builder import recommended_questions
 from core.questions import LEVELS
@@ -53,9 +54,9 @@ def _read_form():
         "is_private": f.get("visibility") == "private",
     }
     if not data["title"]:
-        return data, "Please enter a course title."
+        return data, _("Please enter a course title.")
     if data["level"] not in LEVELS:
-        return data, "Please choose a level."
+        return data, _("Please choose a level.")
     return data, None
 
 
@@ -64,14 +65,14 @@ def _apply_plan_rules(data):
     company = current_user.company
     if data["is_private"] and not (company and company.is_pro):
         data["is_private"] = False
-        flash("Private courses are a Pro feature. The course stays public.", "info")
+        flash(_("Private courses are a Pro feature. The course stays public."), "info")
 
 
 def _no_free_course_slot():
     """Redirect to the pricing page when the company has used all courses of its plan, else None."""
     if can_create_course(current_user):
         return None
-    flash("You have used all courses on your plan. Choose a plan to add more.", "info")
+    flash(_("You have used all courses on your plan. Choose a plan to add more."), "info")
     return redirect(url_for("main.pricing"))
 
 
@@ -148,7 +149,7 @@ def edit(course_id):
         for key, value in data.items():
             setattr(course, key, value)
         db.session.commit()
-        flash("Course saved.", "success")
+        flash(_("Course saved."), "success")
         return redirect(url_for("builder.script", course_id=course.id))
     return _render_form(course)
 
@@ -163,7 +164,7 @@ def delete(course_id):
     # videos are removed only after the course is really gone from the database
     for public_id in video_ids:
         delete_video(public_id)
-    flash("Course deleted.", "info")
+    flash(_("Course deleted."), "info")
     return redirect(url_for("main.account"))
 
 
@@ -173,7 +174,7 @@ def publish(course_id):
     course = _owned_course_or_abort(course_id)
     course.status = "published"
     db.session.commit()
-    flash("Course published.", "success")
+    flash(_("Course published."), "success")
     return redirect(url_for("courses.view", course_id=course.id))
 
 
@@ -217,19 +218,22 @@ def request_access(course_id):
     existing = AccessRequest.query.filter_by(user_id=current_user.id, course_id=course.id).first()
     if existing is not None:
         if existing.status == "declined":
-            flash("The company has already declined your request for this course.", "info")
+            flash(_("The company has already declined your request for this course."), "info")
         return back
 
     db.session.add(AccessRequest(user_id=current_user.id, course_id=course.id))
     db.session.commit()
-    send_email(
-        course.company.email,
-        f"New request to join “{course.title}”",
-        f"{current_user.display_name} ({current_user.email}) asks to join your private course "
-        f"“{course.title}”.\n\nAccept or decline the request in your account:\n"
-        f"{external_url('main.account')}\n",
-    )
-    flash(f"Request sent. {course.company.display_name} will review it — we'll email you the answer.", "success")
+    with use_language(course.company.language):  # the email is written in the company's language
+        send_email(
+            course.company.email,
+            _("New request to join “{course}”", course=course.title),
+            _("{name} ({email}) asks to join your private course “{course}”.",
+              name=current_user.display_name, email=current_user.email, course=course.title)
+            + "\n\n" + _("Accept or decline the request in your account:")
+            + f"\n{external_url('main.account')}\n",
+        )
+    flash(_("Request sent. {company} will review it — we'll email you the answer.",
+            company=course.company.display_name), "success")
     return back
 
 
@@ -254,13 +258,15 @@ def accept_request(course_id, request_id):
             db.session.add(Enrollment(user_id=access_request.user_id, course_id=course.id))
         db.session.commit()
         person = access_request.user
-        send_email(
-            person.email,
-            f"You can start “{course.title}”",
-            f"Hi {person.display_name},\n\n{course.company.display_name} accepted your request. "
-            f"Start the course here:\n{external_url('courses.view', course_id=course.id)}\n",
-        )
-        flash(f"{person.display_name} can start the course now.", "success")
+        with use_language(person.language):  # the email is written in the learner's language
+            send_email(
+                person.email,
+                _("You can start “{course}”", course=course.title),
+                _("Hi {name},", name=person.display_name) + "\n\n"
+                + _("{company} accepted your request. Start the course here:", company=course.company.display_name)
+                + f"\n{external_url('courses.view', course_id=course.id)}\n",
+            )
+        flash(_("{name} can start the course now.", name=person.display_name), "success")
     return redirect(url_for("main.account") + "#requests")
 
 
@@ -275,14 +281,16 @@ def decline_request(course_id, request_id):
         access_request.decided_at = datetime.utcnow()
         db.session.commit()
         person = access_request.user
-        send_email(
-            person.email,
-            f"Your request to “{course.title}”",
-            f"Hi {person.display_name},\n\nUnfortunately {course.company.display_name} declined your "
-            f"request to join “{course.title}”. You can find other courses here:\n"
-            f"{external_url('main.explore')}\n",
-        )
-        flash("Request declined.", "info")
+        with use_language(person.language):  # the email is written in the learner's language
+            send_email(
+                person.email,
+                _("Your request to “{course}”", course=course.title),
+                _("Hi {name},", name=person.display_name) + "\n\n"
+                + _("Unfortunately {company} declined your request to join “{course}”. You can find other courses here:",
+                    company=course.company.display_name, course=course.title)
+                + f"\n{external_url('main.explore')}\n",
+            )
+        flash(_("Request declined."), "info")
     return redirect(url_for("main.account") + "#requests")
 
 
@@ -300,7 +308,7 @@ def start(course_id):
     invited = course.is_private and request.form.get("invite") == course.invite_token
     if not invited and not course_visible_to(course, current_user):
         if course.is_private and course.status == "published":
-            flash("This is a private course. Send a request to join it.", "info")
+            flash(_("This is a private course. Send a request to join it."), "info")
             return redirect(url_for("courses.view", course_id=course.id))
         abort(404)
     enrollment = Enrollment.query.filter_by(
@@ -308,7 +316,7 @@ def start(course_id):
     ).first()
     if enrollment is None:
         if not course.lessons:
-            flash("This course has no lessons yet.", "error")
+            flash(_("This course has no lessons yet."), "error")
             return redirect(url_for("courses.view", course_id=course.id))
         enrollment = Enrollment(user_id=current_user.id, course_id=course.id)
         db.session.add(enrollment)
@@ -392,7 +400,9 @@ def _ai_questions_response(fields):
     """One AI question per topic of the panel, as JSON."""
     categories = [(g["category"], g["category_label"]) for g in recommended_questions(None)]
     try:
-        questions = generate_category_questions(fields, categories)
+        # if the course text does not show its language, the AI writes in the language of the site
+        site_language = {"en": "English", "ru": "Russian"}.get(current_language(), "English")
+        questions = generate_category_questions(fields, categories, fallback_language=site_language)
     except AiUnavailable:
         return jsonify(error="unavailable"), 503
     return jsonify(questions=questions)

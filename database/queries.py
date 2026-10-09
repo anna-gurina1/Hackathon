@@ -4,6 +4,7 @@ Backend calls these instead of writing its own queries — keep the
 function names and signatures exactly as listed here.
 """
 
+from backend.i18n import _
 from database import db
 from database.models import (
     AccessRequest,
@@ -116,7 +117,7 @@ def search_courses(q, by):
             "id": course.id,
             "title": course.title,
             "description": course.description,
-            "level": LEVELS.get(course.level, course.level),
+            "level": _(LEVELS.get(course.level, course.level)),  # in the language of the site
             "lesson_count": course.lesson_count,
             "is_private": course.is_private,
             "url": f"/course/{course.id}",
