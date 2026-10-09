@@ -36,14 +36,21 @@
     {% for item in results %}
       {% set got_it_right = item.chosen and item.chosen.id == item.correct.id %}
       <div class="card review-item {{ 'is-right' if got_it_right else 'is-wrong' }}">
+        {# one "Translate" for the question, your answer and the correct answer #}
+        {% set review_parts = [item.question] %}
+        {% set review_labels = [""] %}
+        {% if item.chosen %}{% set _unused = review_parts.append(item.chosen) %}{% set _unused = review_labels.append(_("Your answer:")) %}{% endif %}
+        {% if not got_it_right %}{% set _unused = review_parts.append(item.correct) %}{% set _unused = review_labels.append(_("Correct answer:")) %}{% endif %}
+        {% set review_translation = offer_translation(review_parts, "text", labels=review_labels) %}
         <p class="review-question">
           <span class="review-mark">{{ '✓' if got_it_right else '✕' }}</span>
-          <span>{{ item.question.text }}</span>
+          <span>{{ item.question.text }}{{ review_translation.button }}</span>
         </p>
         <p class="small">{{ _("Your answer:") }} <strong>{{ item.chosen.text if item.chosen else _("No answer") }}</strong></p>
         {% if not got_it_right %}
           <p class="small muted">{{ _("Correct answer:") }} {{ item.correct.text }}</p>
         {% endif %}
+        {{ review_translation.box }}
       </div>
     {% endfor %}
   </div>

@@ -2,16 +2,18 @@
 
 The master builds the course lesson by lesson. A lesson = title + video and/or text.
 Next to the lesson list the page shows recommended questions (core/questions.py)
-for the course level; a question can be attached to a lesson with the "Use" button
-(then the lesson keeps its question_id). Time is only a hint and is never checked.
+for the course level. They are only hints: the master can tick the ones already
+answered in the course (AnsweredQuestion) — a personal note that nobody else sees
+and that is not linked to any lesson. Time is only a hint and is never checked.
 
-    builder.script         GET  /course/<id>/builder
-    builder.add_lesson     POST /course/<id>/lessons
-    builder.edit_lesson    POST /course/<id>/lessons/<lesson_id>
-    builder.delete_lesson  POST /course/<id>/lessons/<lesson_id>/delete
-    builder.quiz_edit      GET/POST /course/<id>/lesson/<lesson_id>/quiz/edit
+    builder.script           GET  /course/<id>/builder
+    builder.add_lesson       POST /course/<id>/lessons
+    builder.edit_lesson      POST /course/<id>/lessons/<lesson_id>
+    builder.delete_lesson    POST /course/<id>/lessons/<lesson_id>/delete
+    builder.toggle_answered  POST /course/<id>/questions/<question_id>/answered
+    builder.quiz_edit        GET/POST /course/<id>/lesson/<lesson_id>/quiz/edit
 """
-from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from flask import Blueprint, abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from backend.i18n import _
@@ -20,13 +22,13 @@ from backend.uploads import delete_video, save_video
 from core.course_builder import recommended_questions
 from core.questions import QUESTIONS, QUIZ_TEMPLATES
 from database import db
-from database.models import Course, Lesson, Quiz, QuizAnswer, QuizQuestion
+from database.models import AnsweredQuestion, Course, Lesson, Quiz, QuizAnswer, QuizQuestion
 
 bp = Blueprint("builder", __name__)
 
-# Only questions that are answered with a video/text can be attached to a lesson
-MEDIA_QUESTION_IDS = {q["id"] for q in QUESTIONS if q["answer_type"] == "media"}
 QUESTIONS_BY_ID = {q["id"]: q for q in QUESTIONS}
+# Quiz ideas for a lesson that is not linked to a studio question: the first idea of every topic
+GENERAL_QUIZ_SUGGESTIONS = [ideas[0] for ideas in QUIZ_TEMPLATES.values() if ideas]
 
 
 # ---------- helpers ----------
@@ -65,24 +67,6 @@ def _back_to_script(course, lesson=None):
     return redirect(url_for("builder.script", course_id=course.id) + anchor)
 
 
-def _read_question_id(course, current_lesson=None):
-    """question_id from the form. Returns (question_id, error).
-    Empty -> (None, None). A question can be used by one lesson of the course only."""
-    raw = request.form.get("question_id", "").strip()
-    if not raw:
-        return None, None
-    try:
-        question_id = int(raw)
-    except ValueError:
-        return None, _("Unknown question.")
-    if question_id not in MEDIA_QUESTION_IDS:
-        return None, _("Unknown question.")
-    taken = Lesson.query.filter_by(course_id=course.id, question_id=question_id).first()
-    if taken is not None and taken is not current_lesson:
-        return None, _("This question is already used by another lesson.")
-    return question_id, None
-
-
 def _read_video():
     """Uploaded video file or None."""
     video = request.files.get("video")
@@ -112,7 +96,7 @@ def script(course_id):
         course=course,
         lessons=lessons,
         recommended=recommended_questions(course.level),
-        used_question_ids={l.question_id for l in lessons if l.question_id is not None},
+        answered_question_ids={note.question_id for note in course.answered_questions},
         video_limit=video_limit(current_user),
         videos_used=videos_used(course),
         can_add_video=can_add_video(course),
@@ -132,11 +116,6 @@ def add_lesson(course_id):
         flash(_("Enter the lesson title."), "error")
         return _back_to_script(course)
 
-    question_id, error = _read_question_id(course)
-    if error:
-        flash(error, "error")
-        return _back_to_script(course)
-
     filename = None
     video = _read_video()
     if video is not None:
@@ -153,7 +132,6 @@ def add_lesson(course_id):
         order=len(course.lessons) + 1,
         title=title,
         text=text or None,
-        question_id=question_id,
         video_filename=filename,
     )
     db.session.add(lesson)
@@ -176,11 +154,6 @@ def edit_lesson(course_id, lesson_id):
         flash(_("Enter the lesson title."), "error")
         return _back_to_script(course, lesson)
 
-    question_id, error = _read_question_id(course, current_lesson=lesson)
-    if error:
-        flash(error, "error")
-        return _back_to_script(course, lesson)
-
     new_filename = None
     video = _read_video()
     if video is not None:
@@ -195,7 +168,6 @@ def edit_lesson(course_id, lesson_id):
 
     lesson.title = title
     lesson.text = text or None
-    lesson.question_id = question_id
     old_filename = None
     if new_filename:
         old_filename = lesson.video_filename
@@ -227,6 +199,31 @@ def delete_lesson(course_id, lesson_id):
     return _back_to_script(course)
 
 
+# ---------- the master's notes "I have answered this question" ----------
+
+@bp.route("/course/<int:course_id>/questions/<int:question_id>/answered", methods=["POST"])
+@login_required
+def toggle_answered(course_id, question_id):
+    """Tick / untick a studio question. studio.js asks for JSON; without JavaScript the form
+    sends the master back to the studio."""
+    course = _owned_course_or_abort(course_id)
+    if question_id not in QUESTIONS_BY_ID:
+        abort(404)
+
+    note = AnsweredQuestion.query.filter_by(course_id=course.id, question_id=question_id).first()
+    if note is None:
+        db.session.add(AnsweredQuestion(course_id=course.id, question_id=question_id))
+        is_answered = True
+    else:
+        db.session.delete(note)
+        is_answered = False
+    db.session.commit()
+
+    if request.accept_mimetypes.best == "application/json":
+        return jsonify(answered=is_answered)
+    return redirect(request.referrer or url_for("builder.script", course_id=course.id))
+
+
 # ---------- quiz for one lesson ----------
 
 @bp.route("/course/<int:course_id>/lesson/<int:lesson_id>/quiz/edit", methods=["GET", "POST"])
@@ -237,6 +234,7 @@ def quiz_edit(course_id, lesson_id):
     if lesson is None or lesson.course_id != course.id:
         abort(404)
 
+    # old lessons made with the "Use" button keep quiz ideas of their topic
     question = QUESTIONS_BY_ID.get(lesson.question_id)
     category = question["category"] if question else None
 
@@ -254,7 +252,7 @@ def quiz_edit(course_id, lesson_id):
         course=course,
         lesson=lesson,
         quiz=lesson.quiz,
-        suggestions=QUIZ_TEMPLATES.get(category, []),
+        suggestions=QUIZ_TEMPLATES.get(category) or GENERAL_QUIZ_SUGGESTIONS,
     )
 
 

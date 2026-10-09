@@ -16,7 +16,6 @@
   "Copied ✓": "Скопировано ✓",
   "{answered} of {total} answered": "Отвечено {answered} из {total}",
   "Checking…": "Проверяем…",
-  "Idea for this lesson:": "Идея для этого урока:",
   "Fill in the course details first (topic, profession, what people will learn) so the AI knows what to suggest.": "Сначала заполните описание курса (тема, профессия, чему научатся люди), чтобы ИИ понял, что предложить.",
   "Thinking…": "Думаю…",
   "Done! One tip from AI was added to each topic.": "Готово! В каждую тему добавлена одна подсказка от ИИ.",
@@ -46,5 +45,13 @@
     "{count} курс",
     "{count} курса",
     "{count} курсов"
-  ]
+  ],
+  "Could not save. Please try again.": "Не удалось сохранить. Попробуйте ещё раз.",
+  "Could not translate, try later": "Не удалось перевести, попробуйте позже",
+  "Course in English": "Курс на английском",
+  "Course in Russian": "Курс на русском",
+  "Hide translation": "Скрыть перевод",
+  "Show translation": "Показать перевод",
+  "Translating…": "Перевожу…",
+  "No courses in your language yet. Turn off “Only courses in…” to see all courses.": "Курсов на русском пока нет. Выключите «Только курсы на русском», чтобы увидеть все курсы."
 }

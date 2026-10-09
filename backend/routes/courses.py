@@ -15,7 +15,7 @@ from flask_login import current_user, login_required
 from backend.plans import can_create_course
 from backend.uploads import delete_video
 from backend.email import external_url, send_email
-from backend.i18n import _, current_language, use_language
+from backend.i18n import LANGUAGES, _, current_language, use_language
 from backend.ai_tips import AiUnavailable, generate_category_questions
 from core.course_builder import recommended_questions
 from core.questions import LEVELS
@@ -77,11 +77,16 @@ def _no_free_course_slot():
 
 
 def _render_form(course, status=200):
+    extra = {}
+    if course is not None:
+        # the master's ticks "I have answered this question" (only on an existing course)
+        extra["answered_question_ids"] = {note.question_id for note in course.answered_questions}
     return render_template(
         "course_form.html",
         course=course,
         LEVELS=LEVELS,
         recommended=recommended_questions(None),
+        **extra,
     ), status
 
 
@@ -130,6 +135,7 @@ def new():
             return _render_form(None, 400)
         _apply_plan_rules(data)
         course = Course(company_id=current_user.id, **data)
+        course.update_language()  # "en" / "ru" chip in the catalog
         db.session.add(course)
         db.session.commit()
         return redirect(url_for("builder.script", course_id=course.id))
@@ -148,6 +154,7 @@ def edit(course_id):
         _apply_plan_rules(data)
         for key, value in data.items():
             setattr(course, key, value)
+        course.update_language()  # the texts could be rewritten in another language
         db.session.commit()
         flash(_("Course saved."), "success")
         return redirect(url_for("builder.script", course_id=course.id))
@@ -392,7 +399,11 @@ def search():
         for company in companies:
             company["type"] = "company"
         return jsonify(companies)
-    return jsonify(search_courses(q, by))
+    # "Only courses in Russian" in the catalog sends lang=ru
+    language = request.args.get("lang")
+    if language not in LANGUAGES:
+        language = None
+    return jsonify(search_courses(q, by, language))
 
 # ---------- AI suggestions for the "Need ideas?" panel ----------
 

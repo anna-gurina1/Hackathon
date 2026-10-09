@@ -38,6 +38,9 @@ from core.config import BASE_DIR
 LANGUAGES = {"en": "English", "ru": "Русский"}
 DEFAULT_LANGUAGE = "en"
 COOKIE_NAME = "lang"
+# Tooltip of the EN / RU switch, written in the language it switches TO,
+# so a person who reads only that language understands it.
+SWITCH_LABELS = {"en": "Switch to English", "ru": "Переключить на русский"}
 COOKIE_MAX_AGE = 365 * 24 * 60 * 60  # one year
 
 TRANSLATIONS_DIR = os.path.join(BASE_DIR, "translations")
@@ -248,6 +251,12 @@ def safe_next_url(url, fallback="/"):
     return url
 
 
+def next_language():
+    """The language the EN / RU switch goes to: the next one in LANGUAGES (en -> ru -> en)."""
+    codes = list(LANGUAGES)
+    return codes[(codes.index(current_language()) + 1) % len(codes)]
+
+
 def init_app(app):
     """Make _, _n, _html, format_date and the language available in every template."""
     app.jinja_env.globals.update(
@@ -257,5 +266,7 @@ def init_app(app):
         format_date=format_date,
         current_language=current_language,
         LANGUAGES=LANGUAGES,
+        SWITCH_LABELS=SWITCH_LABELS,
+        next_language=next_language,
         scripts_dictionary=scripts_dictionary,
     )

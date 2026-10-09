@@ -56,8 +56,6 @@
   "Request declined.": "Заявка отклонена.",
   "This is a private course. Send a request to join it.": "Это закрытый курс. Отправьте заявку, чтобы присоединиться.",
   "This course has no lessons yet.": "В этом курсе пока нет уроков.",
-  "Unknown question.": "Неизвестный вопрос.",
-  "This question is already used by another lesson.": "Этот вопрос уже используется в другом уроке.",
   "Your plan allows {count} videos per course. Upgrade to add more.": "Ваш тариф позволяет {count} видео в курсе. Смените тариф, чтобы добавить больше.",
   "Enter the lesson title.": "Введите название урока.",
   "Lesson {number} added. Now add a quick quiz to it.": "Урок {number} добавлен. Теперь добавьте к нему короткий тест.",

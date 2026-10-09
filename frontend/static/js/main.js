@@ -106,3 +106,105 @@ if (userMenuButton) {
 document.querySelectorAll('.flash').forEach(function (message) {
   setTimeout(function () { message.remove(); }, 6000);
 });
+
+// ---------- EN / RU switch: a short slide, then the page opens in the other language ----------
+// Without JavaScript the switch is a normal link, so it works anyway.
+const languageSwitch = document.querySelector('[data-lang-switch]');
+
+if (languageSwitch) {
+  const slideTime = 260;   // ms, the same as the transition in style.css
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const startPosition = languageSwitch.style.getPropertyValue('--position');
+
+  languageSwitch.addEventListener('click', function (event) {
+    // Ctrl/Cmd+click opens a new tab as usual; people who turned animations off go at once
+    if (event.ctrlKey || event.metaKey || event.shiftKey || reduceMotion) return;
+    event.preventDefault();
+    if (languageSwitch.classList.contains('is-switching')) return;   // double tap
+
+    const options = languageSwitch.querySelectorAll('.lang-option');
+    const nextPosition = Number(languageSwitch.dataset.nextPosition);
+    languageSwitch.classList.add('is-switching');
+    languageSwitch.style.setProperty('--position', nextPosition);
+    options.forEach(function (option, index) {
+      option.classList.toggle('is-current', index === nextPosition);
+    });
+
+    setTimeout(function () { window.location.href = languageSwitch.href; }, slideTime);
+  });
+
+  // "Back" in the browser can show this page from memory: put the switch back as it was
+  window.addEventListener('pageshow', function (event) {
+    if (!event.persisted) return;
+    languageSwitch.classList.remove('is-switching');
+    languageSwitch.style.setProperty('--position', startPosition);
+    languageSwitch.querySelectorAll('.lang-option').forEach(function (option, index) {
+      option.classList.toggle('is-current', String(index) === startPosition);
+    });
+  });
+}
+
+// ---------- "Translate" button next to texts written by users ----------
+// The server adds the button only when the text is not in the language of the site
+// (backend/translator.py). The first tap asks /api/translate, the next taps only hide/show.
+const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+function showTranslation(box, translations, labels) {
+  const textBox = box.querySelector('[data-translation-text]');
+  textBox.textContent = '';
+  translations.forEach(function (translated, index) {
+    if (!translated) return;
+    const line = document.createElement('p');
+    if (labels[index]) {
+      const label = document.createElement('span');
+      label.className = 'translation-label';
+      label.textContent = labels[index] + ' ';
+      line.appendChild(label);
+    }
+    line.appendChild(document.createTextNode(translated));   // text, never HTML
+    textBox.appendChild(line);
+  });
+}
+
+function setTranslationOpen(button, box, isOpen) {
+  box.classList.toggle('is-open', isOpen);
+  button.setAttribute('aria-expanded', String(isOpen));
+  button.textContent = isOpen ? t('Hide translation') : t('Show translation');
+}
+
+document.addEventListener('click', async function (event) {
+  const button = event.target.closest('[data-translate]');
+  if (!button) return;
+  event.preventDefault();
+
+  const box = document.getElementById(button.getAttribute('aria-controls'));
+  if (box.dataset.loaded) {
+    setTranslationOpen(button, box, !box.classList.contains('is-open'));
+    return;
+  }
+  if (button.disabled) return;
+
+  const normalLabel = button.textContent;
+  button.disabled = true;
+  button.textContent = t('Translating…');
+  try {
+    const response = await fetch('/api/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+      body: JSON.stringify({ source: button.dataset.translate }),
+    });
+    const data = await response.json().catch(function () { return {}; });
+    if (!response.ok || !Array.isArray(data.translations)) throw new Error(data.error || response.status);
+
+    showTranslation(box, data.translations, JSON.parse(button.dataset.labels || '[]'));
+    box.dataset.loaded = 'yes';
+    button.disabled = false;
+    setTranslationOpen(button, box, true);
+  } catch (error) {
+    button.textContent = t('Could not translate, try later');
+    setTimeout(function () {
+      button.textContent = normalLabel;
+      button.disabled = false;
+    }, 3000);
+  }
+});

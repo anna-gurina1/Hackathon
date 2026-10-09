@@ -15,7 +15,9 @@
 
     <article class="lesson-main">
       <p class="eyebrow">{{ _("Lesson {number} of {total}", number=n, total=course.lesson_count) }}</p>
-      <h1>{{ lesson.title }}</h1>
+      {% set title_translation = offer_translation(lesson, "title") %}
+      <h1>{{ lesson.title }}{{ title_translation.button }}</h1>
+      {{ title_translation.box }}
 
       {% if video_url %}
         <div class="video-frame">
@@ -33,7 +35,11 @@
       {% endif %}
 
       {% if lesson.text %}
-        <div class="card lesson-text keep-lines">{{ lesson.text }}</div>
+        {% set text_translation = offer_translation(lesson, "text") %}
+        <div class="card lesson-text">
+          <div class="keep-lines">{{ lesson.text }}{{ text_translation.button }}</div>
+          {{ text_translation.box }}
+        </div>
       {% endif %}
 
       {% if not video_url and not lesson.text %}

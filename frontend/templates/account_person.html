@@ -32,7 +32,9 @@
         <div class="card offer-card">
           <h3>{{ ui.company_link(offer.company) }}</h3>
           <p class="small muted">{{ _("After “{course}”", course=offer.course.title) }} · {{ format_date(offer.created_at) }}</p>
-          <p class="offer-text keep-lines">{{ offer.text }}</p>
+          {% set offer_text_translation = offer_translation(offer, "text") %}
+          <p class="offer-text keep-lines">{{ offer.text }}{{ offer_text_translation.button }}</p>
+          {{ offer_text_translation.box }}
         </div>
       {% endfor %}
     </div>

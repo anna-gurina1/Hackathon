@@ -15,7 +15,9 @@
       <p class="eyebrow">{{ _("Company") }}</p>
       <h1>{{ company.display_name }}</h1>
       {% if company.company and company.company.description %}
-        <p class="lead">{{ company.company.description }}</p>
+        {% set description_translation = offer_translation(company.company, "description") %}
+        <p class="lead">{{ company.company.description }}{{ description_translation.button }}</p>
+        {{ description_translation.box }}
       {% endif %}
     </div>
   </section>

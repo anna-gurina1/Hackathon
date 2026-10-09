@@ -23,15 +23,21 @@
       </a>
 
       <nav class="site-nav">
-        {# EN / RU: switches the whole site and comes back to the same page (backend/i18n.py) #}
+        {# EN / RU: one button. A tap anywhere on it switches to the other language and comes back
+           to the same page (backend/i18n.py); main.js plays a short slide before leaving. #}
         {% set back_to = request.full_path if request.method == 'GET' else request.path %}
-        <div class="lang-switch" role="group" aria-label="{{ _('Language') }}">
-          {% for code in LANGUAGES %}
-            <a href="{{ url_for('main.set_language', code=code, next=back_to.rstrip('?')) }}"
-               class="{{ 'is-active' if code == current_language() }}" lang="{{ code }}"
-               title="{{ LANGUAGES[code] }}" {{ 'aria-current=true' if code == current_language() }}>{{ code|upper }}</a>
+        {% set switch_to = next_language() %}
+        {% set language_codes = LANGUAGES|list %}
+        <a class="lang-switch" data-lang-switch
+           href="{{ url_for('main.set_language', code=switch_to, next=back_to.rstrip('?')) }}"
+           hreflang="{{ switch_to }}" title="{{ SWITCH_LABELS[switch_to] }}" aria-label="{{ SWITCH_LABELS[switch_to] }}"
+           style="--count: {{ language_codes|length }}; --position: {{ language_codes.index(current_language()) }}"
+           data-next-position="{{ language_codes.index(switch_to) }}">
+          <span class="lang-thumb" aria-hidden="true"></span>
+          {% for code in language_codes %}
+            <span class="lang-option {{ 'is-current' if code == current_language() }}" aria-hidden="true">{{ code|upper }}</span>
           {% endfor %}
-        </div>
+        </a>
         <a class="nav-home" href="{{ url_for('main.home') }}">{{ _("Home") }}</a>
         <a href="{{ url_for('main.explore') }}">{{ _("Explore") }}</a>
         <a href="{{ url_for('main.pricing') }}">{{ _("Pricing") }}</a>

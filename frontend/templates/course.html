@@ -16,23 +16,31 @@
       <a class="back-link" href="{{ url_for('courses.company_profile', company_id=course.company.id) }}">
         {{ _("by {company}", company=course.company.display_name) }}
       </a>
-      <h1 class="course-title">{{ course.title }}</h1>
+      {# "Translate" buttons appear only when the course is not in the language of the site (backend/translator.py) #}
+      {% set title_translation = offer_translation(course, "title") %}
+      <h1 class="course-title">{{ course.title }}{{ title_translation.button }}</h1>
+      {{ title_translation.box }}
 
       <div class="chip-row">
         <span class="chip">{{ ui.level_label(course.level) }}</span>
         <span class="chip">{{ _n(course.lesson_count, "{count} lesson", "{count} lessons") }}</span>
+        {{ ui.language_chip(course) }}
         {% if course.is_private %}<span class="chip chip-dark">{{ _("Private") }}</span>{% endif %}
         {% if course.status == 'draft' %}<span class="chip chip-warning">{{ _("Draft") }}</span>{% endif %}
       </div>
 
       {% if course.description %}
-        <p class="lead">{{ course.description }}</p>
+        {% set description_translation = offer_translation(course, "description") %}
+        <p class="lead">{{ course.description }}{{ description_translation.button }}</p>
+        {{ description_translation.box }}
       {% endif %}
 
       {% if course.outcome %}
         <div class="card outcome-card">
           <h2 class="section-title">{{ _("What you'll learn") }}</h2>
-          <p class="keep-lines">{{ course.outcome }}</p>
+          {% set outcome_translation = offer_translation(course, "outcome") %}
+          <p class="keep-lines">{{ course.outcome }}{{ outcome_translation.button }}</p>
+          {{ outcome_translation.box }}
         </div>
       {% endif %}
 
@@ -40,6 +48,11 @@
         {% if course.topic %}<div><dt>{{ _("Topic") }}</dt><dd>{{ course.topic }}</dd></div>{% endif %}
         {% if course.profession %}<div><dt>{{ _("Profession") }}</dt><dd>{{ course.profession }}</dd></div>{% endif %}
       </dl>
+      {% set info_labels = [] %}
+      {% if course.topic %}{% set _unused = info_labels.append(_("Topic") ~ ":") %}{% endif %}
+      {% if course.profession %}{% set _unused = info_labels.append(_("Profession") ~ ":") %}{% endif %}
+      {% set info_translation = offer_translation(course, "topic", "profession", labels=info_labels) %}
+      {% if info_translation.button %}<p class="translate-row">{{ info_translation.button_alone }}</p>{{ info_translation.box }}{% endif %}
     </section>
 
     {# ---------- 2. Action card: what this visitor can do ---------- #}
@@ -131,7 +144,11 @@
 
     {# ---------- 3. Lessons ---------- #}
     <section class="course-lessons">
-      <h2 class="section-title">{{ _("Lessons") }}</h2>
+      {% set lesson_numbers = [] %}
+      {% for lesson in lessons %}{% set _unused = lesson_numbers.append(lesson.order ~ ".") %}{% endfor %}
+      {% set lessons_translation = offer_translation(lessons, "title", labels=lesson_numbers) %}
+      <h2 class="section-title">{{ _("Lessons") }}{{ lessons_translation.button }}</h2>
+      {{ lessons_translation.box }}
       {% if lessons %}
         <ol class="lesson-list">
           {% for lesson in lessons %}

@@ -24,6 +24,13 @@
         <label class="pill"><input type="radio" name="by" value="profession"><span>{{ _("Profession") }}</span></label>
         <label class="pill"><input type="radio" name="by" value="result"><span>{{ _("What you'll learn") }}</span></label>
       </div>
+
+      {# Only courses written in the language of the site (tips.js adds &lang=...) #}
+      <label class="only-language" data-only-my-language-box>
+        <input type="checkbox" data-only-my-language>
+        <span class="only-language-track" aria-hidden="true"></span>
+        <span>{{ _("Only courses in Russian") if current_language() == "ru" else _("Only courses in English") }}</span>
+      </label>
     </form>
   </section>
 

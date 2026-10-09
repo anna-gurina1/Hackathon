@@ -54,24 +54,29 @@ if (levelPicker) {
   if (checkedLevel) showQuestionsForLevel(checkedLevel.value);
 }
 
-// ---------- 4. "Use" a suggested question for a new lesson ----------
-const newLessonBlock = document.getElementById('new-lesson');
-
-document.querySelectorAll('[data-use-question]').forEach(function (useButton) {
-  useButton.addEventListener('click', function () {
-    if (!newLessonBlock) return;
-
-    newLessonBlock.hidden = false;
-    const addLessonButton = document.getElementById('add-lesson-button');
-    if (addLessonButton) addLessonButton.hidden = true;
-
-    const questionPrompt = newLessonBlock.querySelector('[data-question-prompt]');
-    questionPrompt.textContent = '💡 ' + t('Idea for this lesson:') + ' ' + useButton.dataset.questionText;
-    questionPrompt.hidden = false;
-    newLessonBlock.querySelector('[data-question-id]').value = useButton.dataset.useQuestion;
-
-    newLessonBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    newLessonBlock.querySelector('[data-lesson-title]').focus({ preventScroll: true });
+// ---------- 4. Tick "I have answered this question" (a note only the master sees) ----------
+document.querySelectorAll('[data-answered-form]').forEach(function (form) {
+  form.addEventListener('submit', async function (event) {
+    event.preventDefault();               // no page reload: the tick changes in place
+    const tick = form.querySelector('.suggest-tick');
+    const item = form.closest('.suggest-item');
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+        body: new FormData(form),          // has the csrf_token field
+      });
+      if (!response.ok) throw new Error('status ' + response.status);
+      const data = await response.json();
+      tick.setAttribute('aria-pressed', String(data.answered));
+      tick.title = data.answered ? tick.dataset.titleOn : tick.dataset.titleOff;
+      item.classList.toggle('is-answered', data.answered);
+      tick.classList.remove('is-popping');
+      void tick.offsetWidth;              // restart the small "pop" animation
+      tick.classList.add('is-popping');
+    } catch (error) {
+      showToast(t('Could not save. Please try again.'));
+    }
   });
 });
 

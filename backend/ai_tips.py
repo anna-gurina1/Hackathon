@@ -117,7 +117,7 @@ def _call_gemini(system, user_text):
         raise AiUnavailable("The AI gave no answer.") from error
  
  
-def _call_anthropic(system, user_text):
+def _call_anthropic(system, user_text, max_tokens=800):
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
         raise AiUnavailable("ANTHROPIC_API_KEY is not set in the .env file.")
@@ -126,7 +126,7 @@ def _call_anthropic(system, user_text):
         {"x-api-key": api_key, "anthropic-version": ANTHROPIC_VERSION},
         {
             "model": os.getenv("ANTHROPIC_MODEL") or DEFAULT_ANTHROPIC_MODEL,
-            "max_tokens": 800,
+            "max_tokens": max_tokens,
             "system": system,
             "messages": [{"role": "user", "content": user_text}],
         },
@@ -140,13 +140,14 @@ def _call_anthropic(system, user_text):
         raise AiUnavailable("The AI gave no answer.") from error
  
  
-def _call_api(system, user_text):
-    """Sends the prompt to the provider chosen in AI_PROVIDER and returns the answer text."""
+def _call_api(system, user_text, max_tokens=800):
+    """Sends the prompt to the provider chosen in AI_PROVIDER and returns the answer text.
+    max_tokens: the longest answer Anthropic may give (Gemini has no such limit here)."""
     provider = (os.getenv("AI_PROVIDER") or "gemini").strip().lower()
     if provider == "gemini":
         return _call_gemini(system, user_text)
     if provider == "anthropic":
-        return _call_anthropic(system, user_text)
+        return _call_anthropic(system, user_text, max_tokens)
     raise AiUnavailable(f"Unknown AI_PROVIDER: {provider}")
  
  

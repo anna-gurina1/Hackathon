@@ -1,12 +1,14 @@
-from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from flask import Blueprint, abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, logout_user
 
 from backend import plans
+from backend.ai_tips import AiUnavailable
 from backend.i18n import COOKIE_MAX_AGE, COOKIE_NAME, LANGUAGES, _, safe_next_url
 from database import db
 from backend.uploads import delete_image, delete_video, save_image
 from database.models import AccessRequest, CompanyProfile, Course, Enrollment, Offer, PersonProfile, QuizAttempt
 from database.queries import company_dashboard, person_dashboard
+from backend.translator import translate_source
 
 bp = Blueprint("main", __name__)
 
@@ -32,6 +34,20 @@ def set_language(code):
         current_user.language = code  # emails to this person will come in this language
         db.session.commit()
     return response
+
+
+@bp.route("/api/translate", methods=["POST"])
+def translate():
+    """The "Translate" button: {"source": "<signed token from the page>"} ->
+    {"translations": ["...", ...]} in the language of the site. Open to everybody, guests too."""
+    data = request.get_json(silent=True) or {}
+    try:
+        translations = translate_source(str(data.get("source", "")))
+    except ValueError:        # broken or very old token: the page should be reloaded
+        return jsonify(error="bad_source"), 400
+    except AiUnavailable:     # no AI key, network problem, used-up quota...
+        return jsonify(error="unavailable"), 503
+    return jsonify(translations=translations)
 
 
 @bp.route("/pricing")

@@ -1,6 +1,5 @@
 {
   "Microlearning": "Микрообучение",
-  "Language": "Язык",
   "Home": "Главная",
   "Explore": "Каталог",
   "Pricing": "Тарифы",
@@ -306,5 +305,15 @@
   "Need ideas?": "Нужны идеи?",
   "Not sure where to start or how to put it into words? These questions can help you shape your thoughts. They are only hints — use any of them, change them, or teach in your own way.": "Не знаете, с чего начать или как это сформулировать? Эти вопросы помогут собраться с мыслями. Это только подсказки — берите любые, меняйте их или объясняйте по-своему.",
   "Show AI suggestions": "Показать подсказки ИИ",
-  "Use": "Взять"
+  "Answered": "Отвечено",
+  "Answered — tap to untick": "Отвечено — нажмите, чтобы снять отметку",
+  "Course in English": "Курс на английском",
+  "Course in Russian": "Курс на русском",
+  "Mark as answered": "Отметить как отвеченный",
+  "Only courses in English": "Только курсы на английском",
+  "Only courses in Russian": "Только курсы на русском",
+  "Tick ✓ the questions you have already answered in this course. Only you see these ticks.": "Отмечайте ✓ вопросы, на которые вы уже ответили в этом курсе. Эти отметки видите только вы.",
+  "Translate": "Перевести",
+  "Translated by AI from English": "Переведено ИИ с английского",
+  "Translated by AI from Russian": "Переведено ИИ с русского"
 }

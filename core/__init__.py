@@ -46,6 +46,11 @@ def create_app(config_class=Config):
 
     i18n.init_app(app)
 
+    # "Translate" button next to texts written by users (backend/translator.py)
+    from backend import translator
+
+    translator.init_app(app)
+
     from backend.routes.site_auth import bp as auth_bp
     from backend.routes.main import bp as main_bp
     from backend.routes.courses import bp as courses_bp

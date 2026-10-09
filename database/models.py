@@ -140,6 +140,9 @@ class Course(db.Model):
         db.String(64), unique=True, default=lambda: secrets.token_urlsafe(16), nullable=False
     )
     status = db.Column(db.String(20), default="draft", nullable=False)  # "draft" | "published"
+    # "en" or "ru": the language the course is written in (found from its texts when it is saved,
+    # see Course.update_language). Shown as a chip in the catalog; empty = cannot tell.
+    language = db.Column(db.String(5), nullable=True)
 
     # Not used anymore (the studio has no yes/no questions); kept so the table does not change.
     yes_answers = db.Column(db.String(300), default="", nullable=False)
@@ -155,6 +158,17 @@ class Course(db.Model):
     access_requests = db.relationship(
         "AccessRequest", backref="course", cascade="all, delete-orphan"
     )
+    answered_questions = db.relationship(
+        "AnsweredQuestion", backref="course", cascade="all, delete-orphan"
+    )
+
+    def update_language(self):
+        """Finds the language of the course from its title, description and outcome."""
+        from backend.translator import text_language
+
+        self.language = text_language(" ".join(
+            text for text in [self.title, self.description, self.topic, self.profession, self.outcome] if text
+        ))
 
     @property
     def lesson_count(self):
@@ -171,6 +185,8 @@ class Lesson(db.Model):
 
     order = db.Column(db.Integer, nullable=False)  # 1, 2, 3, ...
     title = db.Column(db.String(200), nullable=False)
+    # Old lessons only: the studio question the lesson was made from (new lessons leave it empty;
+    # the master's notes are in AnsweredQuestion now). Still picks quiz ideas for old lessons.
     question_id = db.Column(db.Integer, nullable=True)  # id from core.questions.QUESTIONS
 
     video_filename = db.Column(db.String(255), nullable=True)  # Cloudinary public_id of the video
@@ -297,4 +313,31 @@ class AccessRequest(db.Model):
 
     __table_args__ = (
         db.UniqueConstraint("user_id", "course_id", name="uq_access_request_user_course"),
+    )
+
+
+class AnsweredQuestion(db.Model):
+    """The master's own note in the studio: "I have already answered this question in my course".
+    Only the owner of the course sees it; it is not linked to any lesson."""
+    id = db.Column(db.Integer, primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey("course.id"), nullable=False)
+    question_id = db.Column(db.Integer, nullable=False)  # id from core.questions.QUESTIONS
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint("course_id", "question_id", name="uq_answered_question_course_question"),
+    )
+
+
+class Translation(db.Model):
+    """AI translation of a text written by a user (the "Translate" button, backend/translator.py).
+    Saved the first time somebody asks, so the next reader gets it at once."""
+    id = db.Column(db.Integer, primary_key=True)
+    source_hash = db.Column(db.String(64), nullable=False)  # sha256 of the original text
+    language = db.Column(db.String(5), nullable=False)      # language of the translation
+    text = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint("source_hash", "language", name="uq_translation_source_language"),
     )
