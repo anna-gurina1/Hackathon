@@ -35,5 +35,7 @@ class Config:
     # belong to the mail server is a common reason why letters land in spam.
     MAIL_FROM = os.environ.get("MAIL_FROM", "")
     MAIL_FROM_NAME = os.environ.get("MAIL_FROM_NAME", "Bitwise")  # the name people see as the sender
+    # Brevo (brevo.com): sends email over HTTPS where SMTP is blocked (free Render). Empty = SMTP.
+    BREVO_API_KEY = os.environ.get("BREVO_API_KEY", "")
     # 1 = send in a background thread (the page does not wait for the mail server).
     MAIL_BACKGROUND = os.environ.get("MAIL_BACKGROUND", "1") == "1"

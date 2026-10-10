@@ -19,6 +19,7 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       MAIL_FROM: ${MAIL_FROM:-}          # empty = send from MAIL_USERNAME
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Bitwise}
+      BREVO_API_KEY: ${BREVO_API_KEY:-}       # email over HTTPS (when SMTP ports are closed)
       MAIL_BACKGROUND: ${MAIL_BACKGROUND:-1}
       CLOUDINARY_URL: ${CLOUDINARY_URL:-}
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
