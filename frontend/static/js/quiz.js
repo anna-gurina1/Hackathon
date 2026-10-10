@@ -8,7 +8,7 @@ if (quizForm) {
 
   function updateCounter() {
     const answeredCount = quizForm.querySelectorAll('input[type="radio"]:checked').length;
-    answeredCounter.textContent = answeredCount + ' of ' + totalQuestions + ' answered';
+    answeredCounter.textContent = t('{answered} of {total} answered', { answered: answeredCount, total: totalQuestions });
   }
 
   quizForm.addEventListener('change', updateCounter);
@@ -17,6 +17,6 @@ if (quizForm) {
   quizForm.addEventListener('submit', function () {
     const submitButton = quizForm.querySelector('button[type="submit"]');
     submitButton.disabled = true;
-    submitButton.textContent = 'Checking…';
+    submitButton.textContent = t('Checking…');
   });
 }

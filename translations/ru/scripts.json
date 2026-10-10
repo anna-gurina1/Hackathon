@@ -1,0 +1,57 @@
+{
+  "{size} MB": "{size} МБ",
+  "please choose mp4, webm or mov": "выберите mp4, webm или mov",
+  "Too big: {size} MB (max {max} MB). Record in 720p or compress the video.": "Слишком большой: {size} МБ (максимум {max} МБ). Запишите в 720p или сожмите видео.",
+  "big file, upload may take a while": "большой файл, загрузка может занять время",
+  "Saving…": "Сохраняем…",
+  "Please choose an mp4, webm or mov video.": "Выберите видео в формате mp4, webm или mov.",
+  "This video is bigger than {max} MB. Record it in 720p or compress it first.": "Это видео больше {max} МБ. Запишите его в 720p или сначала сожмите.",
+  "Uploading… {percent}% — please keep this page open": "Загрузка… {percent}% — не закрывайте страницу",
+  "Processing on the server…": "Обрабатываем на сервере…",
+  "Upload failed (error {code}). Please try again.": "Загрузка не удалась (ошибка {code}). Попробуйте ещё раз.",
+  "Connection lost. Check your internet and try again.": "Соединение потеряно. Проверьте интернет и попробуйте ещё раз.",
+  "Try again": "Попробовать ещё раз",
+  "Uploading…": "Загрузка…",
+  "Continued from {time}": "Продолжено с {time}",
+  "Copied ✓": "Скопировано ✓",
+  "{answered} of {total} answered": "Отвечено {answered} из {total}",
+  "Checking…": "Проверяем…",
+  "Fill in the course details first (topic, profession, what people will learn) so the AI knows what to suggest.": "Сначала заполните описание курса (тема, профессия, чему научатся люди), чтобы ИИ понял, что предложить.",
+  "Thinking…": "Думаю…",
+  "Done! One tip from AI was added to each topic.": "Готово! В каждую тему добавлена одна подсказка от ИИ.",
+  "AI suggestions are not available right now. Please try again later.": "Подсказки ИИ сейчас недоступны. Попробуйте позже.",
+  "tip from AI": "подсказка ИИ",
+  "Searching…": "Ищем…",
+  "Something went wrong. Please try again.": "Что-то пошло не так. Попробуйте ещё раз.",
+  "Nothing found for “{text}”. Try another word or search by something else.": "По запросу «{text}» ничего не найдено. Попробуйте другое слово или другой вид поиска.",
+  "No courses yet.": "Курсов пока нет.",
+  "🔒 By request": "🔒 По заявке",
+  "{count} company found": [
+    "Найдена {count} компания",
+    "Найдено {count} компании",
+    "Найдено {count} компаний"
+  ],
+  "{count} course found": [
+    "Найден {count} курс",
+    "Найдено {count} курса",
+    "Найдено {count} курсов"
+  ],
+  "{count} lesson": [
+    "{count} урок",
+    "{count} урока",
+    "{count} уроков"
+  ],
+  "{count} course": [
+    "{count} курс",
+    "{count} курса",
+    "{count} курсов"
+  ],
+  "Could not save. Please try again.": "Не удалось сохранить. Попробуйте ещё раз.",
+  "Could not translate, try later": "Не удалось перевести, попробуйте позже",
+  "Course in English": "Курс на английском",
+  "Course in Russian": "Курс на русском",
+  "Hide translation": "Скрыть перевод",
+  "Show translation": "Показать перевод",
+  "Translating…": "Перевожу…",
+  "No courses in your language yet. Turn off “Only courses in…” to see all courses.": "Курсов на русском пока нет. Выключите «Только курсы на русском», чтобы увидеть все курсы."
+}

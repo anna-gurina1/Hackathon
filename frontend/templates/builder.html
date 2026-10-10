@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% import "partials/macros.html" as ui %}
 
-{% block title %}{{ course.title }} · Studio{% endblock %}
+{% block title %}{{ course.title }} · {{ _("Studio") }}{% endblock %}
 
 {% block head %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
@@ -12,13 +12,9 @@
   <form class="lesson-form" method="post" enctype="multipart/form-data"
         action="{{ url_for('builder.edit_lesson', course_id=course.id, lesson_id=lesson.id) if lesson else url_for('builder.add_lesson', course_id=course.id) }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <input type="hidden" name="question_id" value="{{ lesson.question_id if lesson and lesson.question_id else '' }}" data-question-id>
-
-    <p class="question-prompt" data-question-prompt hidden></p>
-
     <div class="field">
-      <label>Lesson title</label>
-      <input name="title" type="text" maxlength="200" required placeholder="Short name for this lesson"
+      <label>{{ _("Lesson title") }}</label>
+      <input name="title" type="text" maxlength="200" required placeholder="{{ _('Short name for this lesson') }}"
              value="{{ lesson.title if lesson else '' }}" data-lesson-title>
     </div>
 
@@ -26,34 +22,34 @@
     {% set has_video = lesson and lesson.video_filename %}
     {% set video_blocked = not has_video and not (can_add_video | default(true)) %}
     <div class="field">
-      <label>Video</label>
+      <label>{{ _("Video") }}</label>
       <label class="upload-box">
         <input type="file" name="video" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov" data-video-input {{ 'disabled' if video_blocked }}>
-        <span data-file-name>{{ '🔒 No videos left on your plan' if video_blocked else '🎥 Record or choose a video' }}</span>
+        <span data-file-name>{{ _('🔒 No videos left on your plan') if video_blocked else _('🎥 Record or choose a video') }}</span>
       </label>
       <p class="field-hint">
-        {% if has_video %}Current: {{ lesson.video_filename }}. Choose a file to replace it. {% endif %}
-        mp4, webm or mov, up to 500 MB.
+        {% if has_video %}{{ _("Current: {file}. Choose a file to replace it.", file=lesson.video_filename) }} {% endif %}
+        {{ _("mp4, webm or mov, up to 500 MB.") }}
         {% if video_limit is defined and video_limit is not none %}
-          <br>Videos in this course: {{ videos_used }} of {{ video_limit }} on your plan.
-          {% if video_blocked %}<a href="{{ url_for('main.pricing') }}">Upgrade</a> or add a text-only lesson.{% endif %}
+          <br>{{ _("Videos in this course: {used} of {limit} on your plan.", used=videos_used, limit=video_limit) }}
+          {% if video_blocked %}{% set upgrade_link %}<a href="{{ url_for('main.pricing') }}">{{ _("Upgrade") }}</a>{% endset %}{{ _html("{upgrade} or add a text-only lesson.", upgrade=upgrade_link) }}{% endif %}
         {% endif %}
       </p>
     </div>
 
     <div class="field">
-      <label>Text <span class="muted small">(optional)</span></label>
-      <textarea name="text" rows="3" placeholder="Key steps or tips to show under the video">{{ lesson.text if lesson and lesson.text else '' }}</textarea>
+      <label>{{ _("Text") }} <span class="muted small">{{ _("(optional)") }}</span></label>
+      <textarea name="text" rows="3" placeholder="{{ _('Key steps or tips to show under the video') }}">{{ lesson.text if lesson and lesson.text else '' }}</textarea>
     </div>
 
     <div class="upload-progress" data-upload-progress hidden>
       <div class="progress"><div class="progress-fill" data-upload-bar style="width: 0%"></div></div>
-      <p class="small muted" data-upload-text>Uploading… 0%</p>
+      <p class="small muted" data-upload-text>{{ _("Uploading… {percent}%", percent=0) }}</p>
     </div>
 
     <div class="form-actions">
-      <button type="submit" class="btn btn-primary" data-save-button>{{ 'Save lesson' if lesson else 'Add lesson' }}</button>
-      <button type="button" class="btn btn-outline" data-cancel-form>Cancel</button>
+      <button type="submit" class="btn btn-primary" data-save-button>{{ _('Save lesson') if lesson else _('Add lesson') }}</button>
+      <button type="button" class="btn btn-outline" data-cancel-form>{{ _("Cancel") }}</button>
     </div>
   </form>
 {% endmacro %}
@@ -63,34 +59,34 @@
   <div class="studio-main">
 
     {# ---------- Course header ---------- #}
-    <a class="back-link" href="{{ url_for('main.account') }}">← My account</a>
+    <a class="back-link" href="{{ url_for('main.account') }}">← {{ _("My account") }}</a>
     <div class="studio-head">
       <div>
         <h1 class="studio-title">{{ course.title }}</h1>
         <div class="chip-row">
           <span class="chip">{{ ui.level_label(course.level) }}</span>
-          <span class="chip {{ 'chip-dark' if course.is_private }}">{{ 'Private' if course.is_private else 'Public' }}</span>
+          <span class="chip {{ 'chip-dark' if course.is_private }}">{{ _('Private') if course.is_private else _('Public') }}</span>
           {% if course.status == 'published' %}
-            <span class="chip chip-success">Published</span>
+            <span class="chip chip-success">{{ _("Published") }}</span>
           {% else %}
-            <span class="chip chip-warning">Draft</span>
+            <span class="chip chip-warning">{{ _("Draft") }}</span>
           {% endif %}
         </div>
       </div>
       <div class="studio-actions">
-        <a class="btn btn-outline btn-small" href="{{ url_for('courses.edit', course_id=course.id) }}">Details</a>
-        <a class="btn btn-outline btn-small" href="{{ url_for('courses.view', course_id=course.id) }}">Preview</a>
+        <a class="btn btn-outline btn-small" href="{{ url_for('courses.edit', course_id=course.id) }}">{{ _("Details") }}</a>
+        <a class="btn btn-outline btn-small" href="{{ url_for('courses.view', course_id=course.id) }}">{{ _("Preview") }}</a>
         {% if course.status == 'draft' %}
           <form method="post" action="{{ url_for('courses.publish', course_id=course.id) }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-primary btn-small" {{ 'disabled' if not lessons }}>Publish</button>
+            <button type="submit" class="btn btn-primary btn-small" {{ 'disabled' if not lessons }}>{{ _("Publish") }}</button>
           </form>
         {% endif %}
       </div>
     </div>
 
     <details class="tips-card" {{ 'open' if not lessons }}>
-      <summary>💡 Tips for great lessons</summary>
+      <summary>💡 {{ _("Tips for great lessons") }}</summary>
       {% include "partials/creator_tips.html" %}
     </details>
 
@@ -104,23 +100,23 @@
             <div class="studio-lesson-info">
               <strong>{{ lesson.title }}</strong>
               <span class="small muted">
-                {{ '🎥 Video' if lesson.video_filename }}{{ ' · ' if lesson.video_filename and lesson.text }}{{ '📝 Text' if lesson.text }}
-                · {{ quiz_size }} quiz question{{ 's' if quiz_size != 1 }}
+                {{ '🎥 ' ~ _('Video') if lesson.video_filename }}{{ ' · ' if lesson.video_filename and lesson.text }}{{ '📝 ' ~ _('Text') if lesson.text }}
+                · {{ _n(quiz_size, "{count} quiz question", "{count} quiz questions") }}
               </span>
             </div>
             <div class="studio-lesson-buttons">
               <a class="btn btn-small {{ 'btn-outline' if quiz_size else 'btn-primary' }}"
-                 href="{{ url_for('builder.quiz_edit', course_id=course.id, lesson_id=lesson.id) }}">{{ 'Quiz' if quiz_size else 'Add quiz' }}</a>
-              <button type="button" class="btn btn-outline btn-small" data-reveal="edit-lesson-{{ lesson.id }}">Edit</button>
+                 href="{{ url_for('builder.quiz_edit', course_id=course.id, lesson_id=lesson.id) }}">{{ _('Quiz') if quiz_size else _('Add quiz') }}</a>
+              <button type="button" class="btn btn-outline btn-small" data-reveal="edit-lesson-{{ lesson.id }}">{{ _("Edit") }}</button>
             </div>
           </div>
 
           <div id="edit-lesson-{{ lesson.id }}" hidden>
             {{ lesson_form(course, lesson) }}
             <form method="post" action="{{ url_for('builder.delete_lesson', course_id=course.id, lesson_id=lesson.id) }}"
-                  onsubmit="return confirm('Delete this lesson and its quiz?');">
+                  onsubmit="return confirm({{ _('Delete this lesson and its quiz?')|tojson|forceescape }});">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="danger-link">Delete lesson</button>
+              <button type="submit" class="danger-link">{{ _("Delete lesson") }}</button>
             </form>
           </div>
         </li>
@@ -130,17 +126,16 @@
     {# ---------- The big "+" ---------- #}
     <button type="button" class="plus-tile" data-reveal="new-lesson" id="add-lesson-button">
       <span class="plus-icon">+</span>
-      <span>{{ 'Add another lesson' if lessons else 'Add your first lesson' }}</span>
+      <span>{{ _('Add another lesson') if lessons else _('Add your first lesson') }}</span>
     </button>
 
     <div class="card studio-new-lesson" id="new-lesson" hidden>
-      <p class="side-label">Lesson {{ lessons|length + 1 }}</p>
+      <p class="side-label">{{ _("Lesson {number}", number=lessons|length + 1) }}</p>
       {{ lesson_form(course) }}
     </div>
   </div>
 
   {# ---------- Side: suggested questions for this course level ---------- #}
-  {% set can_use = true %}
   {% set ai_url = url_for('courses.course_ai_suggestions', course_id=course.id) %}
   {% include "partials/suggested_questions.html" %}
 </div>

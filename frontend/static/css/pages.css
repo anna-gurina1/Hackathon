@@ -50,6 +50,7 @@
   color: var(--ink-soft);
   white-space: nowrap;
 }
+.chip-language { letter-spacing: .04em; font-weight: 700; }
 .chip-dark { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .chip-warning { background: var(--info-bg); border-color: transparent; color: var(--info-ink); }
 .chip-success { background: var(--success-bg); border-color: transparent; color: var(--success-ink); }
@@ -703,15 +704,6 @@ a.lesson-row:hover { border-color: var(--accent); }
 .studio-lesson-info { flex: 1; min-width: 160px; display: flex; flex-direction: column; }
 .studio-lesson-buttons { display: flex; gap: 6px; }
 .studio-lesson .lesson-form { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
-.question-prompt {
-  margin: 0 0 14px;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  background: var(--info-bg);
-  color: var(--info-ink);
-  font-weight: 600;
-}
-
 /* Suggested questions panel */
 .suggest-panel { padding: 18px; align-self: start; max-height: 460px; overflow-y: auto; }
 .suggest-intro { margin: -4px 0 10px; }
@@ -729,20 +721,30 @@ a.lesson-row:hover { border-color: var(--accent); }
 .suggest-item summary { cursor: pointer; font-size: .9rem; line-height: 1.4; list-style: none; }
 .suggest-item summary::-webkit-details-marker { display: none; }
 .suggest-item details p { margin: 6px 0 0; }
-.suggest-item.is-used summary { color: var(--ink-soft); }
-.suggest-use {
-  flex-shrink: 0;
-  padding: 4px 10px;
-  border: 1px solid var(--accent);
-  border-radius: 999px;
+/* the master's own tick "I have answered this question" */
+.suggest-item.is-answered summary { color: var(--ink-soft); }
+.suggest-item form { margin: 0; flex-shrink: 0; }
+.suggest-tick {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 2px solid var(--line);
+  border-radius: 50%;
   background: transparent;
-  color: var(--accent);
+  color: transparent;
   font: inherit;
-  font-size: .8rem;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
+  transition: background .2s, border-color .2s, color .2s, transform .2s;
 }
-.suggest-use:hover { background: var(--accent); color: var(--accent-ink); }
+@media (hover: hover) {
+  .suggest-tick:hover { border-color: var(--accent); color: var(--accent); }
+}
+.suggest-tick[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.suggest-tick.is-popping { animation: tick-pop .3s ease; }
+@keyframes tick-pop { 50% { transform: scale(1.2); } }
 
 @media (min-width: 960px) {
   .studio { grid-template-columns: minmax(0, 1fr) 340px; gap: 32px; align-items: start; }
@@ -870,3 +872,50 @@ a.lesson-row:hover { border-color: var(--accent); }
 .action-card .btn[disabled] { opacity: .75; cursor: default; color: var(--accent-ink); border-color: rgba(255, 255, 255, .6); }
 .avatar-photo { box-shadow: 0 0 0 1px var(--line); }  /* white logos stay visible on white cards */
 .suggest-ai-button { margin: 0 0 12px; }
+
+/* ---------- Explore: "Only courses in Russian" switch ---------- */
+.only-language {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  font-size: .9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.only-language[hidden] { display: none; }
+.only-language input { position: absolute; opacity: 0; pointer-events: none; }
+.only-language-track {
+  position: relative;
+  flex-shrink: 0;
+  width: 40px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--line);
+  transition: background .2s;
+}
+.only-language-track::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+  transition: transform .2s;
+}
+.only-language input:checked + .only-language-track { background: var(--accent); }
+.only-language input:checked + .only-language-track::after { transform: translateX(16px); }
+.only-language input:focus-visible + .only-language-track { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- Phones: long words and e-mails must not push the page wider than the screen ---------- */
+.manage-row > *,
+.profile-head > div { min-width: 0; }
+.profile-head p,
+.completers-list a { overflow-wrap: anywhere; }
+.completers-list li { max-width: 100%; }
+
+/* quiz: the legend floats (see .question-text), so the translation box must start below it */
+.quiz-question .translation { clear: both; }

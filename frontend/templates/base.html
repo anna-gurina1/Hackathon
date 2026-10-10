@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{ current_language() }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <title>{% block title %}Microlearning{% endblock %} · Bitwise</title>
+  <title>{% block title %}{{ _("Microlearning") }}{% endblock %} · Bitwise</title>
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo.png') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,27 +23,42 @@
       </a>
 
       <nav class="site-nav">
-        <a class="nav-home" href="{{ url_for('main.home') }}">Home</a>
-        <a href="{{ url_for('main.explore') }}">Explore</a>
-        <a href="{{ url_for('main.pricing') }}">Pricing</a>
+        {# EN / RU: one button. A tap anywhere on it switches to the other language and comes back
+           to the same page (backend/i18n.py); main.js plays a short slide before leaving. #}
+        {% set back_to = request.full_path if request.method == 'GET' else request.path %}
+        {% set switch_to = next_language() %}
+        {% set language_codes = LANGUAGES|list %}
+        <a class="lang-switch" data-lang-switch
+           href="{{ url_for('main.set_language', code=switch_to, next=back_to.rstrip('?')) }}"
+           hreflang="{{ switch_to }}" title="{{ SWITCH_LABELS[switch_to] }}" aria-label="{{ SWITCH_LABELS[switch_to] }}"
+           style="--count: {{ language_codes|length }}; --position: {{ language_codes.index(current_language()) }}"
+           data-next-position="{{ language_codes.index(switch_to) }}">
+          <span class="lang-thumb" aria-hidden="true"></span>
+          {% for code in language_codes %}
+            <span class="lang-option {{ 'is-current' if code == current_language() }}" aria-hidden="true">{{ code|upper }}</span>
+          {% endfor %}
+        </a>
+        <a class="nav-home" href="{{ url_for('main.home') }}">{{ _("Home") }}</a>
+        <a href="{{ url_for('main.explore') }}">{{ _("Explore") }}</a>
+        <a href="{{ url_for('main.pricing') }}">{{ _("Pricing") }}</a>
 
         {% if current_user.is_authenticated %}
           <div class="user-menu">
             {% set header_photo = current_user.avatar_url %}
-            <button type="button" class="avatar-button {{ 'has-photo' if header_photo }}" data-user-menu-button aria-label="Account menu">
+            <button type="button" class="avatar-button {{ 'has-photo' if header_photo }}" data-user-menu-button aria-label="{{ _('Account menu') }}">
               {% if header_photo %}<img src="{{ header_photo }}" alt="">{% else %}{{ current_user.initials }}{% endif %}
             </button>
             <div class="user-menu-list" data-user-menu hidden>
               <p class="user-menu-name">{{ current_user.display_name }}</p>
-              <a href="{{ url_for('main.account') }}">My account</a>
+              <a href="{{ url_for('main.account') }}">{{ _("My account") }}</a>
               <form method="post" action="{{ url_for('auth.logout') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit">Log out</button>
+                <button type="submit">{{ _("Log out") }}</button>
               </form>
             </div>
           </div>
         {% else %}
-          <button type="button" class="btn btn-primary btn-small" data-open-auth>Log in</button>
+          <button type="button" class="btn btn-primary btn-small" data-open-auth>{{ _("Log in") }}</button>
         {% endif %}
       </nav>
     </div>
@@ -69,22 +84,22 @@
   {% if not current_user.is_authenticated %}
   <dialog class="auth-modal" data-auth-modal>
     <div class="card">
-      <button type="button" class="auth-close" data-close-auth aria-label="Close">&times;</button>
+      <button type="button" class="auth-close" data-close-auth aria-label="{{ _('Close') }}">&times;</button>
 
       <div class="auth-tabs">
-        <button type="button" class="auth-tab is-active" data-auth-tab="login">Log in</button>
-        <button type="button" class="auth-tab" data-auth-tab="signup">Sign up</button>
+        <button type="button" class="auth-tab is-active" data-auth-tab="login">{{ _("Log in") }}</button>
+        <button type="button" class="auth-tab" data-auth-tab="signup">{{ _("Sign up") }}</button>
       </div>
 
       {# Log in: we email a one-time link, no password #}
       <form method="post" action="{{ url_for('auth.login') }}" data-auth-panel="login">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <p class="muted small">We'll email you a one-time login link. No password needed.</p>
+        <p class="muted small">{{ _("We'll email you a one-time login link. No password needed.") }}</p>
         <div class="field">
-          <label for="login-email">Email</label>
+          <label for="login-email">{{ _("Email") }}</label>
           <input id="login-email" type="email" name="email" required placeholder="you@example.com" autocomplete="email">
         </div>
-        <button type="submit" class="btn btn-primary btn-block">Send login link</button>
+        <button type="submit" class="btn btn-primary btn-block">{{ _("Send login link") }}</button>
       </form>
 
       {# Sign up: person or company #}
@@ -92,18 +107,18 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <div class="pill-switch">
-          <label><input type="radio" name="type" value="person" checked data-account-type><span>I'm person</span></label>
-          <label><input type="radio" name="type" value="company" data-account-type><span>Company</span></label>
+          <label><input type="radio" name="type" value="person" checked data-account-type><span>{{ _("I'm a person") }}</span></label>
+          <label><input type="radio" name="type" value="company" data-account-type><span>{{ _("Company") }}</span></label>
         </div>
 
         <div data-person-fields>
           <div class="field-row">
             <div class="field">
-              <label for="first-name">First name</label>
+              <label for="first-name">{{ _("First name") }}</label>
               <input id="first-name" type="text" name="first_name" autocomplete="given-name">
             </div>
             <div class="field">
-              <label for="last-name">Last name</label>
+              <label for="last-name">{{ _("Last name") }}</label>
               <input id="last-name" type="text" name="last_name" autocomplete="family-name">
             </div>
           </div>
@@ -111,27 +126,29 @@
 
         <div data-company-fields hidden>
           <div class="field">
-            <label for="company-name">Company name</label>
+            <label for="company-name">{{ _("Company name") }}</label>
             <input id="company-name" type="text" name="company_name" autocomplete="organization">
           </div>
           <div class="field">
-            <label for="company-description">About the company <span class="muted small">(optional)</span></label>
+            <label for="company-description">{{ _("About the company") }} <span class="muted small">{{ _("(optional)") }}</span></label>
             <textarea id="company-description" name="description" rows="3" maxlength="500"
-                      placeholder="What you do, where you work, who you hire"></textarea>
+                      placeholder="{{ _('What you do, where you work, who you hire') }}"></textarea>
           </div>
         </div>
 
         <div class="field">
-          <label for="signup-email">Email</label>
+          <label for="signup-email">{{ _("Email") }}</label>
           <input id="signup-email" type="email" name="email" required placeholder="you@example.com" autocomplete="email">
         </div>
-        <button type="submit" class="btn btn-primary btn-block">Create account</button>
+        <button type="submit" class="btn btn-primary btn-block">{{ _("Create account") }}</button>
       </form>
     </div>
   </dialog>
   {% endif %}
   {% endblock %}
 
+  {# texts for the scripts (translations/<lang>/scripts.json); t() in main.js reads them #}
+  <script>window.TRANSLATIONS = {{ scripts_dictionary()|tojson }};</script>
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
   {% block scripts %}{% endblock %}
 </body>

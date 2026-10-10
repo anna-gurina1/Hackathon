@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Your result · {{ lesson.title }}{% endblock %}
+{% block title %}{{ _("Your result") }} · {{ lesson.title }}{% endblock %}
 
 {% block head %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
@@ -13,43 +13,50 @@
     <div class="score-ring" style="--score: {{ score }};"><span>{{ score }}%</span></div>
 
     {% if passed %}
-      <h1>Nice work — you passed!</h1>
-      <p class="muted">You scored {{ score }}% (needed {{ pass_score }}%). The next lesson is unlocked.</p>
+      <h1>{{ _("Nice work — you passed!") }}</h1>
+      <p class="muted">{{ _("You scored {score}% (needed {needed}%). The next lesson is unlocked.", score=score, needed=pass_score) }}</p>
     {% else %}
-      <h1>Almost there</h1>
-      <p class="muted">You scored {{ score }}%, you need {{ pass_score }}% to pass. Rewatch the lesson and try again — there's no limit on attempts.</p>
+      <h1>{{ _("Almost there") }}</h1>
+      <p class="muted">{{ _("You scored {score}%, you need {needed}% to pass. Rewatch the lesson and try again — there's no limit on attempts.", score=score, needed=pass_score) }}</p>
     {% endif %}
 
     <div class="button-row">
       {% if passed and next_url %}
-        <a class="btn btn-primary btn-lg" href="{{ next_url }}">Next lesson →</a>
+        <a class="btn btn-primary btn-lg" href="{{ next_url }}">{{ _("Next lesson") }} →</a>
       {% endif %}
       {% if not passed %}
-        <a class="btn btn-primary btn-lg" href="{{ retry_url }}">Try again</a>
+        <a class="btn btn-primary btn-lg" href="{{ retry_url }}">{{ _("Try again") }}</a>
       {% endif %}
-      <a class="btn btn-outline btn-lg" href="{{ rewatch_url }}">Rewatch lesson</a>
+      <a class="btn btn-outline btn-lg" href="{{ rewatch_url }}">{{ _("Rewatch lesson") }}</a>
     </div>
   </div>
 
-  <h2 class="section-title">Your answers</h2>
+  <h2 class="section-title">{{ _("Your answers") }}</h2>
   <div class="review-list">
     {% for item in results %}
       {% set got_it_right = item.chosen and item.chosen.id == item.correct.id %}
       <div class="card review-item {{ 'is-right' if got_it_right else 'is-wrong' }}">
+        {# one "Translate" for the question, your answer and the correct answer #}
+        {% set review_parts = [item.question] %}
+        {% set review_labels = [""] %}
+        {% if item.chosen %}{% set _unused = review_parts.append(item.chosen) %}{% set _unused = review_labels.append(_("Your answer:")) %}{% endif %}
+        {% if not got_it_right %}{% set _unused = review_parts.append(item.correct) %}{% set _unused = review_labels.append(_("Correct answer:")) %}{% endif %}
+        {% set review_translation = offer_translation(review_parts, "text", labels=review_labels) %}
         <p class="review-question">
           <span class="review-mark">{{ '✓' if got_it_right else '✕' }}</span>
-          <span>{{ item.question.text }}</span>
+          <span>{{ item.question.text }}{{ review_translation.button }}</span>
         </p>
-        <p class="small">Your answer: <strong>{{ item.chosen.text if item.chosen else 'No answer' }}</strong></p>
+        <p class="small">{{ _("Your answer:") }} <strong>{{ item.chosen.text if item.chosen else _("No answer") }}</strong></p>
         {% if not got_it_right %}
-          <p class="small muted">Correct answer: {{ item.correct.text }}</p>
+          <p class="small muted">{{ _("Correct answer:") }} {{ item.correct.text }}</p>
         {% endif %}
+        {{ review_translation.box }}
       </div>
     {% endfor %}
   </div>
 
   <p style="margin-top: 24px;">
-    <a class="back-link" href="{{ url_for('courses.view', course_id=course.id) }}">← Back to course</a>
+    <a class="back-link" href="{{ url_for('courses.view', course_id=course.id) }}">← {{ _("Back to course") }}</a>
   </p>
 </div>
 {% endblock %}

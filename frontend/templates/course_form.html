@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ 'Edit course' if course else 'New course' }}{% endblock %}
+{% block title %}{{ _('Edit course') if course else _('New course') }}{% endblock %}
 
 {% block head %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
@@ -12,13 +12,13 @@
   <div class="studio-main">
 
     <a class="back-link" href="{{ url_for('builder.script', course_id=course.id) if is_editing else url_for('main.account') }}">
-      ← {{ course.title if is_editing else 'My account' }}
+      ← {{ course.title if is_editing else _('My account') }}
     </a>
-    <h1 class="studio-title">{{ 'Course details' if is_editing else 'New course' }}</h1>
+    <h1 class="studio-title">{{ _('Course details') if is_editing else _('New course') }}</h1>
 
     {# ---------- General tips ---------- #}
     <details class="tips-card" {{ 'open' if not is_editing }}>
-      <summary>💡 Tips for great lessons</summary>
+      <summary>💡 {{ _("Tips for great lessons") }}</summary>
       {% include "partials/creator_tips.html" %}
     </details>
 
@@ -26,7 +26,7 @@
     {% if not is_editing %}
       <button type="button" class="plus-tile" data-reveal="course-details">
         <span class="plus-icon">+</span>
-        <span>Add course details</span>
+        <span>{{ _("Add course details") }}</span>
       </button>
     {% endif %}
 
@@ -37,74 +37,74 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
       <div class="field">
-        <label for="title">Course title</label>
+        <label for="title">{{ _("Course title") }}</label>
         <input id="title" name="title" type="text" maxlength="200" required
-               placeholder="e.g. Pull a perfect espresso shot" value="{{ course.title if is_editing else '' }}">
+               placeholder="{{ _('e.g. Pull a perfect espresso shot') }}" value="{{ course.title if is_editing else '' }}">
       </div>
 
       <div class="field">
-        <label for="description">Short description</label>
+        <label for="description">{{ _("Short description") }}</label>
         <textarea id="description" name="description" rows="2"
-                  placeholder="Who is this course for?">{{ course.description if is_editing else '' }}</textarea>
+                  placeholder="{{ _('Who is this course for?') }}">{{ course.description if is_editing else '' }}</textarea>
       </div>
 
       <div class="form-row">
         <div class="field">
-          <label for="topic">Topic</label>
-          <input id="topic" name="topic" type="text" maxlength="100" placeholder="e.g. Coffee"
+          <label for="topic">{{ _("Topic") }}</label>
+          <input id="topic" name="topic" type="text" maxlength="100" placeholder="{{ _('e.g. Coffee') }}"
                  value="{{ course.topic if is_editing else '' }}">
         </div>
         <div class="field">
-          <label for="profession">Profession</label>
-          <input id="profession" name="profession" type="text" maxlength="100" placeholder="e.g. Barista"
+          <label for="profession">{{ _("Profession") }}</label>
+          <input id="profession" name="profession" type="text" maxlength="100" placeholder="{{ _('e.g. Barista') }}"
                  value="{{ course.profession if is_editing else '' }}">
         </div>
       </div>
 
       <div class="field">
-        <label for="outcome">What will people learn?</label>
+        <label for="outcome">{{ _("What will people learn?") }}</label>
         <textarea id="outcome" name="outcome" rows="2"
-                  placeholder="After this course you will be able to…">{{ course.outcome if is_editing else '' }}</textarea>
+                  placeholder="{{ _('After this course you will be able to…') }}">{{ course.outcome if is_editing else '' }}</textarea>
       </div>
 
       <div class="field">
-        <label>Learner level</label>
+        <label>{{ _("Learner level") }}</label>
         <div class="pill-group" data-level-picker>
           {% for level_key, level_name in LEVELS.items() %}
             {% set is_checked = (course.level == level_key) if is_editing else loop.first %}
             <label class="pill">
               <input type="radio" name="level" value="{{ level_key }}" {{ 'checked' if is_checked }} required>
-              <span>{{ level_name }}</span>
+              <span>{{ _(level_name) }}</span>
             </label>
           {% endfor %}
         </div>
       </div>
 
       <div class="field">
-        <label>Who can see it?</label>
+        <label>{{ _("Who can see it?") }}</label>
         {% set is_private = is_editing and course.is_private %}
         <div class="option-grid">
           <label class="option-card">
             <input type="radio" name="visibility" value="public" {{ 'checked' if not is_private }}>
             <span class="option-card-body">
-              <strong>🌍 Public</strong>
-              <span class="small muted">Anyone can find it in search on Explore.</span>
+              <strong>🌍 {{ _("Public") }}</strong>
+              <span class="small muted">{{ _("Anyone can find it in search on Explore.") }}</span>
             </span>
           </label>
           <label class="option-card">
             <input type="radio" name="visibility" value="private" {{ 'checked' if is_private }}>
             <span class="option-card-body">
-              <strong>🔒 Private</strong>
-              <span class="small muted">Only people with your invite link.</span>
+              <strong>🔒 {{ _("Private") }}</strong>
+              <span class="small muted">{{ _("Only people with your invite link.") }}</span>
             </span>
           </label>
         </div>
       </div>
 
       <div class="form-actions">
-        <button type="submit" class="btn btn-primary btn-lg">{{ 'Save' if is_editing else 'Create course' }}</button>
+        <button type="submit" class="btn btn-primary btn-lg">{{ _('Save') if is_editing else _('Create course') }}</button>
         {% if is_editing %}
-          <a class="btn btn-outline btn-lg" href="{{ url_for('builder.script', course_id=course.id) }}">Cancel</a>
+          <a class="btn btn-outline btn-lg" href="{{ url_for('builder.script', course_id=course.id) }}">{{ _("Cancel") }}</a>
         {% endif %}
       </div>
     </form>

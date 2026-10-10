@@ -1,18 +1,17 @@
 {# "Delete account" block at the bottom of My account. Needs: user #}
 <details class="card danger-zone" id="delete-account">
-  <summary>Delete account</summary>
+  <summary>{{ _("Delete account") }}</summary>
   <p class="small muted">
     {% if user.is_company %}
-      This deletes your company account, all your courses with their lessons, videos and quizzes,
-      and the progress of everyone who took them. This cannot be undone.
+      {{ _("This deletes your company account, all your courses with their lessons, videos and quizzes, and the progress of everyone who took them. This cannot be undone.") }}
     {% else %}
-      This deletes your account, your course progress, quiz results and job offers. This cannot be undone.
+      {{ _("This deletes your account, your course progress, quiz results and job offers. This cannot be undone.") }}
     {% endif %}
   </p>
   <form method="post" action="{{ url_for('main.delete_account') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <label class="small" for="confirm-email">Type your email <strong>{{ user.email }}</strong> to confirm</label>
+    <label class="small" for="confirm-email">{{ _html("Type your email <strong>{email}</strong> to confirm", email=user.email) }}</label>
     <input id="confirm-email" name="confirm_email" type="email" required autocomplete="off">
-    <button type="submit" class="btn danger-button">Delete my account</button>
+    <button type="submit" class="btn danger-button">{{ _("Delete my account") }}</button>
   </form>
 </details>

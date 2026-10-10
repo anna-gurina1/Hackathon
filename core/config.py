@@ -31,6 +31,9 @@ class Config:
     MAIL_USE_SSL = os.environ.get("MAIL_USE_SSL", "0") == "1"  # SSL from the start (port 465)
     MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
-    MAIL_FROM = os.environ.get("MAIL_FROM", "noreply@bitwise.local")
+    # Empty = send from MAIL_USERNAME. A made-up address (e.g. noreply@bitwise.local) that does not
+    # belong to the mail server is a common reason why letters land in spam.
+    MAIL_FROM = os.environ.get("MAIL_FROM", "")
+    MAIL_FROM_NAME = os.environ.get("MAIL_FROM_NAME", "Bitwise")  # the name people see as the sender
     # 1 = send in a background thread (the page does not wait for the mail server).
     MAIL_BACKGROUND = os.environ.get("MAIL_BACKGROUND", "1") == "1"

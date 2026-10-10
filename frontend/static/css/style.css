@@ -201,3 +201,145 @@ img, video { max-width: 100%; }
   .logo { font-size: 1.05rem; gap: 8px; }
   .logo-mark { height: 30px; }
 }
+/* ---------- EN / RU switch in the header (backend/i18n.py) ---------- */
+/* EN / RU switch: one link; the lime "thumb" sits under the current language
+   and slides to the other one when tapped (main.js), then the page reloads in that language. */
+.lang-switch {
+  --count: 2;
+  --position: 0;
+  position: relative;
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  flex-shrink: 0;
+  padding: 3px;
+  border: 1px solid rgba(255, 255, 255, .35);
+  border-radius: 999px;
+  color: #ffffff;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.lang-switch:hover { border-color: var(--primary); }
+.lang-switch:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.lang-thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / var(--count));
+  transform: translateX(calc(var(--position) * 100%));
+  transition: transform .26s cubic-bezier(.5, 1.6, .4, 1);   /* a small bounce at the end */
+}
+.lang-thumb::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--primary);
+}
+.lang-switch.is-switching .lang-thumb::before { animation: lang-squish .26s ease; }
+@keyframes lang-squish {
+  40% { transform: scaleX(1.35) scaleY(.85); }   /* stretches while moving, like a drop */
+}
+.lang-option {
+  position: relative;   /* above the thumb */
+  padding: 3px 9px;
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  text-align: center;
+  transition: color .2s;
+}
+.lang-option.is-current { color: var(--primary-ink); }
+@media (max-width: 480px) {
+  .lang-option { padding: 5px 9px; font-size: .75rem; }   /* bigger target for a finger */
+}
+@media (prefers-reduced-motion: reduce) {
+  .lang-thumb { transition: none; }
+}
+/* on phones there is no room for the word "Bitwise" next to the EN / RU switch: only the logo mark stays */
+@media (max-width: 480px) {
+  .logo { font-size: 0; gap: 0; }
+}
+@media (max-width: 360px) {
+  .logo { flex-shrink: 0; }
+  .logo-mark { height: 30px; }
+  .site-nav { gap: 8px; font-size: .85rem; }
+  .site-nav .btn { padding: 6px 10px; }
+}
+
+/* ---------- "Translate" next to texts written by users (backend/translator.py, main.js) ---------- */
+.translate-button {
+  display: inline-block;
+  padding: 2px 10px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--accent);
+  font-family: var(--font-body);
+  font-size: .8rem;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-transform: none;
+  vertical-align: .15em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+@media (hover: hover) {   /* on phones :hover sticks after a tap, so only for a mouse */
+  .translate-button:hover { background: var(--accent); color: var(--accent-ink); }
+}
+.translate-button:disabled { opacity: .7; cursor: progress; }
+.translate-row { margin: 8px 0 0; }
+
+/* the box opens smoothly and pushes the content below down */
+.translation {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows .3s ease;
+}
+.translation.is-open { grid-template-rows: 1fr; }
+.translation-inner { overflow: hidden; min-height: 0; }
+.translation-card {
+  margin: 8px 0 16px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: #f2f2f4;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-align: left;
+}
+.translation-note { margin: 0 0 4px; color: var(--ink-soft); font-size: .75rem; font-weight: 700; }
+.translation-text p { margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
+.translation-text p + p { margin-top: 4px; }
+.translation-label { color: var(--ink-soft); font-weight: 700; }
+@media (prefers-reduced-motion: reduce) {
+  .translation { transition: none; }
+}
+
+/* text only for screen readers */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Phones: a long Russian word in a big heading ("Редактировать") is hyphenated instead of
+   sticking out of the screen; <html lang> tells the browser the language */
+@media (max-width: 480px) {
+  h1, h2, h3 { hyphens: auto; overflow-wrap: break-word; }
+}
+@media (max-width: 360px) {
+  .lang-option { padding: 4px 7px; }
+}
+@media (max-width: 340px) {
+  .site-nav { gap: 6px; }
+  .site-nav .btn { padding: 6px 9px; }
+}

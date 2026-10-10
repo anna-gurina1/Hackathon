@@ -54,24 +54,29 @@ if (levelPicker) {
   if (checkedLevel) showQuestionsForLevel(checkedLevel.value);
 }
 
-// ---------- 4. "Use" a suggested question for a new lesson ----------
-const newLessonBlock = document.getElementById('new-lesson');
-
-document.querySelectorAll('[data-use-question]').forEach(function (useButton) {
-  useButton.addEventListener('click', function () {
-    if (!newLessonBlock) return;
-
-    newLessonBlock.hidden = false;
-    const addLessonButton = document.getElementById('add-lesson-button');
-    if (addLessonButton) addLessonButton.hidden = true;
-
-    const questionPrompt = newLessonBlock.querySelector('[data-question-prompt]');
-    questionPrompt.textContent = '💡 Idea for this lesson: ' + useButton.dataset.questionText;
-    questionPrompt.hidden = false;
-    newLessonBlock.querySelector('[data-question-id]').value = useButton.dataset.useQuestion;
-
-    newLessonBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    newLessonBlock.querySelector('[data-lesson-title]').focus({ preventScroll: true });
+// ---------- 4. Tick "I have answered this question" (a note only the master sees) ----------
+document.querySelectorAll('[data-answered-form]').forEach(function (form) {
+  form.addEventListener('submit', async function (event) {
+    event.preventDefault();               // no page reload: the tick changes in place
+    const tick = form.querySelector('.suggest-tick');
+    const item = form.closest('.suggest-item');
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+        body: new FormData(form),          // has the csrf_token field
+      });
+      if (!response.ok) throw new Error('status ' + response.status);
+      const data = await response.json();
+      tick.setAttribute('aria-pressed', String(data.answered));
+      tick.title = data.answered ? tick.dataset.titleOn : tick.dataset.titleOff;
+      item.classList.toggle('is-answered', data.answered);
+      tick.classList.remove('is-popping');
+      void tick.offsetWidth;              // restart the small "pop" animation
+      tick.classList.add('is-popping');
+    } catch (error) {
+      showToast(t('Could not save. Please try again.'));
+    }
   });
 });
 
@@ -95,7 +100,7 @@ if (aiButton) {
   // On the "New course" page the AI reads the form; on the course page the server uses the saved course.
   const courseForm = aiButton.dataset.aiForm ? document.getElementById(aiButton.dataset.aiForm) : null;
   const aiFieldNames = ['title', 'description', 'topic', 'profession', 'outcome'];
-  const emptyMessage = 'Fill in the course details first (topic, profession, what people will learn) so the AI knows what to suggest.';
+  const emptyMessage = t('Fill in the course details first (topic, profession, what people will learn) so the AI knows what to suggest.');
 
   aiButton.addEventListener('click', async function () {
     let body = '{}';
@@ -118,7 +123,7 @@ if (aiButton) {
 
     const normalLabel = aiButton.textContent;
     aiButton.disabled = true;
-    aiButton.textContent = 'Thinking…';
+    aiButton.textContent = t('Thinking…');
 
     try {
       const response = await fetch(aiButton.dataset.aiUrl, {
@@ -136,9 +141,9 @@ if (aiButton) {
       }
       if (!response.ok) throw new Error('AI request failed: ' + response.status);
       showAiQuestions(data.questions || {});
-      showToast('Done! One tip from AI was added to each topic.');
+      showToast(t('Done! One tip from AI was added to each topic.'));
     } catch (error) {
-      showToast('AI suggestions are not available right now. Please try again later.');
+      showToast(t('AI suggestions are not available right now. Please try again later.'));
     } finally {
       aiButton.disabled = false;
       aiButton.textContent = normalLabel;
@@ -169,7 +174,7 @@ function showAiQuestions(questionsByCategory) {
     question.textContent = text;                     // textContent: the AI text is never run as HTML
     const tag = document.createElement('span');
     tag.className = 'ai-tag';
-    tag.textContent = 'tip from AI';
+    tag.textContent = t('tip from AI');
     body.append(question, tag);
     item.appendChild(body);
 

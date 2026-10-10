@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% import "partials/macros.html" as ui %}
 
-{% block title %}Edit profile{% endblock %}
+{% block title %}{{ _("Edit profile") }}{% endblock %}
 
 {% block head %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
@@ -9,17 +9,17 @@
 
 {% block content %}
 <div class="container page narrow">
-  <h1>Edit profile</h1>
+  <h1>{{ _("Edit profile") }}</h1>
 
   {# ---------- Photo (person) / logo (company) ---------- #}
   <div class="card avatar-edit">
     {{ ui.avatar(user, 'avatar-lg') }}
     <div class="avatar-edit-body">
-      <p class="avatar-edit-title">{{ 'Profile photo' if user.is_person else 'Company logo' }}</p>
+      <p class="avatar-edit-title">{{ _('Profile photo') if user.is_person else _('Company logo') }}</p>
       <form method="post" action="{{ url_for('main.upload_avatar') }}" enctype="multipart/form-data" class="avatar-edit-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <label class="btn btn-outline btn-small avatar-pick">
-          {{ 'Change' if user.avatar else 'Upload' }}
+          {{ _('Change') if user.avatar else _('Upload') }}
           <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp,image/gif" required
                  onchange="this.form.submit()" hidden>
         </label>
@@ -27,10 +27,10 @@
       {% if user.avatar %}
         <form method="post" action="{{ url_for('main.delete_avatar') }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="danger-link">Remove</button>
+          <button type="submit" class="danger-link">{{ _("Remove") }}</button>
         </form>
       {% endif %}
-      <p class="field-hint">png, jpg, webp or gif, up to 5 MB. It will be cropped to a square.</p>
+      <p class="field-hint">{{ _("png, jpg, webp or gif, up to 5 MB. It will be cropped to a square.") }}</p>
     </div>
   </div>
 
@@ -41,37 +41,37 @@
       {% if user.is_person %}
         <div class="field-row">
           <div class="field">
-            <label for="first-name">First name</label>
+            <label for="first-name">{{ _("First name") }}</label>
             <input id="first-name" type="text" name="first_name" maxlength="60" required
                    value="{{ form.get('first_name', user.person.first_name if user.person else '') }}">
           </div>
           <div class="field">
-            <label for="last-name">Last name</label>
+            <label for="last-name">{{ _("Last name") }}</label>
             <input id="last-name" type="text" name="last_name" maxlength="60" required
                    value="{{ form.get('last_name', user.person.last_name if user.person else '') }}">
           </div>
         </div>
       {% else %}
         <div class="field">
-          <label for="company-name">Company name</label>
+          <label for="company-name">{{ _("Company name") }}</label>
           <input id="company-name" type="text" name="company_name" maxlength="120" required
                  value="{{ form.get('company_name', user.company.name if user.company else '') }}">
         </div>
         <div class="field">
-          <label for="description">Description</label>
+          <label for="description">{{ _("Description") }}</label>
           <textarea id="description" name="description" rows="4" maxlength="500">{{ form.get('description', (user.company.description or '') if user.company else '') }}</textarea>
-          <p class="field-hint">Shown on your public page. Up to 500 characters.</p>
+          <p class="field-hint">{{ _("Shown on your public page. Up to 500 characters.") }}</p>
         </div>
       {% endif %}
 
       <div class="field">
-        <label for="email">Email</label>
+        <label for="email">{{ _("Email") }}</label>
         <input id="email" type="email" value="{{ user.email }}" disabled>
-        <p class="field-hint">The email is your login, so it can't be changed here.</p>
+        <p class="field-hint">{{ _("The email is your login, so it can't be changed here.") }}</p>
       </div>
 
-      <button type="submit" class="btn btn-primary">Save</button>
-      <a class="btn btn-outline" href="{{ url_for('main.account') }}">Cancel</a>
+      <button type="submit" class="btn btn-primary">{{ _("Save") }}</button>
+      <a class="btn btn-outline" href="{{ url_for('main.account') }}">{{ _("Cancel") }}</a>
     </form>
   </div>
 </div>

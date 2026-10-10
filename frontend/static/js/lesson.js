@@ -40,7 +40,7 @@ if (lessonVideo) {
 
     if (savedTime > 5 && savedTime < almostTheEnd) {
       lessonVideo.currentTime = savedTime;
-      resumeNote.textContent = 'Continued from ' + formatTime(savedTime);
+      resumeNote.textContent = t('Continued from {time}', { time: formatTime(savedTime) });
       resumeNote.hidden = false;
     }
     // playbackRate resets when the video loads, so set it again

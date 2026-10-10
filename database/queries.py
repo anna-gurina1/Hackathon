@@ -4,6 +4,7 @@ Backend calls these instead of writing its own queries — keep the
 function names and signatures exactly as listed here.
 """
 
+from backend.i18n import _
 from database import db
 from database.models import (
     AccessRequest,
@@ -83,13 +84,14 @@ def search_companies(q, by):
     return list(companies.values())
 
 
-def search_courses(q, by):
+def search_courses(q, by, language=None):
     """
     Public+published courses for the Explore search (newest first).
     `by`: "topic" -> course title, topic or description; "profession" -> Course.profession;
     "result" -> Course.outcome. An empty `q` returns all public courses.
+    `language`: "en" / "ru" -> only courses written in this language; None -> all.
     Each item: {"type": "course", "id", "title", "description", "level", "lesson_count",
-                "url", "company_id", "company_name", "company_url"}
+                "language", "url", "company_id", "company_name", "company_url"}
     """
     from sqlalchemy import or_
 
@@ -108,6 +110,8 @@ def search_courses(q, by):
     q = (q or "").strip()
     if q:
         query = query.filter(or_(*[column.ilike(f"%{q}%") for column in columns]))
+    if language:
+        query = query.filter(Course.language == language)
 
     results = []
     for course in query.order_by(Course.created_at.desc()).all():
@@ -116,8 +120,9 @@ def search_courses(q, by):
             "id": course.id,
             "title": course.title,
             "description": course.description,
-            "level": LEVELS.get(course.level, course.level),
+            "level": _(LEVELS.get(course.level, course.level)),  # in the language of the site
             "lesson_count": course.lesson_count,
+            "language": course.language,  # "en", "ru" or None
             "is_private": course.is_private,
             "url": f"/course/{course.id}",
             "company_id": course.company_id,

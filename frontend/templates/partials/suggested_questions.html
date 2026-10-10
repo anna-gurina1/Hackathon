@@ -1,39 +1,52 @@
 {#
   Side panel with question ideas from core/questions.py.
   Needs: recommended = [{"category": "goal", "category_label": "Learning goal", "questions": [question dicts]}]
-  Optional: used_question_ids (set of ids already turned into lessons), can_use (show "Use" buttons)
+  Optional: answered_question_ids (set of ids the master ticked as answered in this course; with it
+            every question gets a tick button — a personal note, other people never see it; needs `course`)
   Optional: ai_url (shows the purple "Show AI suggestions" button; it posts to this url),
             ai_form (id of the form whose fields the AI should read; without it the server uses the saved course)
   Each module (category) is folded: only its name is shown, the questions open with the arrow.
 #}
 <aside class="suggest-panel card" data-suggest-panel>
-  <p class="side-label">Need ideas?</p>
+  <p class="side-label">{{ _("Need ideas?") }}</p>
   <p class="small muted suggest-intro">
-    Not sure where to start or how to put it into words? These questions can help you shape your thoughts.
-    They are only hints — use any of them, change them, or teach in your own way.
+    {{ _("Not sure where to start or how to put it into words? These questions can help you shape your thoughts. They are only hints — use any of them, change them, or teach in your own way.") }}
   </p>
 
   {% if ai_url is defined %}
     <button type="button" class="btn btn-accent btn-small btn-block suggest-ai-button" data-ai-suggest
             data-ai-url="{{ ai_url }}" data-csrf="{{ csrf_token() }}"
-            {% if ai_form is defined %}data-ai-form="{{ ai_form }}"{% endif %}>Show AI suggestions</button>
+            {% if ai_form is defined %}data-ai-form="{{ ai_form }}"{% endif %}>{{ _("Show AI suggestions") }}</button>
+  {% endif %}
+
+  {% if answered_question_ids is defined %}
+    <p class="small muted suggest-intro">{{ _("Tick ✓ the questions you have already answered in this course. Only you see these ticks.") }}</p>
   {% endif %}
 
   {% for group in recommended %}
     <details class="suggest-group" data-category="{{ group.category }}">
       <summary class="suggest-category">
-        <span>{{ group.category_label }}</span>
+        <span>{{ _(group.category_label) }}</span>
         <span class="suggest-count" data-suggest-count>{{ group.questions|length }}</span>
       </summary>
       {% for question in group.questions %}
-        {% set is_used = used_question_ids is defined and question.id in used_question_ids %}
-        <div class="suggest-item {{ 'is-used' if is_used }}" data-levels="{{ question.levels|join(' ') }}">
+        {% set is_answered = answered_question_ids is defined and question.id in answered_question_ids %}
+        <div class="suggest-item {{ 'is-answered' if is_answered }}" data-levels="{{ question.levels|join(' ') }}">
           <details>
-            <summary>{{ '✓ ' if is_used }}{{ question.text }}</summary>
-            {% if question.hint %}<p class="small muted">{{ question.hint }}</p>{% endif %}
+            <summary>{{ _(question.text) }}</summary>
+            {% if question.hint %}<p class="small muted">{{ _(question.hint) }}</p>{% endif %}
           </details>
-          {% if can_use and not is_used %}
-            <button type="button" class="suggest-use" data-use-question="{{ question.id }}" data-question-text="{{ question.text }}">Use</button>
+          {% if answered_question_ids is defined %}
+            {# works without JavaScript too; studio.js sends it in the background #}
+            <form method="post" action="{{ url_for('builder.toggle_answered', course_id=course.id, question_id=question.id) }}" data-answered-form>
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="suggest-tick" aria-pressed="{{ 'true' if is_answered else 'false' }}"
+                      title="{{ _('Answered — tap to untick') if is_answered else _('Mark as answered') }}"
+                      data-title-on="{{ _('Answered — tap to untick') }}" data-title-off="{{ _('Mark as answered') }}">
+                <span aria-hidden="true">✓</span>
+                <span class="visually-hidden">{{ _("Answered") }}</span>
+              </button>
+            </form>
           {% endif %}
         </div>
       {% endfor %}

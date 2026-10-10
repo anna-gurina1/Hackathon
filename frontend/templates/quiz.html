@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Quiz · {{ lesson.title }}{% endblock %}
+{% block title %}{{ _("Quiz") }} · {{ lesson.title }}{% endblock %}
 
 {% block head %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
@@ -8,21 +8,28 @@
 
 {% block content %}
 <div class="container page narrow">
-  <a class="back-link" href="{{ url_for('courses.lesson', course_id=course.id, n=n) }}">← Back to lesson {{ n }}</a>
+  <a class="back-link" href="{{ url_for('courses.lesson', course_id=course.id, n=n) }}">← {{ _("Back to lesson {number}", number=n) }}</a>
 
-  <p class="eyebrow">Quiz · Lesson {{ n }} of {{ course.lesson_count }}</p>
-  <h1>{{ lesson.title }}</h1>
-  <p class="muted">{{ questions|length }} questions · You need {{ quiz.pass_score }}% to pass</p>
+  <p class="eyebrow">{{ _("Quiz") }} · {{ _("Lesson {number} of {total}", number=n, total=course.lesson_count) }}</p>
+  {% set title_translation = offer_translation(lesson, "title") %}
+  <h1>{{ lesson.title }}{{ title_translation.button }}</h1>
+  {{ title_translation.box }}
+  <p class="muted">{{ _n(questions|length, "{count} question", "{count} questions") }} · {{ _("You need {score}% to pass", score=quiz.pass_score) }}</p>
 
   <form class="quiz-form" method="post" action="{{ url_for('quiz.submit', course_id=course.id, n=n) }}" data-quiz-form>
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
     {% for question in questions %}
       <fieldset class="card quiz-question">
+        {# one "Translate" for the question and its answers; the button is outside the answer labels #}
+        {% set answer_marks = [""] %}
+        {% for answer in question.answers %}{% set _unused = answer_marks.append("•") %}{% endfor %}
+        {% set question_translation = offer_translation([question] + question.answers|list, "text", labels=answer_marks) %}
         <legend class="question-text">
           <span class="question-number">{{ loop.index }}.</span>
-          <span>{{ question.text }}</span>
+          <span>{{ question.text }}{{ question_translation.button }}</span>
         </legend>
+        {{ question_translation.box }}
         <div class="answer-list">
           {% for answer in question.answers %}
             <label class="answer-option">
@@ -35,8 +42,8 @@
     {% endfor %}
 
     <div class="quiz-footer">
-      <span class="small muted" data-answered-counter>0 of {{ questions|length }} answered</span>
-      <button type="submit" class="btn btn-primary btn-lg">Check my answers</button>
+      <span class="small muted" data-answered-counter>{{ _("{answered} of {total} answered", answered=0, total=questions|length) }}</span>
+      <button type="submit" class="btn btn-primary btn-lg">{{ _("Check my answers") }}</button>
     </div>
   </form>
 </div>

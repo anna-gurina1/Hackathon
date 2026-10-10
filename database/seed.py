@@ -507,6 +507,7 @@ def _get_or_create_course(company, data):
     course = Course.query.filter_by(company_id=company.id, title=info["title"]).first()
     if course is None:
         course = Course(company_id=company.id, status="published", **info)
+        course.update_language()
         db.session.add(course)
         db.session.flush()
         _add_lessons(course, data["lessons"])

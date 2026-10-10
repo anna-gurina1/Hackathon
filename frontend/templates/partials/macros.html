@@ -2,14 +2,14 @@
 
 {% macro level_label(level_key) -%}
   {%- set level_names = {"beginner": "Beginner", "intermediate": "Intermediate", "advanced": "Professional"} -%}
-  {{ level_names.get(level_key, level_key|replace('_', ' ')|capitalize) }}
+  {{ _(level_names[level_key]) if level_key in level_names else level_key|replace('_', ' ')|capitalize }}
 {%- endmacro %}
 
 {% macro progress_bar(percent, label=true) %}
   <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ percent }}">
     <div class="progress-fill" style="width: {{ percent }}%"></div>
   </div>
-  {% if label %}<p class="progress-label small muted">{{ percent }}% complete</p>{% endif %}
+  {% if label %}<p class="progress-label small muted">{{ _("{percent}% complete", percent=percent) }}</p>{% endif %}
 {% endmacro %}
 
 {% macro avatar(user, size="") %}
@@ -26,6 +26,13 @@
   <a class="company-link {{ class }}" href="{{ url_for('courses.company_profile', company_id=company.id) }}">{{ company.display_name }}</a>
 {%- endmacro %}
 
+{# EN / RU chip: the language the course is written in #}
+{% macro language_chip(course) -%}
+  {%- if course.language -%}
+    <span class="chip chip-language" title="{{ _('Course in Russian') if course.language == 'ru' else _('Course in English') }}">{{ course.language|upper }}</span>
+  {%- endif -%}
+{%- endmacro %}
+
 {% macro course_card(course) %}
   {# The whole card opens the course (stretched link); the company name opens the company page #}
   <div class="card course-card">
@@ -36,8 +43,9 @@
     {% endif %}
     <span class="chip-row">
       <span class="chip">{{ level_label(course.level) }}</span>
-      <span class="chip">{{ course.lesson_count }} lesson{{ 's' if course.lesson_count != 1 }}</span>
-      {% if course.is_private %}<span class="chip chip-dark">🔒 By request</span>{% endif %}
+      <span class="chip">{{ _n(course.lesson_count, "{count} lesson", "{count} lessons") }}</span>
+      {{ language_chip(course) }}
+      {% if course.is_private %}<span class="chip chip-dark">{{ _("🔒 By request") }}</span>{% endif %}
     </span>
   </div>
 {% endmacro %}
