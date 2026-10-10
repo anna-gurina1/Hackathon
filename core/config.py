@@ -10,11 +10,27 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 
+def database_url():
+    """Where the database lives. Empty DATABASE_URL = the app.db file next to run.py.
+
+    On Render the disk is wiped on every restart, so there DATABASE_URL must point to
+    a Postgres database (Neon, Supabase, Render Postgres). Their links start with
+    postgres:// or postgresql://; we tell SQLAlchemy to use the psycopg driver for them.
+    """
+    url = os.environ.get("DATABASE_URL", "").strip()
+    if not url:
+        return "sqlite:///" + os.path.join(BASE_DIR, "app.db")
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix):]
+    return url
+
+
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-change-me-in-production")
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        "DATABASE_URL", "sqlite:///" + os.path.join(BASE_DIR, "app.db")
-    )
+    SQLALCHEMY_DATABASE_URI = database_url()
+    # Check the connection before using it: free Postgres hosts close idle connections
+    SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
     MAX_CONTENT_LENGTH = 500 * 1024 * 1024  # 500 MB, for course videos

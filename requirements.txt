@@ -7,3 +7,4 @@ python-dotenv>=1.0
 imageio-ffmpeg>=0.5
 Flask-Migrate>=4.0
 gunicorn>=22.0
+psycopg[binary]>=3.2
