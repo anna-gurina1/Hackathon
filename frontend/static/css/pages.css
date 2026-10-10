@@ -819,11 +819,13 @@ a.lesson-row:hover { border-color: var(--accent); }
 .toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
 
 /* My account: "Delete account" block */
-.danger-zone { margin-top: 40px; padding: 0; border-color: var(--line); }
+.danger-zone { margin-top: 40px; padding: 0; border-color: var(--error-ink); }
 .danger-zone > summary {
   padding: 14px 18px; cursor: pointer; list-style: none;
-  color: var(--ink-soft); font-weight: 600; font-size: .92rem;
+  color: var(--error-ink); font-weight: 600; font-size: .92rem;
+  border-radius: var(--radius);
 }
+.danger-zone > summary:hover { background: var(--error-bg); }
 .danger-zone > summary::-webkit-details-marker { display: none; }
 .danger-zone > summary::before { content: "▸ "; }
 .danger-zone[open] > summary::before { content: "▾ "; }
