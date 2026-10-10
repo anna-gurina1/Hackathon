@@ -146,10 +146,15 @@ if (languageSwitch) {
 
 // ---------- "Translate" button next to texts written by users ----------
 // The server adds the button only when the text is not in the language of the site
-// (backend/translator.py). The first tap asks /api/translate, the next taps only hide/show.
+// (backend/translator.py). The pressed button is translated first; right after that all the
+// other buttons of the page are translated in the background in ONE request, so when the
+// person presses the next one, the translation opens at once. Later taps only hide/show.
 const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+const translationRequests = new Map();   // button -> its request that is still running
 
-function showTranslation(box, translations, labels) {
+function showTranslation(button, translations) {
+  const box = document.getElementById(button.getAttribute('aria-controls'));
+  const labels = JSON.parse(button.dataset.labels || '[]');
   const textBox = box.querySelector('[data-translation-text]');
   textBox.textContent = '';
   translations.forEach(function (translated, index) {
@@ -164,12 +169,48 @@ function showTranslation(box, translations, labels) {
     line.appendChild(document.createTextNode(translated));   // text, never HTML
     textBox.appendChild(line);
   });
+  box.dataset.loaded = 'yes';
 }
 
-function setTranslationOpen(button, box, isOpen) {
+function setTranslationOpen(button, isOpen) {
+  const box = document.getElementById(button.getAttribute('aria-controls'));
   box.classList.toggle('is-open', isOpen);
   button.setAttribute('aria-expanded', String(isOpen));
   button.textContent = isOpen ? t('Hide translation') : t('Show translation');
+}
+
+function isTranslated(button) {
+  return Boolean(document.getElementById(button.getAttribute('aria-controls')).dataset.loaded);
+}
+
+// One request for several buttons; every button gets its own promise (true = translated)
+function requestTranslations(buttons) {
+  const request = fetch('/api/translate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+    body: JSON.stringify({ sources: buttons.map(function (button) { return button.dataset.translate; }) }),
+  })
+    .then(function (response) {
+      if (!response.ok) throw new Error('translate: ' + response.status);
+      return response.json();
+    })
+    .then(function (data) {
+      buttons.forEach(function (button, index) { showTranslation(button, data.translations[index]); });
+      return true;
+    })
+    .catch(function () { return false; })
+    .finally(function () {
+      buttons.forEach(function (button) { translationRequests.delete(button); });
+    });
+  buttons.forEach(function (button) { translationRequests.set(button, request); });
+  return request;
+}
+
+function translateRestOfPageInBackground() {
+  const waiting = Array.from(document.querySelectorAll('[data-translate]')).filter(function (button) {
+    return !isTranslated(button) && !translationRequests.has(button);
+  });
+  if (waiting.length) requestTranslations(waiting);   // an error here is quiet: a tap will try again
 }
 
 document.addEventListener('click', async function (event) {
@@ -177,9 +218,9 @@ document.addEventListener('click', async function (event) {
   if (!button) return;
   event.preventDefault();
 
-  const box = document.getElementById(button.getAttribute('aria-controls'));
-  if (box.dataset.loaded) {
-    setTranslationOpen(button, box, !box.classList.contains('is-open'));
+  if (isTranslated(button)) {
+    const box = document.getElementById(button.getAttribute('aria-controls'));
+    setTranslationOpen(button, !box.classList.contains('is-open'));
     return;
   }
   if (button.disabled) return;
@@ -187,20 +228,19 @@ document.addEventListener('click', async function (event) {
   const normalLabel = button.textContent;
   button.disabled = true;
   button.textContent = t('Translating…');
-  try {
-    const response = await fetch('/api/translate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-      body: JSON.stringify({ source: button.dataset.translate }),
-    });
-    const data = await response.json().catch(function () { return {}; });
-    if (!response.ok || !Array.isArray(data.translations)) throw new Error(data.error || response.status);
 
-    showTranslation(box, data.translations, JSON.parse(button.dataset.labels || '[]'));
-    box.dataset.loaded = 'yes';
+  // already on its way in the background? then just wait for it
+  const backgroundRequest = translationRequests.get(button);
+  let translated = await (backgroundRequest || requestTranslations([button]));
+  if (backgroundRequest && !translated) {
+    translated = await requestTranslations([button]);   // the background request failed: ask for this one
+  }
+
+  if (translated || isTranslated(button)) {
     button.disabled = false;
-    setTranslationOpen(button, box, true);
-  } catch (error) {
+    setTranslationOpen(button, true);
+    translateRestOfPageInBackground();
+  } else {
     button.textContent = t('Could not translate, try later');
     setTimeout(function () {
       button.textContent = normalLabel;

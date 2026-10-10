@@ -9,6 +9,7 @@ does not wait for Gmail (it can take up to 15 seconds).
 import smtplib
 from concurrent.futures import ThreadPoolExecutor
 from email.message import EmailMessage
+from email.utils import formataddr, formatdate, make_msgid, parseaddr
 
 from flask import current_app
 
@@ -66,10 +67,15 @@ def send_email(to, subject, body):
         print("=" * 60 + "\n", flush=True)
         return True
 
+    # "Bitwise <address>": a sender name and the Date / Message-ID headers that every normal
+    # mail program adds. Letters without them look suspicious to spam filters.
+    sender_name, sender_address = parseaddr(cfg.get("MAIL_FROM") or cfg.get("MAIL_USERNAME"))
     msg = EmailMessage()
-    msg["From"] = cfg.get("MAIL_FROM") or cfg.get("MAIL_USERNAME")
+    msg["From"] = formataddr((sender_name or cfg.get("MAIL_FROM_NAME") or "Bitwise", sender_address))
     msg["To"] = to
     msg["Subject"] = subject
+    msg["Date"] = formatdate(localtime=True)
+    msg["Message-ID"] = make_msgid(domain=sender_address.rpartition("@")[2] or None)
     msg.set_content(body)
 
     settings = {

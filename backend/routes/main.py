@@ -8,9 +8,12 @@ from database import db
 from backend.uploads import delete_image, delete_video, save_image
 from database.models import AccessRequest, CompanyProfile, Course, Enrollment, Offer, PersonProfile, QuizAttempt
 from database.queries import company_dashboard, person_dashboard
-from backend.translator import translate_source
+from backend.translator import translate_sources
 
 bp = Blueprint("main", __name__)
+
+# one page never has more "Translate" buttons than this (a long quiz is about 20)
+MAX_SOURCES_PER_REQUEST = 60
 
 
 @bp.route("/")
@@ -38,11 +41,16 @@ def set_language(code):
 
 @bp.route("/api/translate", methods=["POST"])
 def translate():
-    """The "Translate" button: {"source": "<signed token from the page>"} ->
-    {"translations": ["...", ...]} in the language of the site. Open to everybody, guests too."""
+    """The "Translate" button. {"sources": ["<signed token>", ...]} ->
+    {"translations": [["...", ...], ...]} (one list per token) in the language of the site.
+    main.js sends the pressed button first and then, in the background, all the other buttons
+    of the page in one request, so they open at once. Open to everybody, guests too."""
     data = request.get_json(silent=True) or {}
+    sources = data.get("sources")
+    if not isinstance(sources, list) or not sources or len(sources) > MAX_SOURCES_PER_REQUEST:
+        return jsonify(error="bad_source"), 400
     try:
-        translations = translate_source(str(data.get("source", "")))
+        translations = translate_sources([str(source) for source in sources])
     except ValueError:        # broken or very old token: the page should be reloaded
         return jsonify(error="bad_source"), 400
     except AiUnavailable:     # no AI key, network problem, used-up quota...

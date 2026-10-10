@@ -6,7 +6,7 @@ the text only when somebody presses it.
 
     text_language(text)              -> "en", "ru" or None (cannot tell)
     offer_translation(obj, "field")  -> button + grey box for a template (empty when not needed)
-    translate_source(token)          -> list of translated texts for the /api/translate route
+    translate_sources(tokens)        -> translated texts of several buttons, for /api/translate
 
 Every translation is saved in the Translation table the first time somebody asks for it,
 so the next reader gets it at once and the AI is not paid twice. Nothing is translated
@@ -18,6 +18,7 @@ as a free translator for any text.
 """
 import hashlib
 import json
+import os
 import re
 import secrets
 
@@ -46,7 +47,7 @@ KIND_OF_TABLE = {table: kind for kind, (table, _fields) in TRANSLATABLE.items()}
 
 LANGUAGE_NAMES_FOR_AI = {"en": "English", "ru": "Russian"}
 TOKEN_MAX_AGE_SECONDS = 7 * 24 * 3600   # a page left open for a week still works
-MAX_TOKENS_FOR_TRANSLATION = 4000       # a long lesson text needs more than the default answer size
+MAX_TOKENS_FOR_TRANSLATION = 8000       # a whole page (long lesson text + quiz) in one answer
 
 LATIN_LETTER = re.compile(r"[A-Za-z]")
 CYRILLIC_LETTER = re.compile(r"[А-Яа-яЁё]")
@@ -174,6 +175,8 @@ def _ask_ai(texts, language):
         system,
         "<texts>" + json.dumps(texts, ensure_ascii=False) + "</texts>",
         max_tokens=MAX_TOKENS_FOR_TRANSLATION,
+        quick=True,   # no long "thinking": a translation does not need it and comes much faster
+        gemini_model=os.getenv("GEMINI_TRANSLATION_MODEL") or None,
     )
     answer = re.sub(r"^```(?:json)?\s*|\s*```$", "", (answer or "").strip())
     start, end = answer.find("["), answer.rfind("]")
@@ -186,33 +189,38 @@ def _ask_ai(texts, language):
     return [str(item).strip() for item in translated]
 
 
-def translate_source(token):
-    """Translations of all texts behind the token into the language of the site.
-    Already translated texts come from the database; the rest from one AI request.
+def translate_sources(tokens):
+    """Translations for several buttons at once, into the language of the site:
+    [[texts of button 1], [texts of button 2], ...]. Texts translated before come from the
+    database; all the others go to the AI in ONE request (faster than one request per button).
     Raises ValueError (bad token) or AiUnavailable (AI is not available)."""
     language = current_language()
-    texts = _read_parts(token)
-    hashes = [_source_hash(text) for text in texts]
+    texts_of_buttons = [_read_parts(token) for token in tokens]
+    all_texts = [text for texts in texts_of_buttons for text in texts if text]
+    hashes = {text: _source_hash(text) for text in all_texts}
 
     saved = {
         row.source_hash: row.text
         for row in Translation.query.filter(
-            Translation.language == language, Translation.source_hash.in_(set(hashes))
+            Translation.language == language, Translation.source_hash.in_(set(hashes.values()))
         )
     }
-    missing = [text for text, text_hash in zip(texts, hashes) if text and text_hash not in saved]
-    missing = list(dict.fromkeys(missing))   # the same text twice -> translate it once
+    # not translated yet; the same text twice (e.g. "Yes" in two questions) is translated once
+    missing = list(dict.fromkeys(text for text in all_texts if hashes[text] not in saved))
 
     if missing:
         for text, translated in zip(missing, _ask_ai(missing, language)):
-            saved[_source_hash(text)] = translated
-            db.session.add(Translation(source_hash=_source_hash(text), language=language, text=translated))
+            saved[hashes[text]] = translated
+            db.session.add(Translation(source_hash=hashes[text], language=language, text=translated))
         try:
             db.session.commit()
         except IntegrityError:   # somebody else saved the same translation a moment ago
             db.session.rollback()
 
-    return [saved.get(text_hash, "") if text else "" for text, text_hash in zip(texts, hashes)]
+    return [
+        [saved.get(hashes[text], "") if text else "" for text in texts]
+        for texts in texts_of_buttons
+    ]
 
 
 def init_app(app):
