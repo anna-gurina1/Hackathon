@@ -11,6 +11,9 @@ Settings are read from the .env file (it must NOT go to git):
     AI_PROVIDER=gemini                  "gemini" (default, has a free tier) or "anthropic"
     GEMINI_API_KEY=...                  key from Google AI Studio (aistudio.google.com)
     GEMINI_MODEL=gemini-3.8-flash       optional; take the name from AI Studio if this one stops working
+    GEMINI_FALLBACK_MODEL=gemini-3.5-flash-lite   optional; used when GEMINI_MODEL has no free quota
+                                        left (HTTP 429) or does not exist (HTTP 404). Flash-Lite models
+                                        have a much bigger free daily limit. Empty = no fallback.
     GEMINI_TRANSLATION_MODEL=...        optional; a separate (e.g. "Flash-Lite") model only for the
                                         "Translate" button; empty = GEMINI_MODEL
     ANTHROPIC_API_KEY=sk-ant-...        only for AI_PROVIDER=anthropic
@@ -34,7 +37,10 @@ ANTHROPIC_VERSION = "2023-06-01"
 DEFAULT_ANTHROPIC_MODEL = "claude-haiku-4-5-20251001"
 TIMEOUT_SECONDS = 25
 MAX_QUESTION_LENGTH = 220
-RETRY_STATUS = {429, 500, 502, 503, 504}  # temporary errors: worth another try
+RETRY_STATUS = {500, 502, 503, 504}       # temporary errors: worth another try (429 is not here:
+                                          # a used-up daily quota does not come back in 3 seconds)
+DEFAULT_GEMINI_FALLBACK_MODEL = "gemini-3.5-flash-lite"
+FALLBACK_STATUS = {429, 404}              # no quota left / model not available
 MAX_ATTEMPTS = 3                          # 1 request + 2 retries
 RETRY_PAUSE_SECONDS = 1.5
  
@@ -115,11 +121,27 @@ _models_without_thinking_settings = set()
 
 def _call_gemini(system, user_text, quick=False, model=None):
     """quick=True: ask the model not to think long (much faster for simple tasks).
-    model: use this model instead of GEMINI_MODEL."""
+    model: use this model instead of GEMINI_MODEL.
+    If the model has no free quota left (429) or is not available (404), the request is
+    repeated once with GEMINI_FALLBACK_MODEL (default: a Flash-Lite model)."""
+    model = model or os.getenv("GEMINI_MODEL") or DEFAULT_GEMINI_MODEL
+    try:
+        return _call_gemini_model(system, user_text, quick, model)
+    except AiUnavailable as error:
+        fallback = os.getenv("GEMINI_FALLBACK_MODEL")
+        if fallback is None:
+            fallback = DEFAULT_GEMINI_FALLBACK_MODEL
+        fallback = fallback.strip()
+        if error.status not in FALLBACK_STATUS or not fallback or fallback == model:
+            raise
+        log.warning("Gemini model %s failed with HTTP %s, trying %s", model, error.status, fallback)
+        return _call_gemini_model(system, user_text, quick, fallback)
+
+
+def _call_gemini_model(system, user_text, quick, model):
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         raise AiUnavailable("GEMINI_API_KEY is not set in the .env file.")
-    model = model or os.getenv("GEMINI_MODEL") or DEFAULT_GEMINI_MODEL
     payload = {"contents": [{"role": "user", "parts": [{"text": f"{system}\n\n{user_text}"}]}]}
 
     if quick and model not in _models_without_thinking_settings:
