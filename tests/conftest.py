@@ -25,19 +25,23 @@ class TestConfig:
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     WTF_CSRF_ENABLED = False
-    UPLOAD_FOLDER = "/tmp/bitwise-test-uploads"
     MAIL_SERVER = ""
     MAIL_BACKGROUND = False
     PUBLIC_URL = "https://example.invalid"
 
 
 @pytest.fixture
-def app(monkeypatch):
+def app(monkeypatch, tmp_path):
     monkeypatch.setattr("backend.routes.workspaces.send_email", lambda *a, **k: True)
     monkeypatch.setattr("backend.routes.site_auth.send_email", lambda *a, **k: True)
     monkeypatch.setattr("backend.routes.courses.send_email", lambda *a, **k: True)
     monkeypatch.setattr("backend.routes.quiz.send_email", lambda *a, **k: True)
-    application = create_app(TestConfig)
+
+    class IsolatedTestConfig(TestConfig):
+        # pytest owns this directory, including on Windows. Never share user uploads.
+        UPLOAD_FOLDER = str(tmp_path / "uploads")
+
+    application = create_app(IsolatedTestConfig)
 
     @application.before_request
     def fresh_login_state():

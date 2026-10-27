@@ -1,4 +1,5 @@
 # Backend
 
-Маршруты находятся в `routes/`. Права проверяются в `access.py`.
-Подробная актуальная карта: `../ARCHITECTURE.md`.
+`routes/` — HTTP-маршруты. `access.py` — обязательные проверки прав. `catalog.py` — общий разбор фильтров и выбор поиска; SQL находится в `database/catalog.py`.
+
+[Пошаговое руководство](../docs/CODE-GUIDE.md) · [Модель и правила доступа](../ARCHITECTURE.md)

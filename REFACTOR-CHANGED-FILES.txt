@@ -1,0 +1,60 @@
+Изменения относительно Hackathon_new.rar
+
+NEW — добавлен; EDIT — изменён; REMOVE — отсутствует в новой поставке.
+REMOVE не означает автоматическое удаление из вашей рабочей папки.
+Старые документы перенесены в docs/history; DESIGN.md — в docs/DESIGN.md.
+Удалены устаревший database/test_queries и заменённый frontend/static/js/tips.js.
+Все актуальные tests/*.py сохранены. Инструкция переноса — START-HERE.md.
+Личные настройки, база, Git, uploads и кэши не сравниваются и не поставляются.
+
+EDIT    ARCHITECTURE.md
+EDIT    README.md
+NEW     REFACTOR-REPORT.md
+EDIT    START-HERE.md
+EDIT    backend/README.md
+NEW     backend/catalog.py
+EDIT    backend/email.py
+EDIT    backend/routes/builder.py
+EDIT    backend/routes/courses.py
+EDIT    backend/routes/main.py
+EDIT    backend/routes/quiz.py
+EDIT    backend/uploads.py
+EDIT    database/README.md
+NEW     database/catalog.py
+EDIT    database/queries.py
+EDIT    design-preview/README.txt
+NEW     docs/CODE-GUIDE.md
+NEW     docs/DESIGN.md
+NEW     docs/history/CHANGED-FILES.txt
+NEW     docs/history/CHANGES-AND-LIMITS.md
+NEW     docs/history/DESIGN-CHANGED-FILES.txt
+NEW     docs/history/DESIGN-QA.md
+NEW     docs/history/README-before-refactor.md
+NEW     docs/history/START-DESIGN.md
+NEW     docs/history/START-HERE-before-refactor.md
+NEW     docs/history/UI-PLAN.md
+NEW     docs/history/UPDATE-FILES.txt
+NEW     docs/history/UPDATE-INSTRUCTIONS.md
+EDIT    frontend/README.md
+EDIT    frontend/static/css/refinements.css
+NEW     frontend/static/js/catalog-cards.js
+NEW     frontend/static/js/catalog.js
+EDIT    frontend/templates/explore.html
+EDIT    tests/conftest.py
+NEW     tests/test_backup.py
+EDIT    tests/test_catalog.py
+NEW     tests/test_query_refactor.py
+NEW     tests/test_resilience.py
+EDIT    translations/ru/messages.json
+EDIT    translations/ru/scripts.json
+REMOVE  CHANGED-FILES.txt
+REMOVE  CHANGES-AND-LIMITS.md
+REMOVE  DESIGN-CHANGED-FILES.txt
+REMOVE  DESIGN-QA.md
+REMOVE  DESIGN.md
+REMOVE  START-DESIGN.md
+REMOVE  UI-PLAN.md
+REMOVE  UPDATE-FILES.txt
+REMOVE  UPDATE-INSTRUCTIONS.md
+REMOVE  database/test_queries
+REMOVE  frontend/static/js/tips.js

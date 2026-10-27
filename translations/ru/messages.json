@@ -94,5 +94,6 @@
   "Only PDF files are allowed.": "Можно загружать только PDF-файлы.",
   "The PDF file is empty.": "PDF-файл пустой.",
   "The PDF is too big (max {size} MB).": "PDF слишком большой (максимум {size} МБ).",
-  "This file is not a valid PDF.": "Этот файл не является корректным PDF."
+  "This file is not a valid PDF.": "Этот файл не является корректным PDF.",
+  "The offer was saved for {name}, but the email could not be sent.": "Предложение для {name} сохранено, но отправить уведомление по почте не удалось."
 }

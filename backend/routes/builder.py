@@ -37,7 +37,6 @@ from core.questions import QUESTIONS, QUIZ_TEMPLATES
 from database import db
 from database.models import (
     AnsweredQuestion,
-    Course,
     CourseDocument,
     Lesson,
     Quiz,
@@ -266,7 +265,7 @@ def toggle_answered(course_id, question_id):
 
     if request.accept_mimetypes.best == "application/json":
         return jsonify(answered=is_answered)
-    return redirect(request.referrer or url_for("builder.script", course_id=course.id))
+    return _back_to_script(course)  # Never trust an external Referer as a redirect target.
 
 
 # ---------- quiz for one lesson ----------

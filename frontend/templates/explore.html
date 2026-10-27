@@ -1,44 +1,39 @@
 {% extends "base.html" %}
-
+{% import "partials/macros.html" as ui %}
 {% block title %}{{ _("Explore — find a course") }}{% endblock %}
-
-{% block head %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
-{% endblock %}
-
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">{% endblock %}
 {% block content %}
-<div class="container page">
-  <section class="search-hero">
-    <h1>{{ _("Learn from people who do it every day") }}</h1>
+<div class="container page explore-page">
+  <section class="catalog-intro">
+    <h1>{{ _("Find your next skill") }}</h1>
     <p class="lead">{{ _("Short video lessons from real experts. Finish a course — and the company may offer you a job.") }}</p>
-
-    <form class="search-form" data-search-form role="search">
+  </section>
+  <section class="catalog-tools" aria-label="{{ _('Course search') }}">
+    <form action="{{ url_for('main.explore') }}" method="get" class="search-form" data-search-form role="search">
+      <label for="course-search" class="visually-hidden">{{ _("Search courses") }}</label>
       <div class="search-box">
-        <input type="search" name="q" placeholder="{{ _('Search courses…') }}" aria-label="{{ _('Search') }}" autocomplete="off" data-search-input>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>
+        <input id="course-search" type="search" name="q" value="{{ query }}" placeholder="{{ _('Search courses…') }}" autocomplete="off" data-search-input>
         <button type="submit" class="btn btn-primary">{{ _("Search") }}</button>
       </div>
-
-      <div class="search-tabs pill-group" role="radiogroup" aria-label="{{ _('Search by') }}">
-        <label class="pill"><input type="radio" name="by" value="topic" checked><span>{{ _("Topic") }}</span></label>
-        <label class="pill"><input type="radio" name="by" value="company"><span>{{ _("Company") }}</span></label>
-        <label class="pill"><input type="radio" name="by" value="profession"><span>{{ _("Profession") }}</span></label>
-        <label class="pill"><input type="radio" name="by" value="result"><span>{{ _("What you'll learn") }}</span></label>
+      <div class="catalog-filter-row">
+        <fieldset class="search-tabs pill-group"><legend class="visually-hidden">{{ _("Search by") }}</legend>
+          {% for value, label in [('topic', 'Topic'), ('company', 'Company'), ('profession', 'Profession'), ('result', "What you'll learn")] %}<label class="pill"><input type="radio" name="by" value="{{ value }}" {{ 'checked' if search_by == value }}><span>{{ _(label) }}</span></label>{% endfor %}
+        </fieldset>
+        <label class="only-language" data-only-my-language-box {{ 'hidden' if search_by == 'company' }}>
+          <input type="checkbox" name="lang" value="{{ language_filter or current_language() }}" {{ 'checked' if language_filter }} data-only-my-language><span class="only-language-track" aria-hidden="true"></span>
+          <span data-language-filter-label>{{ _("Only courses in Russian") if (language_filter or current_language()) == "ru" else _("Only courses in English") }}</span>
+        </label>
       </div>
-
-      {# Only courses written in the language of the site (tips.js adds &lang=...) #}
-      <label class="only-language" data-only-my-language-box>
-        <input type="checkbox" data-only-my-language>
-        <span class="only-language-track" aria-hidden="true"></span>
-        <span>{{ _("Only courses in Russian") if current_language() == "ru" else _("Only courses in English") }}</span>
-      </label>
+      {% if topics or selected_topic %}<div class="topic-filter"><label for="topic-filter">{{ _("Course topic") }}</label><select id="topic-filter" name="topic" data-topic-filter {{ 'disabled' if search_by == 'company' }}><option value="">{{ _("All topics") }}</option>{% if selected_topic and selected_topic not in topics %}<option value="{{ selected_topic }}" selected>{{ selected_topic }}</option>{% endif %}{% for topic in topics %}<option value="{{ topic }}" {{ 'selected' if selected_topic == topic }}>{{ topic }}</option>{% endfor %}</select></div>{% endif %}
     </form>
   </section>
-
-  <p class="search-status muted" data-search-status aria-live="polite">{{ _("Loading…") }}</p>
-  <div class="card-grid" data-search-results></div>
+  <div class="catalog-results-heading"><h2>{{ _("Companies") if search_by == 'company' else _("Courses") }}</h2><p class="search-status muted" data-search-status aria-live="polite">{% if search_by == 'company' %}{{ _n(results|length, "{count} company found", "{count} companies found") }}{% else %}{{ _n(results|length, "{count} course found", "{count} courses found") }}{% endif %}</p></div>
+  <div class="card-grid catalog-grid" data-search-results aria-busy="false">
+    {% for item in results %}{% if search_by == 'company' %}<a class="card result-company" href="{{ item.url }}"><span class="avatar" aria-hidden="true">{{ item.name[:2]|upper }}</span><div><h3>{{ item.name }}</h3><p class="muted">{{ item.description or '' }}</p><span class="chip">{{ _n(item.course_count, "{count} course", "{count} courses") }}</span></div></a>{% else %}{{ ui.catalog_card(item) }}{% endif %}
+    {% else %}<div class="card catalog-empty"><h3>{{ _("No matching companies") if search_by == 'company' else _("No matching courses") }}</h3><p class="muted">{{ _("Try a different search or clear the filters.") }}</p><a class="btn btn-outline" href="{{ url_for('main.explore') }}">{{ _("Reset filters") }}</a></div>{% endfor %}
+  </div>
+  <noscript><p class="muted">{{ _("Choose your filters and press Search to update the catalog.") }}</p></noscript>
 </div>
 {% endblock %}
-
-{% block scripts %}
-  <script src="{{ url_for('static', filename='js/tips.js') }}"></script>
-{% endblock %}
+{% block scripts %}<script type="module" src="{{ url_for('static', filename='js/catalog.js') }}"></script>{% endblock %}

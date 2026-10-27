@@ -1,14 +1,17 @@
 """
-Ready-made query functions for backend routes.
-Backend calls these instead of writing its own queries — keep the
-function names and signatures exactly as listed here.
+Dashboard queries and course visibility.
+
+Catalog SQL lives in database/catalog.py; search helpers remain re-exported here
+for compatibility. Routes must still authorize company dashboard access.
 """
 
-from backend.i18n import _
+from sqlalchemy.orm import joinedload, selectinload
+
+# Compatibility imports: existing callers can still import these query helpers here.
+from database.catalog import search_companies, search_courses
 from database import db
 from database.models import (
     AccessRequest,
-    Company,
     Course,
     Enrollment,
     Lesson,
@@ -18,12 +21,14 @@ from database.models import (
     User,
 )
 
-_SEARCH_COLUMNS = {
-    "topic": lambda: Course.topic,
-    "company": lambda: Company.name,
-    "profession": lambda: Course.profession,
-    "result": lambda: Course.outcome,
-}
+__all__ = [
+    "search_companies",
+    "search_courses",
+    "course_visible_to",
+    "person_dashboard",
+    "company_dashboard",
+    "best_score",
+]
 
 
 def course_visible_to(course, user):
@@ -44,100 +49,6 @@ def course_visible_to(course, user):
         Enrollment.query.filter_by(user_id=user.id, course_id=course.id).first()
         is not None
     )
-
-
-def search_companies(q, by):
-    """
-    Companies that have at least one published course (public or private) matching the
-    filter. `by` selects which column is matched with ILIKE against `q`:
-    "topic" -> Course.topic, "company" -> Company.name,
-    "profession" -> Course.profession, "result" -> Course.outcome.
-    An empty `q` returns companies with any public+published course.
-    """
-    column_factory = _SEARCH_COLUMNS.get(by)
-    if column_factory is None:
-        return []
-
-    query = (
-        db.session.query(Course)
-        .join(Company, Course.company_id == Company.id)
-        .filter(
-            Course.status == "published"
-        )  # private courses count too: they are found by request
-    )
-
-    q = (q or "").strip()
-    if q:
-        query = query.filter(column_factory().ilike(f"%{q}%"))
-
-    companies = {}
-    for course in query.all():
-        company_id = course.company_id
-        if company_id not in companies:
-            profile = course.company.company
-            companies[company_id] = {
-                "id": company_id,
-                "name": profile.name if profile else "",
-                "description": profile.description if profile else None,
-                "course_count": 0,
-                "avatar_url": course.company.avatar_url,
-                "url": f"/company/{company_id}",
-            }
-        companies[company_id]["course_count"] += 1
-
-    return list(companies.values())
-
-
-def search_courses(q, by, language=None):
-    """
-    Public+published courses for the Explore search (newest first).
-    `by`: "topic" -> course title, topic or description; "profession" -> Course.profession;
-    "result" -> Course.outcome. An empty `q` returns all public courses.
-    `language`: "en" / "ru" -> only courses written in this language; None -> all.
-    Each item: {"type": "course", "id", "title", "description", "level", "lesson_count",
-                "language", "url", "company_id", "company_name", "company_url"}
-    """
-    from sqlalchemy import or_
-
-    from core.questions import LEVELS
-
-    columns = {
-        "topic": [Course.title, Course.topic, Course.description],
-        "profession": [Course.profession],
-        "result": [Course.outcome],
-    }.get(by)
-    if columns is None:
-        return []
-
-    # Private courses are found too: their page offers "Request access" instead of "Start".
-    query = Course.query.filter(Course.status == "published")
-    q = (q or "").strip()
-    if q:
-        query = query.filter(or_(*[column.ilike(f"%{q}%") for column in columns]))
-    if language:
-        query = query.filter(Course.language == language)
-
-    results = []
-    for course in query.order_by(Course.created_at.desc()).all():
-        results.append(
-            {
-                "type": "course",
-                "id": course.id,
-                "title": course.title,
-                "description": course.description,
-                "level": _(
-                    LEVELS.get(course.level, course.level)
-                ),  # in the language of the site
-                "lesson_count": course.lesson_count,
-                "language": course.language,  # "en", "ru" or None
-                "is_private": course.is_private,
-                "url": f"/course/{course.id}",
-                "company_id": course.company_id,
-                "company_name": course.company.display_name,
-                "company_url": f"/company/{course.company_id}",
-            }
-        )
-    return results
 
 
 def person_dashboard(user):
@@ -170,89 +81,117 @@ def person_dashboard(user):
     }
 
 
-def company_dashboard(user):
-    """This company's courses (with enrollment counts) and its candidates."""
+def company_dashboard(company):
+    """Owner-only dashboard data; the route checks authorization before calling.
+
+    Batch related records and score/offer lookups instead of querying once per
+    course, completer and candidate. The response keys and score meaning stay
+    compatible with the existing templates.
+    """
+    company_id = company.id
     courses = (
-        Course.query.filter_by(company_id=user.id)
+        Course.query.filter_by(company_id=company_id)
+        .options(
+            # Dashboard templates count lessons; their text/video fields are not needed.
+            selectinload(Course.lessons).load_only(Lesson.id, Lesson.course_id),
+            selectinload(Course.enrollments)
+            .joinedload(Enrollment.user)
+            .joinedload(User.person),
+        )
         .order_by(Course.created_at.desc())
         .all()
     )
+    course_ids = [course.id for course in courses]
+    if not course_ids:
+        return {"courses": [], "candidates": [], "requests": []}
 
-    course_rows = []
-    for course in courses:
-        enrolled = len(course.enrollments)
-        completed = sum(1 for e in course.enrollments if e.status == "completed")
-        invite_url = (
+    scores = _course_scores(course_ids)
+    sent_offers = {
+        (user_id, course_id)
+        for user_id, course_id in db.session.query(Offer.user_id, Offer.course_id)
+        .filter(Offer.company_id == company_id, Offer.course_id.in_(course_ids))
+        .all()
+    }
+    completed_enrollments = (
+        Enrollment.query.filter(
+            Enrollment.course_id.in_(course_ids), Enrollment.status == "completed"
+        )
+        .options(
+            joinedload(Enrollment.user).joinedload(User.person),
+            joinedload(Enrollment.course),
+        )
+        .order_by(Enrollment.completed_at.desc())
+        .all()
+    )
+    candidates = [
+        {
+            "user": enrollment.user,
+            "course": enrollment.course,
+            "score": scores.get((enrollment.user_id, enrollment.course_id)),
+            "completed_at": enrollment.completed_at,
+            "offer_sent": (enrollment.user_id, enrollment.course_id) in sent_offers,
+        }
+        for enrollment in completed_enrollments
+    ]
+    requests = (
+        AccessRequest.query.filter(
+            AccessRequest.course_id.in_(course_ids), AccessRequest.status == "pending"
+        )
+        .options(joinedload(AccessRequest.user).joinedload(User.person))
+        .order_by(AccessRequest.created_at)
+        .all()
+    )
+    return {
+        "courses": [_company_course_row(course, scores) for course in courses],
+        "candidates": candidates,
+        "requests": requests,
+    }
+
+
+def _company_course_row(course, scores):
+    """Counts, invitation link and completers for one owned course."""
+    completed = [e for e in course.enrollments if e.status == "completed"]
+    newest_first = sorted(
+        completed, key=lambda e: e.completed_at or e.started_at, reverse=True
+    )
+    return {
+        "course": course,
+        "enrolled": len(course.enrollments),
+        "completed": len(completed),
+        "invite_url": (
             f"/course/private/{course.invite_token}"
             if course.is_private and course.status == "published"
             else None
-        )
-        # People who finished this course, newest first: their emails are shown on the course card
-        completers = [
+        ),
+        "completers": [
             {
-                "user": e.user,
-                "email": e.user.email,
-                "score": best_score(e.user_id, course.id),
-                "completed_at": e.completed_at,
+                "user": enrollment.user,
+                "email": enrollment.user.email,
+                "score": scores.get((enrollment.user_id, course.id)),
+                "completed_at": enrollment.completed_at,
             }
-            for e in sorted(
-                (e for e in course.enrollments if e.status == "completed"),
-                key=lambda e: e.completed_at or e.started_at,
-                reverse=True,
-            )
-        ]
-        course_rows.append(
-            {
-                "course": course,
-                "enrolled": enrolled,
-                "completed": completed,
-                "invite_url": invite_url,
-                "completers": completers,
-            }
-        )
+            for enrollment in newest_first
+        ],
+    }
 
-    candidates = []
-    course_ids = [c.id for c in courses]
-    if course_ids:
-        completed_enrollments = (
-            Enrollment.query.filter(
-                Enrollment.course_id.in_(course_ids),
-                Enrollment.status == "completed",
-            )
-            .order_by(Enrollment.completed_at.desc())
-            .all()
-        )
-        for enrollment in completed_enrollments:
-            offer_sent = (
-                Offer.query.filter_by(
-                    company_id=user.id,
-                    user_id=enrollment.user_id,
-                    course_id=enrollment.course_id,
-                ).first()
-                is not None
-            )
-            candidates.append(
-                {
-                    "user": enrollment.user,
-                    "course": enrollment.course,
-                    "score": best_score(enrollment.user_id, enrollment.course_id),
-                    "completed_at": enrollment.completed_at,
-                    "offer_sent": offer_sent,
-                }
-            )
 
-    requests = []
-    if course_ids:
-        requests = (
-            AccessRequest.query.filter(
-                AccessRequest.course_id.in_(course_ids),
-                AccessRequest.status == "pending",
-            )
-            .order_by(AccessRequest.created_at)
-            .all()
-        )
+def _course_scores(course_ids):
+    """(learner ID, course ID) -> highest quiz attempt, including failed attempts.
 
-    return {"courses": course_rows, "candidates": candidates, "requests": requests}
+    This is deliberately the same meaning as best_score(), not an average,
+    final exam mark or a new ranking of candidates.
+    """
+    rows = (
+        db.session.query(
+            QuizAttempt.user_id, Lesson.course_id, db.func.max(QuizAttempt.score)
+        )
+        .join(Quiz, QuizAttempt.quiz_id == Quiz.id)
+        .join(Lesson, Quiz.lesson_id == Lesson.id)
+        .filter(Lesson.course_id.in_(course_ids))
+        .group_by(QuizAttempt.user_id, Lesson.course_id)
+        .all()
+    )
+    return {(user_id, course_id): score for user_id, course_id, score in rows}
 
 
 def best_score(user_id, course_id):

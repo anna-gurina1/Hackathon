@@ -64,6 +64,7 @@ if (authModal) {
     tab.addEventListener('click', function () {
       authTabs.forEach(function (otherTab) {
         otherTab.classList.toggle('is-active', otherTab === tab);
+        otherTab.setAttribute('aria-pressed', String(otherTab === tab));
       });
       authModal.querySelectorAll('[data-auth-panel]').forEach(function (panel) {
         panel.hidden = panel.dataset.authPanel !== tab.dataset.authTab;
@@ -81,17 +82,46 @@ if (userMenuButton) {
   userMenuButton.addEventListener('click', function (event) {
     event.stopPropagation();
     userMenu.hidden = !userMenu.hidden;
+    userMenuButton.setAttribute("aria-expanded", String(!userMenu.hidden));
   });
 
   // Click anywhere else closes the menu
   document.addEventListener('click', function () {
     userMenu.hidden = true;
+    userMenuButton.setAttribute("aria-expanded", "false");
   });
 }
 
-// ---------- Flash messages disappear after 6 seconds ----------
-document.querySelectorAll('.flash').forEach(function (message) {
-  setTimeout(function () { message.remove(); }, 6000);
+// Keep important feedback visible instead of removing it on a timer.
+
+// ---------- Mobile navigation ----------
+const navigationButton = document.querySelector('[data-nav-toggle]');
+const navigation = document.querySelector('#site-navigation');
+function closeNavigation() {
+  if (!navigationButton || !navigation) return;
+  navigation.classList.remove('is-open');
+  navigationButton.setAttribute('aria-expanded', 'false');
+}
+if (navigationButton && navigation) {
+  navigationButton.addEventListener('click', function () {
+    const open = navigation.classList.toggle('is-open');
+    navigationButton.setAttribute('aria-expanded', String(open));
+  });
+  document.addEventListener('click', function (event) {
+    if (!event.target.closest('.site-header')) closeNavigation();
+  });
+}
+document.addEventListener('keydown', function (event) {
+  if (event.key !== 'Escape') return;
+  if (navigation && navigation.classList.contains('is-open')) {
+    closeNavigation();
+    navigationButton.focus();
+  }
+  if (userMenu && !userMenu.hidden) {
+    userMenu.hidden = true;
+    userMenuButton.setAttribute('aria-expanded', 'false');
+    userMenuButton.focus();
+  }
 });
 
 // ---------- EN / RU switch: a short slide, then the page opens in the other language ----------

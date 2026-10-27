@@ -188,10 +188,10 @@ def delete_video(public_id, delivery="authenticated"):
     if not public_id:
         return False
 
-    _configure()
     try:
+        _configure()
         result = cloudinary.uploader.destroy(public_id, resource_type="video", type=delivery, invalidate=True)
-    except (CloudinaryError, OSError):
+    except (CloudinaryError, OSError, RuntimeError):
         log.exception("Cloudinary video delete failed")
         return False
     return result.get("result") == "ok"
@@ -260,10 +260,10 @@ def delete_image(public_id):
     """Удаляет картинку из Cloudinary. Безопасно вызывать с None."""
     if not public_id or public_id.startswith("static:"):  # демо-логотип из frontend/static — не трогаем
         return False
-    _configure()
     try:
+        _configure()
         result = cloudinary.uploader.destroy(public_id, resource_type="image", invalidate=True)
-    except (CloudinaryError, OSError):
+    except (CloudinaryError, OSError, RuntimeError):
         log.exception("Cloudinary image delete failed")
         return False
     return result.get("result") == "ok"
@@ -330,10 +330,10 @@ def delete_document(public_id):
     """Удаляет PDF из Cloudinary. Безопасно вызывать с None."""
     if not public_id:
         return False
-    _configure()
     try:
+        _configure()
         result = cloudinary.uploader.destroy(public_id, resource_type="raw", type="authenticated", invalidate=True)
-    except (CloudinaryError, OSError):
+    except (CloudinaryError, OSError, RuntimeError):
         log.exception("Cloudinary document delete failed")
         return False
     return result.get("result") == "ok"

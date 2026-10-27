@@ -1,3 +1,5 @@
+> **История предыдущих обновлений.** Это не текущая инструкция запуска. Актуальные документы: [README](../../README.md), [START-HERE](../../START-HERE.md), [отчёт рефакторинга](../../REFACTOR-REPORT.md).
+
 # UI implementation plan
 Preserve the existing Bitwise identity; this is workflow integration, not redesign.
 - White #FFFFFF: page and form surfaces.

@@ -92,14 +92,19 @@ def send_email(to, subject, body):
     """Send an email.
 
     Returns True when the email was printed (development) or handed to the
-    background sender. A delivery error in the background is only written to
-    the log: the person who clicked the button has already got the page.
+    background sender. Returns False for a synchronous delivery failure or an
+    unconfigured production transport. Background success means queued, not delivered;
+    a later delivery error is logged after the requester has already received the page.
     """
     cfg = current_app.config
 
     # Demo accounts (database/seed.py) have made-up addresses: their emails are always printed.
     # Without MAIL_SERVER and BREVO_API_KEY (development) they are printed too.
     if not (cfg.get("MAIL_SERVER") or cfg.get("BREVO_API_KEY")) or to.lower().endswith("@bitwise.demo"):
+        # Console login links are a development convenience, never a production fallback.
+        if cfg.get("APP_ENV") == "production":
+            current_app.logger.error("Email not sent: production needs a mail transport and a real recipient.")
+            return False
         print("\n" + "=" * 60)
         print(f"EMAIL to: {to}")
         print(f"Subject:  {subject}")
@@ -114,7 +119,8 @@ def send_email(to, subject, body):
     msg = EmailMessage()
     msg["From"] = formataddr((sender_name or cfg.get("MAIL_FROM_NAME") or "Bitwise", sender_address))
     msg["To"] = to
-    msg["Subject"] = subject
+    # A course/company title may contain newlines; email headers may not.
+    msg["Subject"] = " ".join(subject.splitlines())
     msg["Date"] = formatdate(localtime=True)
     msg["Message-ID"] = make_msgid(domain=sender_address.rpartition("@")[2] or None)
     msg.set_content(body)

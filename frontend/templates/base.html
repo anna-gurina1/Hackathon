@@ -3,6 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#faf9fc" data-theme-color>
+  <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>{% block title %}{{ _("Microlearning") }}{% endblock %} · Bitwise</title>
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo.png') }}">
@@ -11,18 +14,23 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   {% block head %}{% endblock %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/refinements.css') }}">
 </head>
 <body>
+  <a class="skip-link" href="#main-content">{{ _("Skip to content") }}</a>
 
   {# ---------- Header ---------- #}
   <header class="site-header">
     <div class="container site-header-inner">
       <a class="logo" href="{{ url_for('main.home') }}">
-        <img class="logo-mark" src="{{ url_for('static', filename='img/logo.png') }}" alt="">
-        Bitwise
+        <img class="logo-mark" src="{{ url_for('static', filename='img/logo.png') }}" width="48" height="38" alt="">
+        <span translate="no">Bitwise</span>
       </a>
 
-      <nav class="site-nav">
+      <nav class="site-nav" id="site-navigation" aria-label="{{ _('Main navigation') }}">
+        <a class="nav-home" href="{{ url_for('main.home') }}" {% if request.endpoint == 'main.home' %}aria-current="page"{% endif %}>{{ _("Home") }}</a>
+        <a href="{{ url_for('main.explore') }}" {% if request.endpoint == 'main.explore' %}aria-current="page"{% endif %}>{{ _("Explore") }}</a>
+        <a href="{{ url_for('main.pricing') }}" {% if request.endpoint == 'main.pricing' %}aria-current="page"{% endif %}>{{ _("Pricing") }}</a>
         {# EN / RU: one button. A tap anywhere on it switches to the other language and comes back
            to the same page (backend/i18n.py); main.js plays a short slide before leaving. #}
         {% set back_to = request.full_path if request.method == 'GET' else request.path %}
@@ -38,17 +46,19 @@
             <span class="lang-option {{ 'is-current' if code == current_language() }}" aria-hidden="true">{{ code|upper }}</span>
           {% endfor %}
         </a>
-        <a class="nav-home" href="{{ url_for('main.home') }}">{{ _("Home") }}</a>
-        <a href="{{ url_for('main.explore') }}">{{ _("Explore") }}</a>
-        <a href="{{ url_for('main.pricing') }}">{{ _("Pricing") }}</a>
-
+      </nav>
+      <div class="header-actions">
+        <button type="button" class="icon-button theme-toggle" data-theme-toggle aria-label="{{ _('Dark theme') }}" title="{{ _('Switch color theme') }}">
+          <svg class="theme-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>
+          <svg class="theme-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M20.5 14A8.5 8.5 0 0 1 10 3.5 8.5 8.5 0 1 0 20.5 14Z"/></svg>
+        </button>
         {% if current_user.is_authenticated %}
           <div class="user-menu">
             {% set header_photo = current_user.avatar_url %}
-            <button type="button" class="avatar-button {{ 'has-photo' if header_photo }}" data-user-menu-button aria-label="{{ _('Account menu') }}">
+            <button type="button" class="avatar-button {{ 'has-photo' if header_photo }}" data-user-menu-button aria-label="{{ _('Account menu') }}" aria-expanded="false" aria-controls="account-menu">
               {% if header_photo %}<img src="{{ header_photo }}" alt="">{% else %}{{ current_user.initials }}{% endif %}
             </button>
-            <div class="user-menu-list" data-user-menu hidden>
+            <div class="user-menu-list" id="account-menu" data-user-menu hidden>
               <p class="user-menu-name">{{ current_user.display_name }}</p>
               <a href="{{ url_for('main.account') }}">{{ _("My account") }}</a>
               <a href="{{ url_for('workspaces.index') }}">{{ _("Workspaces and invitations") }}</a>
@@ -61,7 +71,10 @@
         {% else %}
           <button type="button" class="btn btn-primary btn-small" data-open-auth>{{ _("Log in") }}</button>
         {% endif %}
-      </nav>
+        <button type="button" class="icon-button menu-toggle" data-nav-toggle aria-controls="site-navigation" aria-expanded="false" aria-label="{{ _('Open navigation') }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -93,20 +106,31 @@
     <a href="{{ url_for('workspaces.index') }}">{{ _("Workspaces and invitations") }}</a>
   </div>
   {% endif %}
-  <main>
+  <main id="main-content" tabindex="-1">
     {% block content %}{% endblock %}
   </main>
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <a class="footer-brand" href="{{ url_for('main.home') }}" translate="no"><img src="{{ url_for('static', filename='img/logo.png') }}" width="30" height="26" alt="" loading="lazy">Bitwise</a>
+      <p>{{ _("Learn a skill. Show what you can do.") }}</p>
+      <nav aria-label="{{ _('Footer navigation') }}">
+        <a href="{{ url_for('main.explore') }}">{{ _("Explore") }}</a>
+        <a href="{{ url_for('main.pricing') }}">{{ _("For companies") }}</a>
+      </nav>
+      <span class="footer-year">© {{ now_year }} Bitwise</span>
+    </div>
+  </footer>
 
   {# ---------- Login / sign up window. Any button with data-open-auth opens it ---------- #}
   {% block auth_modal %}
   {% if not current_user.is_authenticated %}
-  <dialog class="auth-modal" data-auth-modal>
+  <dialog class="auth-modal" data-auth-modal aria-label="{{ _('Log in or sign up') }}">
     <div class="card">
       <button type="button" class="auth-close" data-close-auth aria-label="{{ _('Close') }}">&times;</button>
 
       <div class="auth-tabs">
-        <button type="button" class="auth-tab is-active" data-auth-tab="login">{{ _("Log in") }}</button>
-        <button type="button" class="auth-tab" data-auth-tab="signup">{{ _("Sign up") }}</button>
+        <button type="button" class="auth-tab is-active" data-auth-tab="login" aria-pressed="true">{{ _("Log in") }}</button>
+        <button type="button" class="auth-tab" data-auth-tab="signup" aria-pressed="false">{{ _("Sign up") }}</button>
       </div>
 
       {# Log in: we email a one-time link, no password #}

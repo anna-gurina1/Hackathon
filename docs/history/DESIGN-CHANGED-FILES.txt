@@ -1,0 +1,25 @@
+Изменения относительно присланного архива Hackathon.rar
+EDIT = изменён; NEW = добавлен. Исходные файлы не удалялись.
+Снимки design-preview/ перечислены отдельно в папке.
+
+NEW   DESIGN-QA.md
+NEW   DESIGN.md
+EDIT  README.md
+NEW   START-DESIGN.md
+EDIT  backend/routes/courses.py
+EDIT  backend/routes/main.py
+EDIT  database/queries.py
+EDIT  frontend/static/css/pages.css
+NEW   frontend/static/css/refinements.css
+EDIT  frontend/static/css/style.css
+NEW   frontend/static/img/brand-mesh.svg
+EDIT  frontend/static/js/main.js
+NEW   frontend/static/js/theme.js
+EDIT  frontend/static/js/tips.js
+EDIT  frontend/templates/base.html
+EDIT  frontend/templates/explore.html
+EDIT  frontend/templates/home.html
+EDIT  frontend/templates/partials/macros.html
+NEW   tests/test_catalog.py
+NEW   translations/ru/refinements.json
+EDIT  translations/ru/scripts.json

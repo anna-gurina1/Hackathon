@@ -12,11 +12,11 @@ from flask import (
 from flask_login import current_user, login_required, logout_user
 
 from backend import plans
-from backend.access import require_company_owner, owns_company
+from backend.access import require_company_owner
 from backend.ai_tips import AiUnavailable
 from backend.i18n import COOKIE_MAX_AGE, COOKIE_NAME, LANGUAGES, _, safe_next_url
 from database import db
-from backend.uploads import delete_image, delete_video, save_image
+from backend.uploads import delete_image, save_image
 from database.models import (
     AccessRequest,
     Course,
@@ -29,6 +29,8 @@ from database.models import (
     CourseEditor,
     CompanyInvitation,
 )
+from backend.catalog import CatalogFilters, catalog_results
+from database.catalog import published_topics, search_courses
 from database.queries import company_dashboard, person_dashboard
 from backend.translator import translate_sources
 
@@ -40,12 +42,23 @@ MAX_SOURCES_PER_REQUEST = 60
 
 @bp.route("/")
 def home():
-    return render_template("home.html")
+    return render_template(
+        "home.html", featured_courses=search_courses("", "topic", limit=3)
+    )
 
 
 @bp.route("/explore")
 def explore():
-    return render_template("explore.html")
+    filters = CatalogFilters.from_args(request.args, fallback_to_topic=True)
+    return render_template(
+        "explore.html",
+        results=catalog_results(filters),
+        topics=published_topics(),
+        search_by=filters.mode,
+        query=filters.query,
+        selected_topic=filters.topic,
+        language_filter=filters.language,
+    )
 
 
 @bp.route("/language/<code>")
@@ -67,16 +80,19 @@ def translate():
     {"translations": [["...", ...], ...]} (one list per token) in the language of the site.
     main.js sends the pressed button first and then, in the background, all the other buttons
     of the page in one request, so they open at once. Open to everybody, guests too."""
-    data = request.get_json(silent=True) or {}
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify(error="bad_source"), 400
     sources = data.get("sources")
     if (
         not isinstance(sources, list)
         or not sources
         or len(sources) > MAX_SOURCES_PER_REQUEST
+        or any(not isinstance(source, str) or not source for source in sources)
     ):
         return jsonify(error="bad_source"), 400
     try:
-        translations = translate_sources([str(source) for source in sources])
+        translations = translate_sources(sources)
     except ValueError:  # broken or very old token: the page should be reloaded
         return jsonify(error="bad_source"), 400
     except AiUnavailable:  # no AI key, network problem, used-up quota...
@@ -118,8 +134,6 @@ def choose_plan():
 @bp.route("/account")
 @login_required
 def account():
-    from backend.routes.workspaces import pending_invitations
-
     company = current_user.company
     if company is None:
         return render_template(

@@ -10,7 +10,7 @@
   "Processing on the server…": "Обрабатываем на сервере…",
   "Upload failed (error {code}). Please try again.": "Загрузка не удалась (ошибка {code}). Попробуйте ещё раз.",
   "Connection lost. Check your internet and try again.": "Соединение потеряно. Проверьте интернет и попробуйте ещё раз.",
-  "Try again": "Попробовать ещё раз",
+  "Try again": "Повторить",
   "Uploading…": "Загрузка…",
   "Continued from {time}": "Продолжено с {time}",
   "Copied ✓": "Скопировано ✓",
@@ -54,5 +54,18 @@
   "Show translation": "Показать перевод",
   "Translating…": "Перевожу…",
   "No courses in your language yet. Turn off “Only courses in…” to see all courses.": "Курсов на русском пока нет. Выключите «Только курсы на русском», чтобы увидеть все курсы.",
-  "Copy this link:": "Скопируйте эту ссылку:"
+  "Copy this link:": "Скопируйте эту ссылку:",
+  "Companies": "Компании",
+  "Courses": "Курсы",
+  "Course": "Курс",
+  "Private": "Приватный",
+  "Reset filters": "Сбросить фильтры",
+  "No matching courses": "Подходящих курсов пока нет",
+  "Try a different search or clear the filters.": "Попробуйте другой запрос или сбросьте фильтры.",
+  "Could not load results": "Не удалось загрузить результаты",
+  "Check your connection and try again.": "Проверьте подключение и попробуйте ещё раз.",
+  "Search is unavailable": "Поиск временно недоступен",
+  "Only courses in Russian": "Только курсы на русском",
+  "Only courses in English": "Только курсы на английском",
+  "No matching companies": "Подходящих компаний пока нет"
 }

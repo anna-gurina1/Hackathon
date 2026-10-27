@@ -1,13 +1,11 @@
 from flask import (
     Blueprint,
     abort,
-    current_app,
     flash,
     jsonify,
     redirect,
     render_template,
     request,
-    send_from_directory,
     url_for,
 )
 from flask_login import current_user, login_required
@@ -22,7 +20,7 @@ from backend.access import (
 from backend.plans import can_create_course
 from backend.uploads import delete_document, delete_video, document_url
 from backend.email import external_url, send_email
-from backend.i18n import LANGUAGES, _, current_language, use_language
+from backend.i18n import _, current_language, use_language
 from backend.ai_tips import AiUnavailable, generate_category_questions
 from core.course_builder import recommended_questions
 from core.questions import LEVELS
@@ -31,14 +29,13 @@ from database import db
 from database.models import (
     AccessRequest,
     Company,
-    CompanyProfile,
     Course,
     CourseDocument,
     CourseEditor,
     Enrollment,
-    User,
-)  # noqa: F401
-from database.queries import course_visible_to, search_companies, search_courses
+)
+from backend.catalog import CatalogFilters, catalog_results
+from database.queries import course_visible_to
 
 bp = Blueprint("courses", __name__)
 
@@ -542,20 +539,9 @@ def company_profile(company_id):
 
 @bp.route("/api/search")
 def search():
-    q = request.args.get("q", "").strip()
-    by = request.args.get("by", "topic")
-    # "Company" finds companies (the card opens the company page);
-    # everything else finds courses (the card opens the course).
-    if by == "company":
-        companies = search_companies(q, by)
-        for company in companies:
-            company["type"] = "company"
-        return jsonify(companies)
-    # "Only courses in Russian" in the catalog sends lang=ru
-    language = request.args.get("lang")
-    if language not in LANGUAGES:
-        language = None
-    return jsonify(search_courses(q, by, language))
+    """Same search pipeline as /explore; only the response format differs."""
+    filters = CatalogFilters.from_args(request.args)
+    return jsonify(catalog_results(filters))
 
 
 # ---------- AI suggestions for the "Need ideas?" panel ----------

@@ -186,13 +186,27 @@ def send_offer(user_id, course_id):
     )
     db.session.commit()
 
-    with use_language(
-        person.language
-    ):  # the subject is in the learner's language, the text is the company's own
-        send_email(
-            person.email,
-            _("Job offer from {company}", company=course.company.display_name),
-            text,
+    # The offer is already durable. A notification failure must not turn it into
+    # an apparent failed save or tempt the owner to create the same offer again.
+    sent = False
+    try:
+        with use_language(person.language):
+            sent = send_email(
+                person.email,
+                _("Job offer from {company}", company=course.company.display_name),
+                text,
+            )
+    except Exception:  # Notification is secondary; keep the saved offer available.
+        log.exception("Could not send the offer notification")
+
+    if sent:
+        flash(_("Offer sent to {name}.", name=person.display_name), "success")
+    else:
+        flash(
+            _(
+                "The offer was saved for {name}, but the email could not be sent.",
+                name=person.display_name,
+            ),
+            "info",
         )
-    flash(_("Offer sent to {name}.", name=person.display_name), "success")
     return redirect(url_for("main.account"))

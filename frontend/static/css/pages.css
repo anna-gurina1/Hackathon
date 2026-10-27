@@ -16,7 +16,7 @@
   font-weight: 700;
   letter-spacing: .08em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--link);
 }
 .section-title { font-size: 1.25rem; margin: 32px 0 14px; }
 .card .section-title:first-child { margin-top: 0; }
@@ -51,7 +51,7 @@
   white-space: nowrap;
 }
 .chip-language { letter-spacing: .04em; font-weight: 700; }
-.chip-dark { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.chip-dark { background: var(--accent); border-color: var(--link); color: var(--accent-ink); }
 .chip-warning { background: var(--info-bg); border-color: transparent; color: var(--info-ink); }
 .chip-success { background: var(--success-bg); border-color: transparent; color: var(--success-ink); }
 .chip-error { background: var(--error-bg); border-color: transparent; color: var(--error-ink); }
@@ -95,7 +95,7 @@
   text-decoration: none;
   transition: transform .15s ease, border-color .15s ease;
 }
-.course-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+.course-card:hover { transform: translateY(-2px); border-color: var(--link); }
 .course-card-title { margin: 0; font-size: 1.15rem; }
 .course-card-text { margin: 0; flex-grow: 1; }
 
@@ -115,7 +115,7 @@
 .course-title { font-size: clamp(1.8rem, 6vw, 2.6rem); margin: 0 0 12px; }
 .course-intro .chip-row { margin-bottom: 16px; }
 .outcome-card { margin-top: 20px; border-left: 4px solid var(--accent); }
-.outcome-card h2, .outcome-card h3 { color: var(--accent); }
+.outcome-card h2, .outcome-card h3 { color: var(--link); }
 .outcome-card p { margin: 0; }
 .info-list {
   display: grid;
@@ -176,7 +176,7 @@
   color: inherit;
   text-decoration: none;
 }
-a.lesson-row:hover { border-color: var(--accent); }
+a.lesson-row:hover { border-color: var(--link); }
 .lesson-number {
   display: inline-flex;
   align-items: center;
@@ -193,7 +193,7 @@ a.lesson-row:hover { border-color: var(--accent); }
 .lesson-name { flex: 1; font-weight: 600; }
 .lesson-state { font-size: .8rem; color: var(--ink-soft); white-space: nowrap; }
 .lesson-row.is-done .lesson-number { background: var(--success-bg); border-color: transparent; color: var(--success-ink); }
-.lesson-row.is-current { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.lesson-row.is-current { border-color: var(--link); box-shadow: 0 0 0 1px var(--accent) inset; }
 .lesson-row.is-current .lesson-number { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
 .lesson-row.is-locked { opacity: .6; }
 .lesson-list.compact .lesson-row { padding: 10px 12px; }
@@ -220,7 +220,7 @@ a.lesson-row:hover { border-color: var(--accent); }
   margin-top: 20px;
   background: var(--accent);
   color: var(--accent-ink);
-  border-color: var(--accent);
+  border-color: var(--link);
 }
 .next-step-card h2 { margin: 0 0 4px; font-size: 1.25rem; }
 .next-step-card p { margin: 0; opacity: .8; }
@@ -240,7 +240,7 @@ a.lesson-row:hover { border-color: var(--accent); }
   font-weight: 700;
   font-size: 1.05rem;
 }
-.question-number { color: var(--accent); }
+.question-number { color: var(--link); }
 .answer-list { display: grid; gap: 10px; clear: both; }
 .answer-option {
   display: flex;
@@ -254,8 +254,8 @@ a.lesson-row:hover { border-color: var(--accent); }
   transition: border-color .15s ease, background .15s ease;
 }
 .answer-option:hover { border-color: var(--ink-soft); }
-.answer-option input { width: 20px; height: 20px; accent-color: var(--accent); flex-shrink: 0; margin: 0; }
-.answer-option:has(input:checked) { border-color: var(--accent); background: var(--success-bg); }
+.answer-option input { width: 20px; height: 20px; accent-color: var(--link); flex-shrink: 0; margin: 0; }
+.answer-option:has(input:checked) { border-color: var(--link); background: var(--success-bg); }
 .quiz-footer {
   position: sticky;
   bottom: 0;
@@ -347,7 +347,7 @@ a.lesson-row:hover { border-color: var(--accent); }
 }
 .option-card-body strong { display: block; }
 .option-card-body .small { display: block; margin-top: 2px; }
-.option-card input:checked + .option-card-body { border-color: var(--accent); background: var(--success-bg); box-shadow: 0 0 0 1px var(--primary) inset; }
+.option-card input:checked + .option-card-body { border-color: var(--link); background: var(--success-bg); box-shadow: 0 0 0 1px var(--primary) inset; }
 .option-card input:focus-visible + .option-card-body { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* Pills — small options like duration */
@@ -422,8 +422,8 @@ a.lesson-row:hover { border-color: var(--accent); }
   color: var(--ink-soft);
   cursor: pointer;
 }
-.upload-box:hover { border-color: var(--accent); color: var(--ink); }
-.upload-box.has-file { border-style: solid; border-color: var(--accent); color: var(--ink); background: var(--success-bg); }
+.upload-box:hover { border-color: var(--link); color: var(--ink); }
+.upload-box.has-file { border-style: solid; border-color: var(--link); color: var(--ink); background: var(--success-bg); }
 .upload-box input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .builder-footer { margin-top: 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .builder-footer p { margin: 0; }
@@ -440,7 +440,7 @@ a.lesson-row:hover { border-color: var(--accent); }
   border: 1px dashed var(--accent);
   border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--accent);
+  color: var(--link);
   font: inherit;
   font-size: .85rem;
   text-align: left;
@@ -537,7 +537,7 @@ a.lesson-row:hover { border-color: var(--accent); }
 .search-tabs::-webkit-scrollbar { display: none; }
 .search-status { margin: 20px 0 12px; }
 .result-company { display: flex; gap: 14px; align-items: flex-start; color: inherit; text-decoration: none; }
-.result-company:hover { border-color: var(--accent); }
+.result-company:hover { border-color: var(--link); }
 .result-company h3 { margin: 0 0 4px; font-size: 1.1rem; }
 .result-company p { margin: 0 0 8px; }
 
@@ -590,7 +590,7 @@ a.lesson-row:hover { border-color: var(--accent); }
   font-weight: 600;
   cursor: pointer;
 }
-.speed-button.is-active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.speed-button.is-active { background: var(--accent); border-color: var(--link); color: var(--accent-ink); }
 .resume-note { margin-left: auto; }
 .upload-progress { margin-bottom: 14px; }
 .upload-progress p { margin: 6px 0 0; }
@@ -615,7 +615,7 @@ a.lesson-row:hover { border-color: var(--accent); }
 .hero.search-hero .btn-outline:hover { background: rgba(255, 255, 255, .12); border-color: var(--accent-ink); }
 
 /* Course page: "Ready to learn?" panel */
-.action-card { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.action-card { background: var(--accent); border-color: var(--link); color: var(--accent-ink); }
 .action-card .side-label { color: var(--primary); }
 .action-card .muted, .action-card .small { color: var(--accent-soft); }
 .action-card .btn-outline { color: var(--accent-ink); border-color: rgba(255, 255, 255, .6); }
@@ -624,7 +624,7 @@ a.lesson-row:hover { border-color: var(--accent); }
 .action-card .invite-box input { color: var(--ink); }
 
 /* Course completed */
-.celebrate-card { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.celebrate-card { background: var(--accent); border-color: var(--link); color: var(--accent-ink); }
 .celebrate-card .muted, .celebrate-card .lead { color: var(--accent-soft); }
 .celebrate-card .btn-outline { color: var(--accent-ink); border-color: rgba(255, 255, 255, .6); }
 
@@ -682,7 +682,7 @@ a.lesson-row:hover { border-color: var(--accent); }
   cursor: pointer;
   transition: border-color .15s ease, color .15s ease, background .15s ease;
 }
-.plus-tile:hover { border-color: var(--accent); color: var(--accent); background: var(--soft); }
+.plus-tile:hover { border-color: var(--link); color: var(--link); background: var(--soft); }
 .plus-icon {
   display: grid;
   place-items: center;
@@ -714,7 +714,7 @@ a.lesson-row:hover { border-color: var(--accent); }
   font-weight: 700;
   letter-spacing: .07em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--link);
 }
 .suggest-item { display: flex; align-items: flex-start; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); }
 .suggest-item details { flex: 1; }
@@ -740,9 +740,9 @@ a.lesson-row:hover { border-color: var(--accent); }
   transition: background .2s, border-color .2s, color .2s, transform .2s;
 }
 @media (hover: hover) {
-  .suggest-tick:hover { border-color: var(--accent); color: var(--accent); }
+  .suggest-tick:hover { border-color: var(--link); color: var(--link); }
 }
-.suggest-tick[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.suggest-tick[aria-pressed="true"] { border-color: var(--link); background: var(--accent); color: var(--accent-ink); }
 .suggest-tick.is-popping { animation: tick-pop .3s ease; }
 @keyframes tick-pop { 50% { transform: scale(1.2); } }
 
@@ -753,7 +753,7 @@ a.lesson-row:hover { border-color: var(--accent); }
 
 
 /* Studio in the brand colours (purple panels, lime buttons) */
-.studio-lesson:hover { border-color: var(--accent); }
+.studio-lesson:hover { border-color: var(--link); }
 .suggest-panel { border-top: 4px solid var(--accent); }
 
 /* Course page owner panel: "Delete course" readable on purple */
@@ -768,11 +768,11 @@ a.lesson-row:hover { border-color: var(--accent); }
 
 /* Company account: who completed each course */
 .completers { grid-column: 1 / -1; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--soft); border: 1px solid var(--line); }
-.completers-title { margin: 0 0 8px; font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.completers-title { margin: 0 0 8px; font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--link); }
 .completers-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .completers-list li { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: .9rem; }
 .completers-list a { color: var(--ink); text-decoration: none; font-weight: 600; }
-.completers-list a:hover { color: var(--accent); }
+.completers-list a:hover { color: var(--link); }
 .completers-score { font-size: .8rem; color: var(--ink-soft); }
 .completers-empty { margin: 0; font-size: .9rem; color: var(--ink-soft); }
 .manage-numbers strong { font-family: var(--font-body); font-weight: 800; }
@@ -794,7 +794,7 @@ a.lesson-row:hover { border-color: var(--accent); }
 .suggest-group > summary.suggest-category:hover { color: var(--ink); }
 .suggest-count {
   margin-left: auto; min-width: 22px; padding: 1px 7px;
-  border-radius: 999px; background: var(--soft); color: var(--accent);
+  border-radius: 999px; background: var(--soft); color: var(--link);
   font-size: .72rem; text-align: center; letter-spacing: 0;
 }
 .suggest-group[open] { padding-bottom: 8px; }
@@ -805,13 +805,13 @@ a.lesson-row:hover { border-color: var(--accent); }
 .suggest-ai-body em { font-size: .9rem; line-height: 1.4; }
 .ai-tag {
   align-self: flex-start; padding: 1px 8px; border-radius: 999px;
-  background: var(--info-bg); color: var(--accent);
+  background: var(--info-bg); color: var(--link);
   font-size: .68rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
 }
 .toast {
   position: fixed; left: 50%; bottom: 28px; z-index: 1000;
   max-width: min(440px, calc(100vw - 32px)); padding: 12px 18px;
-  border-radius: var(--radius-sm); background: var(--ink); color: #fff;
+  border-radius: var(--radius-sm); background: var(--ink); color: var(--inverse-ink);
   font-size: .92rem; line-height: 1.4; box-shadow: var(--shadow);
   opacity: 0; transform: translate(-50%, 12px); transition: opacity .3s ease, transform .3s ease;
   pointer-events: none;
@@ -840,7 +840,7 @@ a.lesson-row:hover { border-color: var(--accent); }
 
 /* Company name that opens the company page */
 .company-link { color: inherit; text-decoration: none; font-weight: 600; }
-.company-link:hover { color: var(--accent); text-decoration: underline; }
+.company-link:hover { color: var(--link); text-decoration: underline; }
 
 /* Course card: the whole card opens the course, the company name opens the company */
 .course-card { position: relative; }

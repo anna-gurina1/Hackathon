@@ -49,3 +49,19 @@
     </span>
   </div>
 {% endmacro %}
+
+{% macro catalog_card(course) %}
+<article class="card course-card catalog-card">
+  <div class="course-card-top">
+    <span class="course-topic">{{ course.topic or _("Course") }}</span>
+    <span class="chip chip-language" title="{{ _('Course in Russian') if course.language == 'ru' else _('Course in English') }}">{{ (course.language or '')|upper }}</span>
+  </div>
+  <a class="company-link course-card-company small muted" href="{{ course.company_url }}">{{ course.company_name }}</a>
+  <h3 class="course-card-title"><a class="stretched-link" href="{{ course.url }}">{{ course.title }}</a></h3>
+  {% if course.description %}<p class="course-card-text muted">{{ course.description|truncate(140) }}</p>{% endif %}
+  <div class="course-card-bottom">
+    <div class="chip-row"><span class="chip">{{ course.level }}</span><span class="chip">{{ _n(course.lesson_count, "{count} lesson", "{count} lessons") }}</span>{% if course.is_private %}<span class="chip chip-dark">{{ _("Private") }}</span>{% endif %}</div>
+    <span class="course-card-arrow" aria-hidden="true">↗</span>
+  </div>
+</article>
+{% endmacro %}
