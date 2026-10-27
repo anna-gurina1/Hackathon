@@ -13,6 +13,7 @@ the sender; it must be a sender verified in Brevo (Senders, domains & dedicated 
 """
 import json
 import smtplib
+import ssl
 import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
@@ -41,12 +42,17 @@ def _deliver(settings, msg, logger):
     flask.request / current_app (settings and logger are passed in)."""
     try:
         if settings["MAIL_USE_SSL"]:
-            smtp = smtplib.SMTP_SSL(settings["MAIL_SERVER"], settings["MAIL_PORT"], timeout=15)
+            smtp = smtplib.SMTP_SSL(
+                settings["MAIL_SERVER"], settings["MAIL_PORT"], timeout=15,
+                context=ssl.create_default_context(),
+            )
         else:
             smtp = smtplib.SMTP(settings["MAIL_SERVER"], settings["MAIL_PORT"], timeout=15)
         with smtp:
             if settings["MAIL_USE_TLS"] and not settings["MAIL_USE_SSL"]:
-                smtp.starttls()
+                # Verify the certificate and hostname; a failed handshake must not
+                # fall through to authentication or unencrypted delivery.
+                smtp.starttls(context=ssl.create_default_context())
             if settings["MAIL_USERNAME"]:
                 smtp.login(settings["MAIL_USERNAME"], settings["MAIL_PASSWORD"])
             smtp.send_message(msg)
